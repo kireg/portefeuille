@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/portfolio.dart';
+import '../../utils/currency_formatter.dart';
 
 class PortfolioHeader extends StatelessWidget {
   final Portfolio portfolio;
@@ -27,7 +28,7 @@ class PortfolioHeader extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '${totalValue.toStringAsFixed(2)} €',
+              CurrencyFormatter.format(totalValue),
               style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
@@ -37,7 +38,7 @@ class PortfolioHeader extends StatelessWidget {
                 _buildStat(
                   context,
                   'Plus/Moins-value',
-                  '${totalPL.toStringAsFixed(2)} € (${(totalPLPercentage * 100).toStringAsFixed(2)}%)',
+                  '${CurrencyFormatter.format(totalPL)} (${(totalPLPercentage * 100).toStringAsFixed(2)}%)',
                   totalPL >= 0 ? Colors.green[400]! : Colors.red[400]!,
                 ),
                  _buildStat(
@@ -74,4 +75,3 @@ class PortfolioHeader extends StatelessWidget {
     );
   }
 }
-

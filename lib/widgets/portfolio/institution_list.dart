@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/institution.dart';
+import '../../utils/currency_formatter.dart';
 import 'account_tile.dart';
 
 class InstitutionList extends StatelessWidget {
@@ -23,7 +24,7 @@ class InstitutionList extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             trailing: Text(
-              '${institution.totalValue.toStringAsFixed(2)} €',
+              CurrencyFormatter.format(institution.totalValue),
                style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             children: institution.accounts.map((account) {

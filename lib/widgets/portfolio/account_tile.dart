@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/account.dart';
+import '../../utils/currency_formatter.dart';
 import 'asset_list_item.dart';
 
 class AccountTile extends StatelessWidget {
@@ -19,7 +20,7 @@ class AccountTile extends StatelessWidget {
       ),
       subtitle: Text(account.type.toString().split('.').last),
       trailing: Text(
-        '${account.totalValue.toStringAsFixed(2)} €',
+        CurrencyFormatter.format(account.totalValue),
         style: theme.textTheme.bodyLarge,
       ),
       children: [
@@ -29,12 +30,15 @@ class AccountTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Liquidités', style: TextStyle(color: Colors.grey[400])),
-              Text('${account.cashBalance.toStringAsFixed(2)} €', style: TextStyle(color: Colors.grey[300])),
+              Text(
+                CurrencyFormatter.format(account.cashBalance),
+                style: TextStyle(color: Colors.grey[300]),
+              ),
             ],
           ),
         ),
         const Divider(height: 1),
-        ...account.assets.map((asset) => AssetListItem(asset: asset)).toList(),
+        ...account.assets.map((asset) => AssetListItem(asset: asset)),
       ],
     );
   }

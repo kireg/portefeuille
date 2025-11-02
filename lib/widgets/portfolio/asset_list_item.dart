@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/asset.dart';
+import '../../utils/currency_formatter.dart';
 
 class AssetListItem extends StatelessWidget {
   final Asset asset;
@@ -14,18 +15,18 @@ class AssetListItem extends StatelessWidget {
 
     return ListTile(
       title: Text(asset.name),
-      subtitle: Text('${asset.quantity} x ${asset.averagePrice.toStringAsFixed(2)} €'),
+      subtitle: Text('${asset.quantity} x ${CurrencyFormatter.format(asset.averagePrice)}'),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '${asset.totalValue.toStringAsFixed(2)} €',
+            CurrencyFormatter.format(asset.totalValue),
             style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
-            '${pnl.toStringAsFixed(2)} € (${(asset.profitAndLossPercentage * 100).toStringAsFixed(2)}%)',
+            '${CurrencyFormatter.format(pnl)} (${(asset.profitAndLossPercentage * 100).toStringAsFixed(2)}%)',
             style: theme.textTheme.bodySmall?.copyWith(color: pnlColor),
           ),
         ],

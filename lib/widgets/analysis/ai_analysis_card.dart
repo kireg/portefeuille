@@ -85,7 +85,7 @@ class _AiAnalysisCardState extends State<AiAnalysisCard> {
                 onPressed: settings.isOnlineMode && !_isLoading ? _runAnalysis : null,
                 style: ElevatedButton.styleFrom(
                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                   disabledBackgroundColor: theme.colorScheme.background,
+                   disabledBackgroundColor: theme.colorScheme.surface,
                 ),
               ),
             ),

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-enum UserLevel { Novice, Expert }
+enum UserLevel { novice, expert }
 
 class SettingsProvider extends ChangeNotifier {
   bool _isOnlineMode = false;
-  UserLevel _userLevel = UserLevel.Novice;
+  UserLevel _userLevel = UserLevel.novice;
 
   bool get isOnlineMode => _isOnlineMode;
   UserLevel get userLevel => _userLevel;

@@ -8,9 +8,7 @@ class AppTheme {
     colorScheme: const ColorScheme.dark(
       primary: Color(0xFF00bcd4),      // Cyan
       secondary: Color(0xFFab47bc),    // Violet
-      background: Color(0xFF1a2943),   // Conserver pour compatibilité
       surface: Color(0xFF294166),      // Couleur des cartes/blocs
-      onBackground: Color(0xFFe0e0e0), // Conserver pour compatibilité
       onSurface: Color(0xFFe0e0e0),    // Texte principal
       error: Colors.redAccent,
       onError: Colors.white,
@@ -22,7 +20,6 @@ class AppTheme {
       titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFe0e0e0)),
     ),
 
-    // Correction ici : CardTheme -> CardThemeData
     cardTheme: CardThemeData(
       color: const Color(0xFF294166),
       elevation: 2,
@@ -36,23 +33,23 @@ class AppTheme {
     ),
 
     switchTheme: SwitchThemeData(
-      thumbColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
           return const Color(0xFF00bcd4); // Cyan
         }
         return Colors.grey;
       }),
-      trackColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
-          return const Color(0xFF00bcd4).withOpacity(0.5);
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const Color(0xFF00bcd4).withAlpha(128);
         }
-        return Colors.grey.withOpacity(0.5);
+        return Colors.grey.withAlpha(128);
       }),
     ),
 
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: const Color(0xFF1a2943).withOpacity(0.8),
+      fillColor: const Color(0xFF1a2943).withAlpha(204),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide.none,

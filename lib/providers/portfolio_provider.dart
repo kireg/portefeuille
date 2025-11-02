@@ -56,7 +56,7 @@ class PortfolioProvider extends ChangeNotifier {
           accounts: [
             Account(
               name: 'CTO',
-              type: AccountType.CTO,
+              type: AccountType.cto,
               cashBalance: 150.75,
               assets: [
                 Asset(name: 'Apple Inc.', ticker: 'AAPL', quantity: 10, averagePrice: 150.0, currentPrice: 175.2),
@@ -65,7 +65,7 @@ class PortfolioProvider extends ChangeNotifier {
             ),
             Account(
               name: 'PEA',
-              type: AccountType.PEA,
+              type: AccountType.pea,
               cashBalance: 50.25,
               assets: [
                 Asset(name: 'LVMH', ticker: 'MC', quantity: 5, averagePrice: 700.0, currentPrice: 850.5),
@@ -78,7 +78,7 @@ class PortfolioProvider extends ChangeNotifier {
           accounts: [
             Account(
               name: 'Portefeuille Crypto',
-              type: AccountType.Crypto,
+              type: AccountType.crypto,
               cashBalance: 200.0,
               assets: [
                 Asset(name: 'Bitcoin', ticker: 'BTC', quantity: 0.05, averagePrice: 35000.0, currentPrice: 42000.0),

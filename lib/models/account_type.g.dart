@@ -14,41 +14,41 @@ class AccountTypeAdapter extends TypeAdapter<AccountType> {
   AccountType read(BinaryReader reader) {
     switch (reader.readByte()) {
       case 0:
-        return AccountType.PEA;
+        return AccountType.pea;
       case 1:
-        return AccountType.CTO;
+        return AccountType.cto;
       case 2:
-        return AccountType.AssuranceVie;
+        return AccountType.assuranceVie;
       case 3:
-        return AccountType.PER;
+        return AccountType.per;
       case 4:
-        return AccountType.Crypto;
+        return AccountType.crypto;
       case 5:
-        return AccountType.Autre;
+        return AccountType.autre;
       default:
-        return AccountType.PEA;
+        return AccountType.pea;
     }
   }
 
   @override
   void write(BinaryWriter writer, AccountType obj) {
     switch (obj) {
-      case AccountType.PEA:
+      case AccountType.pea:
         writer.writeByte(0);
         break;
-      case AccountType.CTO:
+      case AccountType.cto:
         writer.writeByte(1);
         break;
-      case AccountType.AssuranceVie:
+      case AccountType.assuranceVie:
         writer.writeByte(2);
         break;
-      case AccountType.PER:
+      case AccountType.per:
         writer.writeByte(3);
         break;
-      case AccountType.Crypto:
+      case AccountType.crypto:
         writer.writeByte(4);
         break;
-      case AccountType.Autre:
+      case AccountType.autre:
         writer.writeByte(5);
         break;
     }

@@ -28,7 +28,8 @@ class SettingsScreen extends StatelessWidget {
             onChanged: (bool value) {
               settingsProvider.toggleOnlineMode(value);
             },
-             activeColor: theme.colorScheme.primary,
+             // Correction de la propriété obsolète
+            activeTrackColor: theme.colorScheme.primary,
           ),
           const Divider(),
           ListTile(

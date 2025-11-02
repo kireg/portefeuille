@@ -7,25 +7,25 @@ part 'account_type.g.dart';
 enum AccountType {
   /// Plan d'Épargne en Actions
   @HiveField(0)
-  PEA,
+  pea,
 
   /// Compte-Titres Ordinaire
   @HiveField(1)
-  CTO,
+  cto,
 
   /// Assurance Vie
   @HiveField(2)
-  AssuranceVie,
+  assuranceVie,
 
   /// Plan Épargne Retraite
   @HiveField(3)
-  PER,
+  per,
 
   /// Portefeuille de crypto-monnaies
   @HiveField(4)
-  Crypto,
+  crypto,
 
   /// Autre type de compte
   @HiveField(5)
-  Autre,
+  autre,
 }

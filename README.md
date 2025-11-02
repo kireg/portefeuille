@@ -27,9 +27,10 @@ La structure de base de l'application est en place, incluant les modèles de don
 
 ### Problèmes Techniques Résolus :
 
-- **Configuration de l'Environnement de Build :** Correction des problèmes de compatibilité entre Flutter et l'environnement de développement Windows.
-- **Résolution des Dépendances :** Ajout et configuration des librairies externes nécessaires (`provider`, `fl_chart`, `hive`).
-- **Correction du Code Initial :** Révision et correction des erreurs de syntaxe et des chemins d'importation.
+- **Mise à Jour des Dépendances :** Correction d'un blocage critique causé par des versions de dépendances obsolètes (notamment `fl_chart`), assurant la compatibilité avec les dernières fonctionnalités des packages.
+- **Correction de l'API des Graphiques :** Mise à jour du code des graphiques pour utiliser les API modernes suite à la mise à jour de la dépendance `fl_chart`.
+- **Conventions de Nommage et API Obsolètes :** Harmonisation du code pour respecter les conventions `lowerCamelCase` et remplacement des API Flutter obsolètes (ex: `CardThemeData`, `WidgetStateProperty`).
+- **Configuration de la Génération de Code :** Résolution des erreurs de synchronisation avec les fichiers générés par `Hive` (`.g.dart`) après modification des modèles de données.
 
 ## Prochaines Étapes (Implémentation des Fonctionnalités)
 

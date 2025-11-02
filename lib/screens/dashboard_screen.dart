@@ -41,7 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // Ceci est une sécurité, normalement on n'arrive pas ici sans portefeuille
       return const Scaffold(
         body: Center(
-          child: Text("Aucun portefeuille n\'a été chargé."),
+          child: Text("Aucun portefeuille n'a été chargé."),
         ),
       );
     }
