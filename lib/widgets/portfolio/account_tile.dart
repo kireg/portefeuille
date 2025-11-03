@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/account.dart';
 import '../../utils/currency_formatter.dart';
+import '../common/account_type_chip.dart';
 import 'asset_list_item.dart';
 
 class AccountTile extends StatelessWidget {
@@ -14,11 +15,17 @@ class AccountTile extends StatelessWidget {
 
     return ExpansionTile(
       backgroundColor: theme.scaffoldBackgroundColor.withAlpha(20),
-      title: Text(
-        account.name,
-        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            account.name,
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          AccountTypeChip(accountType: account.type, isNoviceModeEnabled: true),
+        ],
       ),
-      subtitle: Text(account.type.toString().split('.').last),
       trailing: Text(
         CurrencyFormatter.format(account.totalValue),
         style: theme.textTheme.bodyLarge,
