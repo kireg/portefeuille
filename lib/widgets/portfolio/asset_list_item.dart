@@ -14,19 +14,21 @@ class AssetListItem extends StatelessWidget {
     final pnl = asset.profitAndLoss;
     final pnlColor = pnl >= 0 ? Colors.green.shade400 : Colors.red.shade400;
 
-
-    String subtitleText = '${asset.quantity} x ${CurrencyFormatter.format(asset.averagePrice)}';
-    if (asset.estimatedAnnualYield > 0) {
-      final yieldFormatted = NumberFormat.percentPattern().format(asset.estimatedAnnualYield);
-      subtitleText += '  •  Rdt. est. $yieldFormatted';
-    }
-
     return ListTile(
       dense: true,
       title: Text(asset.name),
-      subtitle: Text(
-        subtitleText,
-        style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+      subtitle: RichText(
+        text: TextSpan(
+          style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+          children: <TextSpan>[
+            TextSpan(text: '${asset.quantity} x ${CurrencyFormatter.format(asset.averagePrice)}'),
+            if (asset.estimatedAnnualYield > 0)
+              TextSpan(
+                text: '  •  Rdt. Annuel Est. ${NumberFormat.percentPattern().format(asset.estimatedAnnualYield)}',
+                style: TextStyle(color: Colors.deepPurple[400]),
+              ),
+          ],
+        ),
       ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -37,7 +39,7 @@ class AssetListItem extends StatelessWidget {
             style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           Text(
-            '${CurrencyFormatter.format(pnl)} (${(asset.profitAndLossPercentage * 100).toStringAsFixed(2)}%)',
+            '${CurrencyFormatter.format(pnl)} (${(asset.profitAndLossPercentage * 100).toStringAsFixed(2)}%)}',
             style: theme.textTheme.bodySmall?.copyWith(color: pnlColor),
           ),
         ],

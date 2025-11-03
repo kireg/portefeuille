@@ -39,7 +39,7 @@ class PortfolioHeader extends StatelessWidget {
                   child: _buildStat(
                     context,
                     'Plus/Moins-value',
-                    '${CurrencyFormatter.format(totalPL)} (${(totalPLPercentage * 100).toStringAsFixed(2)}%)',
+                    '${CurrencyFormatter.format(totalPL)} (${(totalPLPercentage * 100).toStringAsFixed(2)}%)}',
                     totalPL >= 0 ? Colors.green[400]! : Colors.red[400]!,
                   ),
                 ),
@@ -48,7 +48,7 @@ class PortfolioHeader extends StatelessWidget {
                     context,
                     'Rendement Annuel Estimé',
                     '${(annualYield * 100).toStringAsFixed(2)}%',
-                    theme.colorScheme.secondary,
+                    Colors.deepPurple[400]!,
                   ),
                 ),
               ],
