@@ -23,7 +23,9 @@ class InstitutionTile extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
+      clipBehavior: Clip.antiAlias, // Pour que la couleur respecte les coins arrondis de la carte
       child: ExpansionTile(
+        collapsedBackgroundColor: Colors.white.withOpacity(0.05),
         title: Text(
           institution.name,
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),

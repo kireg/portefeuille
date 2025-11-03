@@ -33,17 +33,13 @@ class AccountTile extends StatelessWidget {
       ),
       childrenPadding: const EdgeInsets.only(left: 16.0),
       children: [
-         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Liquidités', style: TextStyle(color: Colors.grey[400])),
-              Text(
-                CurrencyFormatter.format(account.cashBalance),
-                style: TextStyle(color: Colors.grey[300]),
-              ),
-            ],
+         ListTile(
+          dense: true,
+          leading: Icon(Icons.account_balance_wallet_outlined, color: Colors.grey[400]),
+          title: Text('Liquidités', style: TextStyle(color: Colors.grey[400], fontStyle: FontStyle.italic)),
+          trailing: Text(
+            CurrencyFormatter.format(account.cashBalance),
+            style: TextStyle(color: Colors.grey[300], fontStyle: FontStyle.italic),
           ),
         ),
         const Divider(height: 1),
