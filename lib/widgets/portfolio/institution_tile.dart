@@ -23,43 +23,30 @@ class InstitutionTile extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+      child: ExpansionTile(
+        title: Text(
+          institution.name,
+          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          '${NumberFormat.percentPattern(Localizations.localeOf(context).languageCode).format(percentageOfPortfolio)} du portefeuille',
+          style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade400),
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      institution.name,
-                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      '${NumberFormat.percentPattern(Localizations.localeOf(context).languageCode).format(percentageOfPortfolio)} du portefeuille',
-                      style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade400),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      CurrencyFormatter.format(institution.totalValue),
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    _buildProfitAndLoss(institution.profitAndLoss, institution.profitAndLossPercentage, theme),
-                  ],
-                )
-              ],
+            Text(
+              CurrencyFormatter.format(institution.totalValue),
+              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const Divider(height: 32),
-            ...institution.accounts.map((account) => AccountTile(account: account)),
+            _buildProfitAndLoss(institution.profitAndLoss, institution.profitAndLossPercentage, theme),
           ],
         ),
+        childrenPadding: const EdgeInsets.only(left: 16.0),
+        children: institution.accounts
+            .map((account) => AccountTile(account: account))
+            .toList(),
       ),
     );
   }

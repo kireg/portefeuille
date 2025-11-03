@@ -15,6 +15,7 @@ class AccountTile extends StatelessWidget {
 
     return ExpansionTile(
       backgroundColor: theme.scaffoldBackgroundColor.withAlpha(20),
+      controlAffinity: ListTileControlAffinity.leading,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -30,6 +31,7 @@ class AccountTile extends StatelessWidget {
         CurrencyFormatter.format(account.totalValue),
         style: theme.textTheme.bodyLarge,
       ),
+      childrenPadding: const EdgeInsets.only(left: 16.0),
       children: [
          Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
