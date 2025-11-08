@@ -22,7 +22,10 @@ class PortfolioManagementSettings extends StatelessWidget {
               style: theme.textTheme.titleMedium,
             ),
             ListTile(
-              title: const Text('Portefeuille Actif'),
+              title: const Text(
+                'Portefeuille Actif',
+                overflow: TextOverflow.ellipsis,
+              ),
               trailing: DropdownButton<Portfolio>(
                 value: portfolioProvider.activePortfolio,
                 onChanged: (Portfolio? newValue) {
@@ -34,15 +37,19 @@ class PortfolioManagementSettings extends StatelessWidget {
                     .map<DropdownMenuItem<Portfolio>>((Portfolio portfolio) {
                   return DropdownMenuItem<Portfolio>(
                     value: portfolio,
-                    child: Text(portfolio.name),
+                    child: Text(
+                      portfolio.name,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   );
                 }).toList(),
               ),
             ),
-            Row(
+            Wrap(
               // --- CORRECTION DE L'ERREUR ---
               // mainAxisAlignment est maintenant un paramètre nommé
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              alignment: WrapAlignment.spaceEvenly,
+              spacing: 8.0,
               children: [
                 TextButton.icon(
                   icon: const Icon(Icons.add_outlined),

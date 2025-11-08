@@ -143,10 +143,12 @@ class _CorrectionTabState extends State<CorrectionTab>
                     children: [
                       Expanded(
                           child: Text(inst.name,
-                              style: theme.textTheme.titleLarge)),
+                              style: theme.textTheme.titleLarge,
+                              overflow: TextOverflow.ellipsis)),
                       Text(
                         CurrencyFormatter.format(instTotal),
                         style: theme.textTheme.titleSmall,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -172,29 +174,36 @@ class _CorrectionTabState extends State<CorrectionTab>
                           title: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    account.name,
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(
-                                        color: theme.colorScheme.primary),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  // Widget extrait
-                                  AccountTypeLabel(
-                                    label: account.type.displayName,
-                                    description: account.type.description,
-                                    backgroundColor: theme.colorScheme.primary
-                                        .withOpacity(0.12),
-                                    textColor: theme.colorScheme.primary,
-                                  ),
-                                ],
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        account.name,
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                            color: theme.colorScheme.primary),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Widget extrait
+                                    AccountTypeLabel(
+                                      label: account.type.displayName,
+                                      description: account.type.description,
+                                      backgroundColor: theme.colorScheme.primary
+                                          .withOpacity(0.12),
+                                      textColor: theme.colorScheme.primary,
+                                    ),
+                                  ],
+                                ),
                               ),
+                              const SizedBox(width: 8),
                               Text(
                                 CurrencyFormatter.format(account.totalValue),
                                 style: theme.textTheme.titleSmall?.copyWith(
                                     color: theme.colorScheme.primary),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
@@ -351,6 +360,7 @@ class _CorrectionTabState extends State<CorrectionTab>
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.bold,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -358,43 +368,48 @@ class _CorrectionTabState extends State<CorrectionTab>
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                      TextButton.icon(
-                        icon: const Icon(Icons.cancel_outlined),
-                        label: const Text('Annuler'),
-                        onPressed: () async {
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text(
-                                  'Annuler les modifications ?'),
-                              content: const Text(
-                                  'Toutes les modifications non sauvegardées seront perdues.'),
-                              actions: [
-                                TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(ctx).pop(false),
-                                    child: const Text('Non')),
-                                TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(ctx).pop(true),
-                                    child: const Text('Oui')),
-                              ],
-                            ),
-                          );
-                          if (confirmed == true) {
-                            _resetLocalCopy();
-                          }
-                        },
+                      Flexible(
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.cancel_outlined),
+                          label: const Text('Annuler'),
+                          onPressed: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text(
+                                    'Annuler les modifications ?'),
+                                content: const Text(
+                                    'Toutes les modifications non sauvegardées seront perdues.'),
+                                actions: [
+                                  TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(ctx).pop(false),
+                                      child: const Text('Non')),
+                                  TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(ctx).pop(true),
+                                      child: const Text('Oui')),
+                                ],
+                              ),
+                            );
+                            if (confirmed == true) {
+                              _resetLocalCopy();
+                            }
+                          },
+                        ),
                       ),
                       const SizedBox(width: 8),
-                      FilledButton.icon(
-                        icon: const Icon(Icons.save),
-                        label: const Text('Enregistrer'),
-                        onPressed: _saveChanges,
+                      Flexible(
+                        child: FilledButton.icon(
+                          icon: const Icon(Icons.save),
+                          label: const Text('Enregistrer'),
+                          onPressed: _saveChanges,
+                        ),
                       ),
                     ],
                   ),
