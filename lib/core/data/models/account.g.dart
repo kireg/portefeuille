@@ -17,6 +17,8 @@ class AccountAdapter extends TypeAdapter<Account> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Account(
+      id: (fields[4] as String?) ??
+          'account-${DateTime.now().millisecondsSinceEpoch}-${fields[0]}',
       name: fields[0] as String,
       type: fields[1] as AccountType,
       assets: (fields[2] as List).cast<Asset>(),
@@ -27,7 +29,7 @@ class AccountAdapter extends TypeAdapter<Account> {
   @override
   void write(BinaryWriter writer, Account obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -35,7 +37,9 @@ class AccountAdapter extends TypeAdapter<Account> {
       ..writeByte(2)
       ..write(obj.assets)
       ..writeByte(3)
-      ..write(obj.cashBalance);
+      ..write(obj.cashBalance)
+      ..writeByte(4)
+      ..write(obj.id);
   }
 
   @override

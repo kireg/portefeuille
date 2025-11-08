@@ -22,7 +22,11 @@ class Asset {
   @HiveField(5)
   double estimatedAnnualYield;
 
+  @HiveField(6)
+  final String id; // NOUVEAU
+
   Asset({
+    required this.id, // MIS À JOUR
     required this.name,
     required this.ticker,
     required this.quantity,
@@ -42,6 +46,7 @@ class Asset {
 
   Asset deepCopy() {
     return Asset(
+      id: id, // MIS À JOUR
       name: name,
       ticker: ticker,
       quantity: quantity,

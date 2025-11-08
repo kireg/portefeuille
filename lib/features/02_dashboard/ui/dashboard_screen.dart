@@ -1,3 +1,5 @@
+// lib/features/02_dashboard/ui/dashboard_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../00_app/providers/portfolio_provider.dart';
@@ -6,7 +8,6 @@ import '../../00_app/providers/portfolio_provider.dart';
 import '../../03_overview/ui/overview_tab.dart';
 import '../../05_planner/ui/planner_tab.dart';
 import '../../04_correction/ui/correction_tab.dart';
-
 // Ecran des paramètres
 import '../../06_settings/ui/settings_screen.dart';
 
@@ -35,26 +36,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final portfolioProvider = Provider.of<PortfolioProvider>(context);
-    final portfolio = portfolioProvider.portfolio;
+    // MODIFIÉ : Utilise activePortfolio au lieu de portfolio
+    final portfolio = portfolioProvider.activePortfolio;
 
     if (portfolio == null) {
-      // Ceci est une sécurité, normalement on n'arrive pas ici sans portefeuille
-      return const Scaffold(
+      // Sécurité : si aucun portefeuille n'est actif (ex: tous supprimés)
+      return Scaffold(
         body: Center(
-          child: Text("Aucun portefeuille n'a été chargé."),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("Aucun portefeuille n'est sélectionné."),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  // Ouvre les paramètres pour en créer/sélectionner un
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (context) => const SettingsScreen(),
+                  );
+                },
+                child: const Text('Gérer les portefeuilles'),
+              )
+            ],
+          ),
         ),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tableau de Bord'),
+        // MODIFIÉ : Affiche le nom du portefeuille actif
+        title: Text(portfolio.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () {
               showModalBottomSheet(
                 context: context,
+                isScrollControlled: true, // Permet au BottomSheet de grandir
                 builder: (context) => const SettingsScreen(),
               );
             },

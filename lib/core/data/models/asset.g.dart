@@ -17,6 +17,8 @@ class AssetAdapter extends TypeAdapter<Asset> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Asset(
+      id: (fields[6] as String?) ??
+          'asset-${DateTime.now().millisecondsSinceEpoch}-${fields[1]}',
       name: fields[0] as String,
       ticker: fields[1] as String,
       quantity: fields[2] as double,
@@ -29,7 +31,7 @@ class AssetAdapter extends TypeAdapter<Asset> {
   @override
   void write(BinaryWriter writer, Asset obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -41,7 +43,9 @@ class AssetAdapter extends TypeAdapter<Asset> {
       ..writeByte(4)
       ..write(obj.currentPrice)
       ..writeByte(5)
-      ..write(obj.estimatedAnnualYield);
+      ..write(obj.estimatedAnnualYield)
+      ..writeByte(6)
+      ..write(obj.id);
   }
 
   @override
