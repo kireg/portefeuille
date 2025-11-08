@@ -365,12 +365,14 @@ class _CorrectionTabState extends State<CorrectionTab>
                                     ),
                                     const SizedBox(width: 8),
                                     // Widget extrait
-                                    AccountTypeLabel(
-                                      label: account.type.displayName,
-                                      description: account.type.description,
-                                      backgroundColor: theme.colorScheme.primary
-                                          .withOpacity(0.12),
-                                      textColor: theme.colorScheme.primary,
+                                    Flexible(
+                                      child: AccountTypeLabel(
+                                        label: account.type.displayName,
+                                        description: account.type.description,
+                                        backgroundColor: theme.colorScheme.primary
+                                            .withOpacity(0.12),
+                                        textColor: theme.colorScheme.primary,
+                                      ),
                                     ),
                                   ],
                                 ),
