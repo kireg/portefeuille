@@ -17,8 +17,9 @@ class PortfolioAdapter extends TypeAdapter<Portfolio> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Portfolio(
-      id: fields[1] as String,
-      name: fields[2] as String,
+      id: (fields[1] as String?) ??
+          'portfolio-${DateTime.now().millisecondsSinceEpoch}',
+      name: (fields[2] as String?) ?? 'Mon Portefeuille',
       institutions: (fields[0] as List).cast<Institution>(),
     );
   }

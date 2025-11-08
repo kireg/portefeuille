@@ -17,7 +17,8 @@ class InstitutionAdapter extends TypeAdapter<Institution> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Institution(
-      id: fields[2] as String,
+      id: (fields[2] as String?) ??
+          'institution-${DateTime.now().millisecondsSinceEpoch}-${fields[0]}',
       name: fields[0] as String,
       accounts: (fields[1] as List).cast<Account>(),
     );
