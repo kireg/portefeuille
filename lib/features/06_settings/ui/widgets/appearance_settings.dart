@@ -31,8 +31,10 @@ class AppearanceSettings extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          child: Wrap(
+            alignment: WrapAlignment.spaceEvenly,
+            spacing: 8.0,
+            runSpacing: 8.0,
             children: _colorOptions.map((color) {
               return _buildColorChip(
                   context, color, settingsProvider.appColor == color);
