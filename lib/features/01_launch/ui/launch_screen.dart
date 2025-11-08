@@ -1,3 +1,5 @@
+// lib/features/01_launch/ui/launch_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../00_app/providers/portfolio_provider.dart';
@@ -8,7 +10,8 @@ class LaunchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final portfolioProvider = Provider.of<PortfolioProvider>(context, listen: false);
+    final portfolioProvider =
+    Provider.of<PortfolioProvider>(context, listen: false);
 
     return Scaffold(
       body: Center(
@@ -22,12 +25,16 @@ class LaunchScreen extends StatelessWidget {
             const SizedBox(height: 40),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),
               onPressed: () {
-                portfolioProvider.createDemoPortfolio();
+                // MODIFIÉ : Appel de la nouvelle méthode
+                portfolioProvider.addDemoPortfolio();
+
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const DashboardScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const DashboardScreen()),
                 );
               },
               child: const Text('Découvrir la version démo'),
@@ -35,13 +42,17 @@ class LaunchScreen extends StatelessWidget {
             const SizedBox(height: 20),
             OutlinedButton(
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),
               onPressed: () {
-                // Create an empty portfolio and navigate to the dashboard
-                portfolioProvider.createEmptyPortfolio();
+                // MODIFIÉ : Appel de la nouvelle méthode
+                // (Pour l'instant, nom par défaut. On pourra ajouter un dialogue plus tard)
+                portfolioProvider.addNewPortfolio("Mon Portefeuille");
+
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const DashboardScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const DashboardScreen()),
                 );
               },
               child: const Text('Commencer avec un portefeuille vide'),

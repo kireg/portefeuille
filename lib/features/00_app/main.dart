@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart'; // Importer kDebugMode
+// lib/features/00_app/main.dart
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
@@ -16,20 +18,16 @@ import 'package:portefeuille/core/utils/constants.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
-// MODIFICATION: Importer le nouveau SplashScreen
 import 'package:portefeuille/core/ui/splash_screen.dart';
-// Ces imports ne sont plus nécessaires ici, mais dans le SplashScreen
-// import 'package:portefeuille/features/02_dashboard/ui/dashboard_screen.dart';
-// import 'package:portefeuille/features/01_launch/ui/launch_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 1. Initialiser Hive
   await Hive.initFlutter();
-
   if (kDebugMode) {
-    await Hive.deleteFromDisk();
+    // Note : On ne supprime plus de la sauvegarde pour tester la persistance
+    // await Hive.deleteFromDisk();
   }
 
   // 2. Enregistrer les Adapters
@@ -39,10 +37,10 @@ void main() async {
   Hive.registerAdapter(AssetAdapter());
   Hive.registerAdapter(AccountTypeAdapter());
 
-  // 3. Ouvrir la boîte de stockage principale
+  // 3. Ouvrir la boîte
   await Hive.openBox<Portfolio>(AppConstants.kPortfolioBoxName);
 
-  // 4. Instancier le Repository (MAINTENANT que la box est ouverte)
+  // 4. Instancier le Repository
   final portfolioRepository = PortfolioRepository();
 
   runApp(MyApp(repository: portfolioRepository));
@@ -57,22 +55,23 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // On injecte le repository instancié dans le Provider
         ChangeNotifierProvider(
           create: (_) => PortfolioProvider(repository: repository),
         ),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],
-      // MODIFICATION: Le Consumer est retiré d'ici.
-      // Le MaterialApp est l'enfant direct du MultiProvider
-      // afin que le SplashScreen puisse accéder aux providers.
-      child: MaterialApp(
-        title: 'Portefeuille',
-        theme: AppTheme.darkTheme,
-        debugShowCheckedModeBanner: false,
-        // MODIFICATION: Le SplashScreen est maintenant l'écran d'accueil.
-        // Il contient la logique pour naviguer vers LaunchScreen ou DashboardScreen.
-        home: const SplashScreen(),
+      // MODIFIÉ : Le MaterialApp est maintenant dans un Consumer
+      // pour lire le SettingsProvider
+      child: Consumer<SettingsProvider>(
+        builder: (context, settingsProvider, child) {
+          return MaterialApp(
+            title: 'Portefeuille',
+            // MODIFIÉ : Utilise la méthode getTheme avec la couleur du provider
+            theme: AppTheme.getTheme(settingsProvider.appColor),
+            debugShowCheckedModeBanner: false,
+            home: const SplashScreen(),
+          );
+        },
       ),
     );
   }

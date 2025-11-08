@@ -5,15 +5,15 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'dart:math' as math;
-
-// Imports du projet
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+// NOUVEL IMPORT
+import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/01_launch/ui/launch_screen.dart';
 import 'package:portefeuille/features/02_dashboard/ui/dashboard_screen.dart';
 
+// ... (State et initState/dispose/navigateToNextScreen inchangés [source 72-85]) ...
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -22,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _fadeController;
-  late AnimationController _backgroundAnimationController; // Renommé pour plus de clarté
+  late AnimationController _backgroundAnimationController;
   late Animation<double> _pulseAnimation;
   late Animation<double> _fadeAnimation;
 
@@ -30,47 +30,39 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Animation de pulsation pour les cercles
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     )..repeat(reverse: true);
-
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-
-    // Animation pour le fond (lignes)
     _backgroundAnimationController = AnimationController(
-      duration: const Duration(seconds: 15), // Durée ajustée pour l'animation des lignes
+      duration: const Duration(seconds: 15),
       vsync: this,
     )..repeat();
-
-    // Animation de fade-in pour l'ensemble
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
     );
 
     _fadeController.forward();
-
     _navigateToNextScreen();
   }
 
   Future<void> _navigateToNextScreen() async {
-    // Durée du splash
     await Future.delayed(const Duration(milliseconds: 3500));
 
-    // Logique de navigation
     if (mounted) {
       final portfolioProvider =
       Provider.of<PortfolioProvider>(context, listen: false);
 
-      final Widget nextScreen = portfolioProvider.portfolio != null
+      final bool hasPortfolios = portfolioProvider.portfolios.isNotEmpty;
+
+      final Widget nextScreen = hasPortfolios
           ? const DashboardScreen()
           : const LaunchScreen();
 
@@ -84,20 +76,23 @@ class _SplashScreenState extends State<SplashScreen>
   void dispose() {
     _pulseController.dispose();
     _fadeController.dispose();
-    _backgroundAnimationController.dispose(); // Dispose du nouveau contrôleur
+    _backgroundAnimationController.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    final Color kColor = const Color(0xFF00bcd4); // primary
+    // MODIFIÉ : Récupère la couleur depuis le provider
+    final Color kColor = Provider.of<SettingsProvider>(context).appColor;
+
+    // Ces couleurs sont statiques et correspondent au fond de l'application
     final List<Color> gradientColors = [
       const Color(0xFF1a2943), // scaffoldBackgroundColor
       const Color(0xFF294166), // surface
     ];
-
     return Scaffold(
       body: Container(
         width: size.width,
@@ -111,16 +106,14 @@ class _SplashScreenState extends State<SplashScreen>
         ),
         child: Stack(
           children: [
-            // Fond animé avec lignes rotatives (NOUVEAU PAINTER)
             _buildAnimatedBackground(),
-
-            // Contenu principal
             Center(
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // MODIFIÉ : Passe la couleur dynamique au logo
                     _buildAnimatedLogo(kColor),
                     const SizedBox(height: 48),
                     _buildShimmeredTitle(),
@@ -139,12 +132,12 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildAnimatedBackground() {
+    // ... (inchangé [source 92-93]) ...
     return AnimatedBuilder(
       animation: _backgroundAnimationController,
       builder: (context, child) {
         return CustomPaint(
           size: Size.infinite,
-          // UTILISE LE NOUVEAU PAINTER
           painter: BackgroundLinesPainter(
             animationValue: _backgroundAnimationController.value,
           ),
@@ -153,6 +146,7 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
+  // MODIFIÉ : Accepte kColor en paramètre
   Widget _buildAnimatedLogo(Color kColor) {
     return AnimatedBuilder(
       animation: _pulseAnimation,
@@ -160,7 +154,7 @@ class _SplashScreenState extends State<SplashScreen>
         return Stack(
           alignment: Alignment.center,
           children: [
-            // Cercle extérieur pulsant
+            // ... (Cercles extérieurs inchangés [source 94-98]) ...
             Container(
               width: 180 * _pulseAnimation.value,
               height: 180 * _pulseAnimation.value,
@@ -172,7 +166,6 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
-            // Cercle moyen
             Container(
               width: 140,
               height: 140,
@@ -207,7 +200,7 @@ class _SplashScreenState extends State<SplashScreen>
                   style: TextStyle(
                     fontSize: 56,
                     fontWeight: FontWeight.bold,
-                    color: kColor,
+                    color: kColor, // MODIFIÉ : Utilise la couleur passée
                     letterSpacing: -2,
                   ),
                 ),
@@ -220,12 +213,13 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildShimmeredTitle() {
+    // ... (inchangé [source 105]) ...
     return Shimmer.fromColors(
       baseColor: Colors.white,
       highlightColor: Colors.white.withOpacity(0.6),
       period: const Duration(milliseconds: 1500),
       child: const Text(
-        'PORTEFEUILLE',
+        'Portefeuille',
         style: TextStyle(
           fontSize: 40,
           fontWeight: FontWeight.bold,
@@ -237,6 +231,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildAnimatedSlogan() {
+    // ... (inchangé [source 106-108]) ...
     return SizedBox(
       height: 40,
       child: DefaultTextStyle(
@@ -261,6 +256,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildLoadingIndicator() {
+    // ... (inchangé [source 109-112]) ...
     return Column(
       children: [
         SizedBox(
@@ -287,55 +283,39 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-/// NOUVEAU Painter pour créer un effet de lignes en arrière-plan
 class BackgroundLinesPainter extends CustomPainter {
+  // ... (Code du Painter inchangé [source 112-127]) ...
   final double animationValue;
-
   BackgroundLinesPainter({required this.animationValue});
 
   @override
   void paint(Canvas canvas, Size size) {
     final linePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round; // Pour des lignes plus douces
+      ..strokeCap = StrokeCap.round;
 
-    // Nombre de lignes à dessiner
     final int numberOfLines = 8;
-    // Angle de départ des lignes
-    final double startAngle = -math.pi / 4; // Environ -45 degrés
 
     for (int i = 0; i < numberOfLines; i++) {
-      // Calculer l'opacité et la largeur de la ligne en fonction de l'index
-      final double opacity = 0.05 + (i * 0.02); // Les lignes deviennent légèrement plus visibles
-      final double strokeWidth = 1.0 + (i * 0.5); // Les lignes deviennent plus épaisses
+      final double opacity = 0.05 + (i * 0.02);
+      final double strokeWidth = 1.0 + (i * 0.5);
       linePaint.color = Colors.white.withOpacity(opacity);
       linePaint.strokeWidth = strokeWidth;
-
-      // Calculer la position de la ligne
-      // Utilisation de animationValue pour faire bouger les lignes
       final double offset = (animationValue * (size.width + size.height)) %
           (size.width + size.height);
-
-      // Espacement entre les lignes
-      final double lineSpacing = (size.width + size.height) / (numberOfLines + 2);
-
-      // Calculer les points de départ et d'arrivée
-      // Les lignes vont de haut-gauche à bas-droite
+      final double lineSpacing =
+          (size.width + size.height) / (numberOfLines + 2);
       final double linePosition = offset + (i * lineSpacing);
-
-      // Les lignes traversent tout l'écran en diagonale
       final Offset p1 = Offset(linePosition - size.height, 0);
       final Offset p2 = Offset(linePosition, size.height);
 
       canvas.drawLine(p1, p2, linePaint);
     }
 
-    // Ajouter quelques fines lignes verticales/horizontales pour un peu plus de détail
     final fineLinePaint = Paint()
       ..style = PaintingStyle.stroke
       ..color = Colors.white.withOpacity(0.015)
       ..strokeWidth = 0.5;
-
     for (int i = 0; i < 20; i++) {
       final double x = (animationValue * 50 + i * 80) % size.width;
       final double y = (animationValue * 70 + i * 60) % size.height;

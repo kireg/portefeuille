@@ -17,6 +17,7 @@ class InstitutionAdapter extends TypeAdapter<Institution> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Institution(
+      id: fields[2] as String,
       name: fields[0] as String,
       accounts: (fields[1] as List).cast<Account>(),
     );
@@ -25,11 +26,13 @@ class InstitutionAdapter extends TypeAdapter<Institution> {
   @override
   void write(BinaryWriter writer, Institution obj) {
     writer
-      ..writeByte(2)
+      ..writeByte(3)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
-      ..write(obj.accounts);
+      ..write(obj.accounts)
+      ..writeByte(2)
+      ..write(obj.id);
   }
 
   @override

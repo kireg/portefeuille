@@ -18,7 +18,11 @@ class Account {
   @HiveField(3)
   double cashBalance;
 
+  @HiveField(4)
+  final String id; // NOUVEAU
+
   Account({
+    required this.id, // MIS À JOUR
     required this.name,
     required this.type,
     this.assets = const [],
@@ -26,7 +30,8 @@ class Account {
   });
 
   double get totalValue {
-    final assetsValue = assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
+    final assetsValue =
+    assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
     return assetsValue + cashBalance;
   }
 
@@ -35,16 +40,21 @@ class Account {
   }
 
   double get estimatedAnnualYield {
-    final assetsValue = assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
+    final assetsValue =
+    assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
     if (assetsValue == 0) {
       return 0.0;
     }
-    final weightedYield = assets.fold(0.0, (sum, asset) => sum + (asset.totalValue * asset.estimatedAnnualYield));
+    final weightedYield = assets.fold(
+        0.0,
+            (sum, asset) =>
+        sum + (asset.totalValue * asset.estimatedAnnualYield));
     return weightedYield / assetsValue;
   }
 
   Account deepCopy() {
     return Account(
+      id: id, // MIS À JOUR
       name: name,
       type: type,
       cashBalance: cashBalance,
