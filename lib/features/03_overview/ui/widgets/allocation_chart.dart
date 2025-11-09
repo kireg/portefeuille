@@ -18,7 +18,8 @@ class _AllocationChartState extends State<AllocationChart> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bool hasData = widget.portfolio.institutions.isNotEmpty && widget.portfolio.totalValue > 0;
+    final bool hasData = widget.portfolio.institutions.isNotEmpty &&
+        widget.portfolio.totalValue > 0;
 
     return Card(
       child: Padding(
@@ -35,35 +36,37 @@ class _AllocationChartState extends State<AllocationChart> {
               height: 180,
               child: hasData
                   ? PieChart(
-                      PieChartData(
-                        pieTouchData: PieTouchData(
-                          touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                            setState(() {
-                              if (!event.isInterestedForInteractions ||
-                                  pieTouchResponse == null ||
-                                  pieTouchResponse.touchedSection == null) {
-                                touchedIndex = -1;
-                                return;
-                              }
-                              touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                            });
-                          },
-                        ),
-                        sections: _generateSections(
-                          context,
-                          widget.portfolio.institutions,
-                          widget.portfolio.totalValue,
-                        ),
-                        centerSpaceRadius: 40,
-                        sectionsSpace: 2,
-                      ),
-                    )
+                PieChartData(
+                  pieTouchData: PieTouchData(
+                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                      setState(() {
+                        if (!event.isInterestedForInteractions ||
+                            pieTouchResponse == null ||
+                            pieTouchResponse.touchedSection == null) {
+                          touchedIndex = -1;
+                          return;
+                        }
+                        touchedIndex = pieTouchResponse.touchedSection!
+                            .touchedSectionIndex;
+                      });
+                    },
+                  ),
+                  sections: _generateSections(
+                    context,
+                    widget.portfolio.institutions,
+                    widget.portfolio.totalValue,
+                  ),
+                  centerSpaceRadius: 40,
+                  sectionsSpace: 2,
+                ),
+              )
                   : Center(
-                      child: Text(
-                        'Aucune donnée d\'allocation disponible.',
-                        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                      ),
-                    ),
+                child: Text(
+                  'Aucune donnée d\'allocation disponible.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey),
+                ),
+              ),
             ),
           ],
         ),
@@ -71,15 +74,18 @@ class _AllocationChartState extends State<AllocationChart> {
     );
   }
 
-  List<PieChartSectionData> _generateSections(
-      BuildContext context, List<Institution> institutions, double totalValue) {
-    final theme = Theme.of(context);
-    final colors = [
-      theme.colorScheme.primary,
-      theme.colorScheme.secondary,
+  List<PieChartSectionData> _generateSections(BuildContext context,
+      List<Institution> institutions, double totalValue) {
+    // MODIFIÉ : Définition d'une palette de couleurs statique et distincte
+    // pour le graphique, afin d'éviter les collisions avec le thème.
+    final List<Color> colors = [
+      Colors.blue.shade400,
+      Colors.green.shade400,
       Colors.orange.shade400,
+      Colors.purple.shade400,
       Colors.teal.shade400,
       Colors.red.shade400,
+      Colors.amber.shade600,
     ];
 
     // Return an empty list if there is no value, to prevent division by zero
@@ -94,11 +100,13 @@ class _AllocationChartState extends State<AllocationChart> {
 
       // Avoid creating a section with no value
       if (institution.totalValue <= 0) {
-        return PieChartSectionData(value: 0); // Return a dummy, invisible section
+        return PieChartSectionData(
+            value: 0); // Return a dummy, invisible section
       }
 
       return PieChartSectionData(
         color: colors[i % colors.length],
+        // MODIFIÉ : Utilise la liste statique
         value: percentage,
         title: isTouched
             ? institution.name
@@ -111,6 +119,8 @@ class _AllocationChartState extends State<AllocationChart> {
           shadows: const [Shadow(color: Colors.black, blurRadius: 2)],
         ),
       );
-    }).where((section) => section.value > 0).toList(); // Filter out dummy sections
+    })
+        .where((section) => section.value > 0)
+        .toList(); // Filter out dummy sections
   }
 }
