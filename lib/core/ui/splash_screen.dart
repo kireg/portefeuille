@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
-import 'dart:math' as math;
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 // NOUVEL IMPORT
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
