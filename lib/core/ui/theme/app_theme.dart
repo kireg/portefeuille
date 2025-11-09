@@ -3,53 +3,78 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // MODIFIÉ : darkTheme n'est plus un `static final`
-  // C'est maintenant une méthode qui génère un thème.
+  // MODIFIÉ : La méthode getTheme utilise maintenant la couleur primaire
+  // pour teinter les fonds (surface et scaffold).
   static ThemeData getTheme(Color primaryColor) {
+    // MODIFIÉ : Réglages d'assombrissement (valeurs plus basses = plus clair)
+
+    // Crée une couleur de surface (pour les cartes, appbar, etc.)
+    // 75% noir (au lieu de 85%)
+    final Color surfaceColor = Color.lerp(
+      primaryColor,
+      Colors.black,
+      0.75, // Moins sombre
+    )!;
+
+    // Crée une couleur de fond (scaffold)
+    // 85% noir (au lieu de 92%)
+    final Color scaffoldColor = Color.lerp(
+      primaryColor,
+      Colors.black,
+      0.85, // Moins sombre
+    )!;
+
+    // Crée une couleur de fond pour les inputs (légèrement plus sombre que le fond)
+    final Color inputFillColor = Color.lerp(
+      primaryColor,
+      Colors.black,
+      0.90, // Un peu plus sombre pour le contraste
+    )!;
+
     return ThemeData(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF1a2943),
+      scaffoldBackgroundColor: scaffoldColor, // MODIFIÉ
 
       colorScheme: ColorScheme.dark(
-        primary: primaryColor, // MODIFIÉ
-        secondary: const Color(0xFFab47bc), // Reste inchangé (ou peut aussi être dynamique)
-        surface: const Color(0xFF294166),
+        primary: primaryColor,
+        secondary: const Color(0xFFab47bc),
+        surface: surfaceColor, // MODIFIÉ
         onSurface: const Color(0xFFe0e0e0),
         error: Colors.redAccent,
         onError: Colors.white,
       ),
 
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF294166),
+      appBarTheme: AppBarTheme(
+        backgroundColor: surfaceColor, // MODIFIÉ
         elevation: 0,
-        titleTextStyle: TextStyle(
+        titleTextStyle: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Color(0xFFe0e0e0)),
       ),
 
       cardTheme: CardThemeData(
-        color: const Color(0xFF294166),
+        color: surfaceColor, // MODIFIÉ
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
 
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: const Color(0xFF294166),
-        selectedItemColor: primaryColor, // MODIFIÉ
+        backgroundColor: surfaceColor, // MODIFIÉ
+        selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey,
       ),
 
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return primaryColor; // MODIFIÉ
+            return primaryColor;
           }
           return Colors.grey;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return primaryColor.withAlpha(128); // MODIFIÉ
+            return primaryColor.withAlpha(128);
           }
           return Colors.grey.withAlpha(128);
         }),
@@ -57,7 +82,7 @@ class AppTheme {
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1a2943).withAlpha(204),
+        fillColor: inputFillColor.withAlpha(204), // MODIFIÉ
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide.none,
@@ -67,7 +92,7 @@ class AppTheme {
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor, // MODIFIÉ
+          backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
@@ -75,8 +100,8 @@ class AppTheme {
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primaryColor, // MODIFIÉ
-          side: BorderSide(color: primaryColor), // MODIFIÉ
+          foregroundColor: primaryColor,
+          side: BorderSide(color: primaryColor),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
