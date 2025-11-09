@@ -95,10 +95,14 @@ class _PlannerTabState extends State<PlannerTab> {
   }
 
   // NOUVEAU : Logique de génération des données pour le graphique
+  // NOUVEAU : Logique de génération des données pour le graphique
   List<ProjectionData> _generateProjectionData(Portfolio portfolio) {
     List<ProjectionData> data = [];
     final double initialPortfolioValue = portfolio.totalValue;
-    final double portfolioAnnualYield = portfolio.estimatedAnnualYield / 100.0;
+
+    // --- CORRECTION ICI (ne plus diviser par 100) ---
+    final double portfolioAnnualYield = portfolio.estimatedAnnualYield;
+    // --- FIN CORRECTION ---
 
     // Calculer le total des versements mensuels et le rendement pondéré des plans
     double totalMonthlyInvestment = 0;
@@ -106,22 +110,23 @@ class _PlannerTabState extends State<PlannerTab> {
 
     for (var plan in portfolio.savingsPlans.where((p) => p.isActive)) {
       final targetAsset = _findAssetByTicker(portfolio, plan.targetTicker);
-      final assetYield = (targetAsset?.estimatedAnnualYield ?? 0.0) / 100.0;
+
+      // --- CORRECTION ICI (ne plus diviser par 100) ---
+      final assetYield = (targetAsset?.estimatedAnnualYield ?? 0.0);
+      // --- FIN CORRECTION ---
 
       totalMonthlyInvestment += plan.monthlyAmount;
       weightedPlansYield += plan.monthlyAmount * assetYield;
     }
-
+// ... (le reste de la méthode est inchangé)
     final double averagePlansYield = (totalMonthlyInvestment > 0)
         ? weightedPlansYield / totalMonthlyInvestment
         : 0.0;
-
     // Simuler année par année
     for (int year = 1; year <= _selectedDuration; year++) {
       // 1. Valeur future du portefeuille initial (intérêts composés)
       final double futureBaseValue =
           initialPortfolioValue * pow(1 + portfolioAnnualYield, year);
-
       // 2. Valeur future des plans d'épargne (formule d'annuité)
       final double futureSavingsValue = SavingsPlan(
         id: '',
@@ -129,10 +134,8 @@ class _PlannerTabState extends State<PlannerTab> {
         monthlyAmount: totalMonthlyInvestment,
         targetTicker: '',
       ).futureValue(year, averagePlansYield);
-
       final double totalCapitalInvested = totalMonthlyInvestment * 12 * year;
       final double totalValue = futureBaseValue + futureSavingsValue;
-
       data.add(ProjectionData(
         year: year,
         baseValue: futureBaseValue,

@@ -232,7 +232,7 @@ class _SyntheseViewState extends State<SyntheseView> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    '${asset.estimatedAnnualYield.toStringAsFixed(2)} %',
+                                    '${(asset.estimatedAnnualYield * 100).toStringAsFixed(2)} %',
                                     style: const TextStyle(color: Colors.blue),
                                   ),
                                   const SizedBox(width: 4),
@@ -258,8 +258,8 @@ class _SyntheseViewState extends State<SyntheseView> {
   /// Affiche le dialogue pour éditer le rendement annuel estimé
   void _showEditYieldDialog(
       BuildContext context, AggregatedAsset asset, PortfolioProvider provider) {
-    final controller =
-    TextEditingController(text: asset.estimatedAnnualYield.toStringAsFixed(2));
+    final controller = TextEditingController(
+        text: (asset.estimatedAnnualYield * 100).toStringAsFixed(2));
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -281,9 +281,11 @@ class _SyntheseViewState extends State<SyntheseView> {
           ),
           TextButton(
             onPressed: () {
-              final newYield = double.tryParse(controller.text) ??
-                  asset.estimatedAnnualYield;
-              provider.updateAssetYield(asset.ticker, newYield);
+              final enteredValue =
+                  double.tryParse(controller.text.replaceAll(',', '.')) ??
+                      (asset.estimatedAnnualYield * 100);
+              final newYieldAsDecimal = enteredValue / 100.0;
+              provider.updateAssetYield(asset.ticker, newYieldAsDecimal);
               Navigator.of(ctx).pop();
             },
             child: const Text('Sauvegarder'),
