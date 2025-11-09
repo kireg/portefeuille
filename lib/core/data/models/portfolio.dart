@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
+import 'package:portefeuille/core/data/models/savings_plan.dart';
 // N'oubliez pas l'import pour Uuid si vous l'utilisez ici,
 // mais il est préférable de le générer à l'extérieur.
 
@@ -16,11 +17,16 @@ class Portfolio {
   @HiveField(2)
   String name; // NOUVEAU
 
+  @HiveField(3)
+  List<SavingsPlan> savingsPlans; // Plans d'épargne mensuels
+
   Portfolio({
     required this.id,
     required this.name,
     List<Institution>? institutions,
-  }) : institutions = institutions ?? [];
+    List<SavingsPlan>? savingsPlans,
+  }) : institutions = institutions ?? [],
+       savingsPlans = savingsPlans ?? [];
 
   double get totalValue {
     return institutions.fold(0.0, (sum, inst) => sum + inst.totalValue);
@@ -63,6 +69,7 @@ class Portfolio {
       id: id, // MIS À JOUR
       name: name, // MIS À JOUR
       institutions: institutions.map((inst) => inst.deepCopy()).toList(),
+      savingsPlans: savingsPlans.map((plan) => plan.deepCopy()).toList(),
     );
   }
 }

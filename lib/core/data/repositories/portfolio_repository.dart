@@ -4,6 +4,7 @@ import 'package:portefeuille/core/data/models/account_type.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
+import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/core/utils/constants.dart';
 import 'package:uuid/uuid.dart'; // NOUVEL IMPORT
 
@@ -161,6 +162,18 @@ class PortfolioRepository {
               ],
             ),
           ],
+        ),
+      ],
+      savingsPlans: [
+        // Plan d'épargne mensuel de démonstration
+        SavingsPlan(
+          id: _uuid.v4(),
+          name: 'Achat mensuel d\'ETF World',
+          monthlyAmount: 150.0,
+          targetTicker: 'CW8',
+          targetAssetName: 'Amundi MSCI World',
+          estimatedAnnualReturn: 0.07, // 7% de rendement annuel estimé
+          isActive: true,
         ),
       ],
     );

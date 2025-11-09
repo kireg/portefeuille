@@ -17,22 +17,25 @@ class PortfolioAdapter extends TypeAdapter<Portfolio> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Portfolio(
-      id: (fields[1] as String?) ?? 'portfolio-${DateTime.now().millisecondsSinceEpoch}',
-      name: (fields[2] as String?) ?? 'Portfolio',
+      id: fields[1] as String,
+      name: fields[2] as String,
       institutions: (fields[0] as List?)?.cast<Institution>(),
+      savingsPlans: (fields[3] as List?)?.cast<SavingsPlan>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Portfolio obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.institutions)
       ..writeByte(1)
       ..write(obj.id)
       ..writeByte(2)
-      ..write(obj.name);
+      ..write(obj.name)
+      ..writeByte(3)
+      ..write(obj.savingsPlans);
   }
 
   @override

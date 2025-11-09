@@ -10,6 +10,7 @@ import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/account_type.dart';
+import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
 import 'package:portefeuille/core/utils/constants.dart';
@@ -25,8 +26,8 @@ void main() async {
   // 1. Initialiser Hive
   await Hive.initFlutter();
   if (kDebugMode) {
-    // Note : On ne supprime plus de la sauvegarde pour tester la persistance
-    // await Hive.deleteFromDisk();
+    // TEMPORAIRE : Suppression pour tester le nouveau modèle avec données démo
+    await Hive.deleteFromDisk();
   }
 
   // 2. Enregistrer les Adapters
@@ -35,6 +36,7 @@ void main() async {
   Hive.registerAdapter(AccountAdapter());
   Hive.registerAdapter(AssetAdapter());
   Hive.registerAdapter(AccountTypeAdapter());
+  Hive.registerAdapter(SavingsPlanAdapter()); // Adapter pour les plans d'épargne
 
   // 3. Ouvrir les boîtes
   await Hive.openBox<Portfolio>(AppConstants.kPortfolioBoxName);
