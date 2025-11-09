@@ -1,8 +1,9 @@
 // lib/features/00_app/providers/settings_provider.dart
 
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart'; // NOUVEL IMPORT
-import 'package:portefeuille/core/utils/constants.dart'; // NOUVEL IMPORT
+import 'package:hive/hive.dart';
+import 'package:portefeuille/core/utils/constants.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // NOUVEL IMPORT
 
 enum UserLevel { novice, expert }
 
@@ -11,6 +12,8 @@ class SettingsProvider extends ChangeNotifier {
   static const String _kIsOnlineMode = 'isOnlineMode';
   static const String _kUserLevel = 'userLevel';
   static const String _kAppColor = 'appColor';
+  // NOUVELLE CLÉ SÉCURISÉE
+  static const String _kFmpApiKey = 'fmpApiKey';
 
   // Valeurs par défaut
   static const bool _defaultOnlineMode = false;
@@ -18,56 +21,63 @@ class SettingsProvider extends ChangeNotifier {
   static const int _defaultAppColorValue = 0xFF00bcd4; // Cyan par défaut
 
   late final Box _settingsBox;
+  // NOUVEAU : Service de stockage sécurisé
+  late final FlutterSecureStorage _secureStorage;
 
   // Variables d'état local
   bool _isOnlineMode = _defaultOnlineMode;
   UserLevel _userLevel = UserLevel.values[_defaultUserLevelIndex];
   Color _appColor = const Color(_defaultAppColorValue);
+  String? _fmpApiKey; // NOUVEAU : Clé API en mémoire
 
   // Getters publics
   bool get isOnlineMode => _isOnlineMode;
   UserLevel get userLevel => _userLevel;
   Color get appColor => _appColor;
+  String? get fmpApiKey => _fmpApiKey; // NOUVEAU
+  bool get hasFmpApiKey => _fmpApiKey != null && _fmpApiKey!.isNotEmpty; // NOUVEAU
 
   SettingsProvider() {
     // 1. Initialiser la boîte
     _settingsBox = Hive.box(AppConstants.kSettingsBoxName);
-    // 2. Charger les paramètres persistés
+    // NOUVEAU : Initialiser le stockage sécurisé
+    _secureStorage = const FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
+    // 2. Charger les paramètres
     _loadSettings();
   }
 
-  /// Charge les paramètres depuis la Hive Box.
-  void _loadSettings() {
+  /// Charge les paramètres depuis Hive ET le stockage sécurisé.
+  void _loadSettings() async {
     // Charger le mode en ligne
     _isOnlineMode = _settingsBox.get(
       _kIsOnlineMode,
       defaultValue: _defaultOnlineMode,
     );
-
-    // Charger le niveau utilisateur (stocké comme un index 'int')
+    // Charger le niveau utilisateur
     final userLevelIndex = _settingsBox.get(
       _kUserLevel,
       defaultValue: _defaultUserLevelIndex,
     );
-
-    // --- CORRECTION ---
-    // 'elementAtOrElse' n'existe pas. On vérifie les limites de l'index.
     final allLevels = UserLevel.values;
     if (userLevelIndex >= 0 && userLevelIndex < allLevels.length) {
       _userLevel = allLevels[userLevelIndex];
     } else {
       _userLevel = allLevels[_defaultUserLevelIndex];
     }
-    // --- FIN CORRECTION ---
-
-    // Charger la couleur (stockée comme une valeur 'int')
+    // Charger la couleur
     final appColorValue = _settingsBox.get(
       _kAppColor,
       defaultValue: _defaultAppColorValue,
     );
     _appColor = Color(appColorValue);
 
-    // Pas de notifyListeners() nécessaire lors de l'initialisation.
+    // NOUVEAU : Charger la clé depuis le stockage sécurisé
+    _fmpApiKey = await _secureStorage.read(key: _kFmpApiKey);
+
+    // Note : On notifie les listeners APRES le chargement asynchrone de la clé
+    notifyListeners();
   }
 
   void toggleOnlineMode(bool value) {
@@ -85,6 +95,20 @@ class SettingsProvider extends ChangeNotifier {
   void setAppColor(Color color) {
     _appColor = color;
     _settingsBox.put(_kAppColor, color.value); // SAUVEGARDE
+    notifyListeners();
+  }
+
+  // --- NOUVELLES MÉTHODES ---
+
+  /// Sauvegarde la clé API FMP de manière sécurisée.
+  Future<void> setFmpApiKey(String? key) async {
+    if (key == null || key.trim().isEmpty) {
+      _fmpApiKey = null;
+      await _secureStorage.delete(key: _kFmpApiKey);
+    } else {
+      _fmpApiKey = key;
+      await _secureStorage.write(key: _kFmpApiKey, value: key);
+    }
     notifyListeners();
   }
 }

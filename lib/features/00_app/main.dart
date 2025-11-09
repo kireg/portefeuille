@@ -14,6 +14,9 @@ import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
 import 'package:portefeuille/core/utils/constants.dart';
+// --- NOUVEL IMPORT ---
+import 'package:portefeuille/core/data/services/api_service.dart';
+// --- FIN NOUVEL IMPORT ---
 // Features
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
@@ -30,21 +33,20 @@ void main() async {
     await Hive.deleteFromDisk();
   }
 
-  // 2. Enregistrer les Adapters
+  // 2. Enregistrer les Adapters (INCLUANT CELUI DE VOTRE NOUVELLE VERSION)
   Hive.registerAdapter(PortfolioAdapter());
   Hive.registerAdapter(InstitutionAdapter());
   Hive.registerAdapter(AccountAdapter());
   Hive.registerAdapter(AssetAdapter());
   Hive.registerAdapter(AccountTypeAdapter());
-  Hive.registerAdapter(SavingsPlanAdapter()); // Adapter pour les plans d'épargne
+  Hive.registerAdapter(SavingsPlanAdapter()); // CONSERVÉ [cite: 182]
 
   // 3. Ouvrir les boîtes
   await Hive.openBox<Portfolio>(AppConstants.kPortfolioBoxName);
-  await Hive.openBox(AppConstants.kSettingsBoxName); // MODIFIÉ : Ajout de la boîte des settings
+  await Hive.openBox(AppConstants.kSettingsBoxName);
 
   // 4. Instancier le Repository
   final portfolioRepository = PortfolioRepository();
-
   runApp(MyApp(repository: portfolioRepository));
 }
 
@@ -55,20 +57,44 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // --- MODIFICATION MAJEURE (MultiProvider) ---
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => PortfolioProvider(repository: repository),
-        ),
+        // 1. SettingsProvider (indépendant)
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+
+        // 2. ApiService (dépend de SettingsProvider)
+        Provider<ApiService>(
+          create: (context) => ApiService(
+            settingsProvider: context.read<SettingsProvider>(),
+          ),
+        ),
+
+        // 3. PortfolioProvider (dépend de ApiService et SettingsProvider)
+        ChangeNotifierProxyProvider<SettingsProvider, PortfolioProvider>(
+          // 'create' est appelé 1 fois
+          create: (context) => PortfolioProvider(
+            repository: repository,
+            apiService: context.read<ApiService>(),
+          ),
+          // 'update' est appelé à chaque fois que SettingsProvider notifie
+          update: (context, settingsProvider, portfolioProvider) {
+            if (portfolioProvider == null) {
+              return PortfolioProvider(
+                  repository: repository,
+                  apiService: context.read<ApiService>());
+            }
+            // On notifie le PortfolioProvider des changements de settings
+            portfolioProvider.updateSettings(settingsProvider);
+            return portfolioProvider;
+          },
+        ),
       ],
-      // MODIFIÉ : Le MaterialApp est maintenant dans un Consumer
-      // pour lire le SettingsProvider
+      // Le Consumer<SettingsProvider> pour le Thème est inchangé
       child: Consumer<SettingsProvider>(
         builder: (context, settingsProvider, child) {
           return MaterialApp(
             title: 'Portefeuille',
-            // MODIFIÉ : Utilise la méthode getTheme avec la couleur du provider
             theme: AppTheme.getTheme(settingsProvider.appColor),
             debugShowCheckedModeBanner: false,
             home: const SplashScreen(),
@@ -76,5 +102,6 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
+    // --- FIN MODIFICATION ---
   }
 }

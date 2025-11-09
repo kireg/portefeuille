@@ -26,6 +26,11 @@ dependencies:
   shimmer: ^3.0.0
   animated_text_kit: ^4.2.2
 
+ # --- NOUVELLES DÉPENDANCES AJOUTÉES ---
+  http: ^1.2.1
+  flutter_secure_storage: ^9.1.1
+    # --- FIN DES NOUVEAUTÉS ---
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

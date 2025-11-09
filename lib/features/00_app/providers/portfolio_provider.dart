@@ -1,35 +1,130 @@
+// lib/features/00_app/providers/portfolio_provider.dart
+
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
-// import 'package:uuid/uuid.dart'; // SUPPRIMÉ (Avertissement 2)
+// --- NOUVEAUX IMPORTS ---
+import 'package:portefeuille/core/data/services/api_service.dart';
+import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+// --- FIN NOUVEAUX IMPORTS ---
 
 class PortfolioProvider extends ChangeNotifier {
   final PortfolioRepository _repository;
-  // final _uuid = const Uuid(); // SUPPRIMÉ (Avertissement 2)
+  // --- NOUVEAU ---
+  final ApiService _apiService;
+  SettingsProvider? _settingsProvider;
+  // --- FIN NOUVEAU ---
 
   List<Portfolio> _portfolios = [];
   Portfolio? _activePortfolio;
   bool _isLoading = true;
+  bool _isSyncing = false; // NOUVEAU : Pour l'indicateur de synchronisation
 
   List<Portfolio> get portfolios => _portfolios;
   Portfolio? get activePortfolio => _activePortfolio;
   bool get isLoading => _isLoading;
+  bool get isSyncing => _isSyncing; // NOUVEAU
 
-  PortfolioProvider({required PortfolioRepository repository})
-      : _repository = repository {
+  // --- CONSTRUCTEUR MODIFIÉ ---
+  PortfolioProvider({
+    required PortfolioRepository repository,
+    required ApiService apiService,
+  })  : _repository = repository,
+        _apiService = apiService {
     loadAllPortfolios();
   }
 
-  void loadAllPortfolios() {
+  // --- NOUVELLE MÉTHODE (pour le ProxyProvider) ---
+  /// Met à jour le provider avec la dernière instance de SettingsProvider.
+  /// Appelée par le ProxyProvider lorsque les paramètres changent.
+  void updateSettings(SettingsProvider settingsProvider) {
+    final bool wasOffline = _settingsProvider?.isOnlineMode ?? false;
+    _settingsProvider = settingsProvider;
+
+    // Si l'utilisateur vient d'activer le 'Mode en ligne', on déclenche une synchronisation
+    if (_settingsProvider!.isOnlineMode && !wasOffline) {
+      synchroniserLesPrix();
+    }
+  }
+
+  void loadAllPortfolios() async {
     _portfolios = _repository.getAllPortfolios();
     if (_portfolios.isNotEmpty) {
       _activePortfolio = _portfolios.first;
     }
     _isLoading = false;
-    notifyListeners();
+    notifyListeners(); // Notifie que le chargement est terminé
+
+    // --- NOUVEAU (Déclenchement au chargement) ---
+    // On attend un instant pour laisser les paramètres se charger, puis on synchronise
+    await Future.delayed(Duration.zero);
+    if (_settingsProvider?.isOnlineMode == true) {
+      await synchroniserLesPrix();
+    }
+    // --- FIN NOUVEAU ---
+  }
+
+  // --- NOUVELLE MÉTHODE (Logique de synchronisation) ---
+  Future<void> synchroniserLesPrix() async {
+    if (_activePortfolio == null) return;
+    if (_isSyncing) return; // Ne pas synchroniser si déjà en cours
+    if (_settingsProvider?.isOnlineMode != true) return; // Vérifie le mode en ligne
+
+    _isSyncing = true;
+    notifyListeners(); // Notifie l'UI que la synchronisation *commence*
+
+    bool hasChanges = false;
+    final portfolioToSync = _activePortfolio!;
+
+    // 1. Collecter tous les actifs
+    List<Asset> allAssets = [];
+    for (var inst in portfolioToSync.institutions) {
+      for (var acc in inst.accounts) {
+        allAssets.addAll(acc.assets);
+      }
+    }
+
+    // 2. Obtenir les tickers uniques (et non vides)
+    final tickers =
+    allAssets.map((a) => a.ticker).where((t) => t.isNotEmpty).toSet();
+    if (tickers.isEmpty) {
+      _isSyncing = false;
+      notifyListeners();
+      return;
+    }
+
+    // 3. Récupérer les prix (en parallèle)
+    Map<String, double?> prices = {};
+    await Future.wait(tickers.map((ticker) async {
+      final price = await _apiService.getPrice(ticker);
+      if (price != null) {
+        prices[ticker] = price;
+      }
+    }));
+
+    // 4. Appliquer les nouveaux prix
+    for (var asset in allAssets) {
+      if (prices.containsKey(asset.ticker)) {
+        final newPrice = prices[asset.ticker]!;
+        // Optimisation : ne mettre à jour que si le prix a changé
+        if (asset.currentPrice != newPrice) {
+          asset.currentPrice = newPrice;
+          hasChanges = true;
+        }
+      }
+    }
+
+    _isSyncing = false;
+
+    // 5. Sauvegarder et notifier si des changements ont eu lieu
+    if (hasChanges) {
+      updateActivePortfolio(); // Cette méthode notifie déjà les listeners
+    } else {
+      notifyListeners(); // Notifie que la synchronisation *est terminée* (même sans changements)
+    }
   }
 
   void setActivePortfolio(String portfolioId) {
@@ -58,8 +153,6 @@ class PortfolioProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// NOUVELLE MÉTHODE (pour corriger l'Erreur 3)
-  /// Sauvegarde un portefeuille (généralement après une édition).
   void savePortfolio(Portfolio portfolio) {
     // Met à jour l'objet dans la liste en mémoire
     int index = _portfolios.indexWhere((p) => p.id == portfolio.id);
@@ -78,7 +171,6 @@ class PortfolioProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Met à jour le portefeuille actif (après modif interne) et sauvegarde.
   void updateActivePortfolio() {
     if (_activePortfolio == null) return;
     _repository.savePortfolio(_activePortfolio!);
@@ -87,19 +179,13 @@ class PortfolioProvider extends ChangeNotifier {
 
   void renameActivePortfolio(String newName) {
     if (_activePortfolio == null) return;
-
-    // 1. Modifier le nom sur l'objet en mémoire
     _activePortfolio!.name = newName;
-
-    // 2. Sauvegarder et notifier
-    // (updateActivePortfolio fait déjà les deux)
     updateActivePortfolio();
   }
 
   Future<void> deletePortfolio(String portfolioId) async {
     await _repository.deletePortfolio(portfolioId);
     _portfolios.removeWhere((p) => p.id == portfolioId);
-
     if (_activePortfolio?.id == portfolioId) {
       _activePortfolio = _portfolios.isNotEmpty ? _portfolios.first : null;
     }
@@ -115,32 +201,19 @@ class PortfolioProvider extends ChangeNotifier {
 
   void addInstitution(Institution newInstitution) {
     if (_activePortfolio == null) return;
-
-    // 1. Créer une copie immuable
     final updatedPortfolio = _activePortfolio!.deepCopy();
-
-    // 2. Modifier la copie
     updatedPortfolio.institutions.add(newInstitution);
-
-    // 3. Sauvegarder la nouvelle instance (ceci remplacera l'ancienne)
-    // C'est la fonction savePortfolio qui notifie les listeners.
     savePortfolio(updatedPortfolio);
   }
 
   void addAccount(String institutionId, Account newAccount) {
     if (_activePortfolio == null) return;
-
-    // 1. Créer une copie immuable
     final updatedPortfolio = _activePortfolio!.deepCopy();
-
-    // 2. Modifier la copie
     try {
       updatedPortfolio.institutions
           .firstWhere((inst) => inst.id == institutionId)
           .accounts
           .add(newAccount);
-
-      // 3. Sauvegarder la nouvelle instance
       savePortfolio(updatedPortfolio);
     } catch (e) {
       debugPrint("Institution non trouvée : $institutionId");
@@ -149,18 +222,12 @@ class PortfolioProvider extends ChangeNotifier {
 
   void addAsset(String accountId, Asset newAsset) {
     if (_activePortfolio == null) return;
-
-    // 1. Créer une copie immuable
     final updatedPortfolio = _activePortfolio!.deepCopy();
-
-    // 2. Modifier la copie
     try {
       for (var inst in updatedPortfolio.institutions) {
         for (var acc in inst.accounts) {
           if (acc.id == accountId) {
             acc.assets.add(newAsset);
-
-            // 3. Sauvegarder la nouvelle instance
             savePortfolio(updatedPortfolio);
             return;
           }
