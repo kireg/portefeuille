@@ -3,7 +3,8 @@ import 'package:hive/hive.dart';
 part 'savings_plan.g.dart';
 
 /// Modèle représentant un plan d'épargne mensuel
-/// Permet de simuler des investissements réguliers dans un actif
+/// Permet de simuler des investissements réguliers dans un actif existant du portefeuille
+/// Le rendement est récupéré automatiquement depuis l'actif cible
 @HiveType(typeId: 5)
 class SavingsPlan {
   /// Identifiant unique du plan
@@ -18,20 +19,12 @@ class SavingsPlan {
   @HiveField(2)
   double monthlyAmount;
 
-  /// Ticker de l'actif cible (ex: "CW8")
+  /// Ticker de l'actif cible (référence à un actif du portefeuille)
   @HiveField(3)
   String targetTicker;
 
-  /// Nom de l'actif cible (ex: "Amundi MSCI World")
-  @HiveField(4)
-  String targetAssetName;
-
-  /// Rendement annuel estimé (ex: 0.07 pour 7%)
-  @HiveField(5)
-  double estimatedAnnualReturn;
-
   /// Plan actif ou non
-  @HiveField(6)
+  @HiveField(4)
   bool isActive;
 
   SavingsPlan({
@@ -39,8 +32,6 @@ class SavingsPlan {
     required this.name,
     required this.monthlyAmount,
     required this.targetTicker,
-    required this.targetAssetName,
-    this.estimatedAnnualReturn = 0.07, // 7% par défaut
     this.isActive = true,
   });
 
@@ -54,7 +45,8 @@ class SavingsPlan {
   /// Formule : VF = VM × [(1 + r/12)^n - 1] / (r/12) × (1 + r/12)
   /// où VM = versement mensuel, r = taux annuel, n = nombre de mois
   /// [years] : durée en années
-  double futureValue(int years) {
+  /// [estimatedAnnualReturn] : rendement annuel de l'actif cible
+  double futureValue(int years, double estimatedAnnualReturn) {
     if (monthlyAmount <= 0 || years <= 0) return 0;
     
     final monthlyRate = estimatedAnnualReturn / 12;
@@ -74,8 +66,10 @@ class SavingsPlan {
   }
 
   /// Calcule le gain total (valeur future - capital investi)
-  double totalGain(int years) {
-    return futureValue(years) - totalInvestedCapital(years);
+  /// [years] : durée en années
+  /// [estimatedAnnualReturn] : rendement annuel de l'actif cible
+  double totalGain(int years, double estimatedAnnualReturn) {
+    return futureValue(years, estimatedAnnualReturn) - totalInvestedCapital(years);
   }
 
   /// Crée une copie profonde du plan
@@ -85,8 +79,6 @@ class SavingsPlan {
       name: name,
       monthlyAmount: monthlyAmount,
       targetTicker: targetTicker,
-      targetAssetName: targetAssetName,
-      estimatedAnnualReturn: estimatedAnnualReturn,
       isActive: isActive,
     );
   }

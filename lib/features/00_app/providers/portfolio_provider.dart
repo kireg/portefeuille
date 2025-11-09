@@ -3,6 +3,7 @@ import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
+import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 // import 'package:uuid/uuid.dart'; // SUPPRIMÉ (Avertissement 2)
 
@@ -170,5 +171,52 @@ class PortfolioProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint("Erreur lors de l'ajout de l'actif : $e");
     }
+  }
+
+  // ========== GESTION DES PLANS D'ÉPARGNE ==========
+
+  /// Ajoute un nouveau plan d'épargne au portefeuille actif
+  void addSavingsPlan(SavingsPlan newPlan) {
+    if (_activePortfolio == null) return;
+
+    // 1. Créer une copie immuable du portefeuille
+    final updatedPortfolio = _activePortfolio!.deepCopy();
+
+    // 2. Ajouter le plan à la copie
+    updatedPortfolio.savingsPlans.add(newPlan);
+
+    // 3. Sauvegarder (notifie automatiquement les listeners)
+    savePortfolio(updatedPortfolio);
+  }
+
+  /// Met à jour un plan d'épargne existant
+  void updateSavingsPlan(String planId, SavingsPlan updatedPlan) {
+    if (_activePortfolio == null) return;
+
+    // 1. Créer une copie immuable
+    final updatedPortfolio = _activePortfolio!.deepCopy();
+
+    // 2. Trouver et remplacer le plan
+    final index = updatedPortfolio.savingsPlans.indexWhere((p) => p.id == planId);
+    if (index != -1) {
+      updatedPortfolio.savingsPlans[index] = updatedPlan;
+      savePortfolio(updatedPortfolio);
+    } else {
+      debugPrint("Plan d'épargne non trouvé : $planId");
+    }
+  }
+
+  /// Supprime un plan d'épargne
+  void deleteSavingsPlan(String planId) {
+    if (_activePortfolio == null) return;
+
+    // 1. Créer une copie immuable
+    final updatedPortfolio = _activePortfolio!.deepCopy();
+
+    // 2. Retirer le plan de la copie
+    updatedPortfolio.savingsPlans.removeWhere((p) => p.id == planId);
+
+    // 3. Sauvegarder
+    savePortfolio(updatedPortfolio);
   }
 }

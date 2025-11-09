@@ -21,16 +21,14 @@ class SavingsPlanAdapter extends TypeAdapter<SavingsPlan> {
       name: fields[1] as String,
       monthlyAmount: fields[2] as double,
       targetTicker: fields[3] as String,
-      targetAssetName: fields[4] as String,
-      estimatedAnnualReturn: fields[5] as double,
-      isActive: fields[6] as bool,
+      isActive: fields[4] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, SavingsPlan obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -40,10 +38,6 @@ class SavingsPlanAdapter extends TypeAdapter<SavingsPlan> {
       ..writeByte(3)
       ..write(obj.targetTicker)
       ..writeByte(4)
-      ..write(obj.targetAssetName)
-      ..writeByte(5)
-      ..write(obj.estimatedAnnualReturn)
-      ..writeByte(6)
       ..write(obj.isActive);
   }
 

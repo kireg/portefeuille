@@ -1,6 +1,5 @@
 // lib/features/00_app/main.dart
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
@@ -25,10 +24,6 @@ void main() async {
 
   // 1. Initialiser Hive
   await Hive.initFlutter();
-  if (kDebugMode) {
-    // TEMPORAIRE : Suppression pour tester le nouveau modèle avec données démo
-    await Hive.deleteFromDisk();
-  }
 
   // 2. Enregistrer les Adapters
   Hive.registerAdapter(PortfolioAdapter());

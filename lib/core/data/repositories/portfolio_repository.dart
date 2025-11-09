@@ -166,13 +166,12 @@ class PortfolioRepository {
       ],
       savingsPlans: [
         // Plan d'épargne mensuel de démonstration
+        // Utilise l'ETF CW8 qui existe dans le CTO
         SavingsPlan(
           id: _uuid.v4(),
           name: 'Achat mensuel d\'ETF World',
           monthlyAmount: 150.0,
-          targetTicker: 'CW8',
-          targetAssetName: 'Amundi MSCI World',
-          estimatedAnnualReturn: 0.07, // 7% de rendement annuel estimé
+          targetTicker: 'CW8', // Référence à l'actif existant
           isActive: true,
         ),
       ],
