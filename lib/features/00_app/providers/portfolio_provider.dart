@@ -17,6 +17,7 @@ class PortfolioProvider extends ChangeNotifier {
   // --- NOUVEAU ---
   final ApiService _apiService;
   SettingsProvider? _settingsProvider;
+  bool _isFirstSettingsUpdate = true; // Flag pour éviter la sync au premier chargement
   // --- FIN NOUVEAU ---
 
   List<Portfolio> _portfolios = [];
@@ -43,10 +44,18 @@ class PortfolioProvider extends ChangeNotifier {
   /// Appelée par le ProxyProvider lorsque les paramètres changent.
   void updateSettings(SettingsProvider settingsProvider) {
     final bool wasOffline = _settingsProvider?.isOnlineMode ?? false;
+    final bool wasNull = _settingsProvider == null;
     _settingsProvider = settingsProvider;
 
+    // Ignorer le premier appel (initialisation au démarrage)
+    if (_isFirstSettingsUpdate) {
+      _isFirstSettingsUpdate = false;
+      return;
+    }
+
     // Si l'utilisateur vient d'activer le 'Mode en ligne', on déclenche une synchronisation
-    if (_settingsProvider!.isOnlineMode && !wasOffline) {
+    // (mais pas si c'était null avant, ce qui signifie que c'est le premier chargement)
+    if (_settingsProvider!.isOnlineMode && !wasOffline && !wasNull) {
       synchroniserLesPrix();
     }
   }
@@ -59,13 +68,13 @@ class PortfolioProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners(); // Notifie que le chargement est terminé
 
-    // --- DÉSACTIVÉ TEMPORAIREMENT (bug DNS au démarrage) ---
-    // TODO: Réactiver après avoir résolu le problème de permission réseau
-    // await Future.delayed(Duration.zero);
-    // if (_settingsProvider?.isOnlineMode == true) {
-    //   await synchroniserLesPrix();
-    // }
-    // --- FIN DÉSACTIVATION ---
+    // Synchroniser les prix au démarrage si le mode en ligne est activé
+    // Note: synchroniserLesPrix() est maintenant protégé par un try/catch
+    // donc l'app ne plantera plus même si le réseau est indisponible
+    await Future.delayed(Duration.zero);
+    if (_settingsProvider?.isOnlineMode == true) {
+      await synchroniserLesPrix();
+    }
   }
 
   // --- NOUVELLE MÉTHODE (Logique de synchronisation) ---
@@ -77,54 +86,63 @@ class PortfolioProvider extends ChangeNotifier {
     _isSyncing = true;
     notifyListeners(); // Notifie l'UI que la synchronisation *commence*
 
-    bool hasChanges = false;
-    final portfolioToSync = _activePortfolio!;
+    try {
+      bool hasChanges = false;
+      final portfolioToSync = _activePortfolio!;
 
-    // 1. Collecter tous les actifs
-    List<Asset> allAssets = [];
-    for (var inst in portfolioToSync.institutions) {
-      for (var acc in inst.accounts) {
-        allAssets.addAll(acc.assets);
-      }
-    }
-
-    // 2. Obtenir les tickers uniques (et non vides)
-    final tickers =
-    allAssets.map((a) => a.ticker).where((t) => t.isNotEmpty).toSet();
-    if (tickers.isEmpty) {
-      _isSyncing = false;
-      notifyListeners();
-      return;
-    }
-
-    // 3. Récupérer les prix (en parallèle)
-    Map<String, double?> prices = {};
-    await Future.wait(tickers.map((ticker) async {
-      final price = await _apiService.getPrice(ticker);
-      if (price != null) {
-        prices[ticker] = price;
-      }
-    }));
-
-    // 4. Appliquer les nouveaux prix
-    for (var asset in allAssets) {
-      if (prices.containsKey(asset.ticker)) {
-        final newPrice = prices[asset.ticker]!;
-        // Optimisation : ne mettre à jour que si le prix a changé
-        if (asset.currentPrice != newPrice) {
-          asset.currentPrice = newPrice;
-          hasChanges = true;
+      // 1. Collecter tous les actifs
+      List<Asset> allAssets = [];
+      for (var inst in portfolioToSync.institutions) {
+        for (var acc in inst.accounts) {
+          allAssets.addAll(acc.assets);
         }
       }
-    }
 
-    _isSyncing = false;
+      // 2. Obtenir les tickers uniques (et non vides)
+      final tickers =
+      allAssets.map((a) => a.ticker).where((t) => t.isNotEmpty).toSet();
+      if (tickers.isEmpty) {
+        _isSyncing = false;
+        notifyListeners();
+        return;
+      }
 
-    // 5. Sauvegarder et notifier si des changements ont eu lieu
-    if (hasChanges) {
-      updateActivePortfolio(); // Cette méthode notifie déjà les listeners
-    } else {
-      notifyListeners(); // Notifie que la synchronisation *est terminée* (même sans changements)
+      // 3. Récupérer les prix (en parallèle)
+      Map<String, double?> prices = {};
+      await Future.wait(tickers.map((ticker) async {
+        final price = await _apiService.getPrice(ticker);
+        if (price != null) {
+          prices[ticker] = price;
+        }
+      }));
+
+      // 4. Appliquer les nouveaux prix
+      for (var asset in allAssets) {
+        if (prices.containsKey(asset.ticker)) {
+          final newPrice = prices[asset.ticker]!;
+          // Optimisation : ne mettre à jour que si le prix a changé
+          if (asset.currentPrice != newPrice) {
+            asset.currentPrice = newPrice;
+            hasChanges = true;
+          }
+        }
+      }
+
+      // 5. Sauvegarder et notifier si des changements ont eu lieu
+      if (hasChanges) {
+        updateActivePortfolio(); // Cette méthode notifie déjà les listeners
+      } else {
+        notifyListeners(); // Notifie que la synchronisation *est terminée* (même sans changements)
+      }
+    } catch (e) {
+      // Capturer TOUTES les exceptions (réseau, DNS, timeout, etc.)
+      // pour éviter que l'app ne plante au démarrage
+      debugPrint("⚠️ Erreur lors de la synchronisation des prix : $e");
+      // L'utilisateur verra simplement que la sync n'a pas fonctionné
+    } finally {
+      // Toujours réinitialiser l'état de synchronisation
+      _isSyncing = false;
+      notifyListeners();
     }
   }
 

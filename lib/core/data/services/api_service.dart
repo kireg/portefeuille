@@ -45,32 +45,39 @@ class ApiService {
 
   /// Récupère le prix pour un ticker.
   /// Gère le cache et la stratégie de fallback.
+  /// Retourne null en cas d'erreur (ne lance jamais d'exception).
   Future<double?> getPrice(String ticker) async {
-    // 1. Vérifier le cache
-    final cached = _priceCache[ticker];
-    if (cached != null && !cached.isStale) {
-      return cached.value;
+    try {
+      // 1. Vérifier le cache
+      final cached = _priceCache[ticker];
+      if (cached != null && !cached.isStale) {
+        return cached.value;
+      }
+
+      // 2. Si le cache est vide ou obsolète, appeler le réseau
+      double? price;
+      final bool hasFmpKey = _settingsProvider.hasFmpApiKey;
+
+      if (hasFmpKey) {
+        price = await _fetchFromFmp(ticker);
+      }
+
+      if (price == null) {
+        // Stratégie 2 : Yahoo (Fallback)
+        price = await _fetchFromYahoo(ticker);
+      }
+
+      // 3. Mettre à jour le cache si un prix est trouvé
+      if (price != null) {
+        _priceCache[ticker] = _CacheEntry(price);
+      }
+
+      return price;
+    } catch (e) {
+      // Capturer TOUTES les exceptions non gérées (y compris DNS, timeout, etc.)
+      debugPrint("⚠️ Erreur inattendue lors de la récupération du prix pour $ticker : $e");
+      return null; // Retourner null plutôt que de crasher
     }
-
-    // 2. Si le cache est vide ou obsolète, appeler le réseau
-    double? price;
-    final bool hasFmpKey = _settingsProvider.hasFmpApiKey;
-
-    if (hasFmpKey) {
-      price = await _fetchFromFmp(ticker);
-    }
-
-    if (price == null) {
-      // Stratégie 2 : Yahoo (Fallback)
-      price = await _fetchFromYahoo(ticker);
-    }
-
-    // 3. Mettre à jour le cache si un prix est trouvé
-    if (price != null) {
-      _priceCache[ticker] = _CacheEntry(price);
-    }
-
-    return price;
   }
 
   /// Tente de récupérer un prix via FMP (Financial Modeling Prep)
