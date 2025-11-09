@@ -34,8 +34,7 @@ class PortfolioProvider extends ChangeNotifier {
 
   void setActivePortfolio(String portfolioId) {
     try {
-      _activePortfolio =
-          _portfolios.firstWhere((p) => p.id == portfolioId);
+      _activePortfolio = _portfolios.firstWhere((p) => p.id == portfolioId);
       notifyListeners();
     } catch (e) {
       debugPrint("Portefeuille non trouvé : $portfolioId");
@@ -143,7 +142,6 @@ class PortfolioProvider extends ChangeNotifier {
 
       // 3. Sauvegarder la nouvelle instance
       savePortfolio(updatedPortfolio);
-
     } catch (e) {
       debugPrint("Institution non trouvée : $institutionId");
     }
