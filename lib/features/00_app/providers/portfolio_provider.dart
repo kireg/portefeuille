@@ -59,13 +59,13 @@ class PortfolioProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners(); // Notifie que le chargement est terminé
 
-    // --- NOUVEAU (Déclenchement au chargement) ---
-    // On attend un instant pour laisser les paramètres se charger, puis on synchronise
-    await Future.delayed(Duration.zero);
-    if (_settingsProvider?.isOnlineMode == true) {
-      await synchroniserLesPrix();
-    }
-    // --- FIN NOUVEAU ---
+    // --- DÉSACTIVÉ TEMPORAIREMENT (bug DNS au démarrage) ---
+    // TODO: Réactiver après avoir résolu le problème de permission réseau
+    // await Future.delayed(Duration.zero);
+    // if (_settingsProvider?.isOnlineMode == true) {
+    //   await synchroniserLesPrix();
+    // }
+    // --- FIN DÉSACTIVATION ---
   }
 
   // --- NOUVELLE MÉTHODE (Logique de synchronisation) ---

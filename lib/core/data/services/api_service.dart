@@ -1,6 +1,7 @@
 // lib/core/data/services/api_service.dart
 
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
@@ -151,11 +152,16 @@ class ApiService {
         'https://query1.finance.yahoo.com/v1/finance/search?q=$query&lang=fr-FR&region=FR');
 
     try {
+      debugPrint("🔍 Recherche de ticker: '$query' - URL: $url");
+      
       final response = await _httpClient.get(url, headers: {
         'User-Agent': 'Mozilla/5.0'
       }).timeout(const Duration(seconds: 5));
 
+      debugPrint("✅ Réponse reçue - Status: ${response.statusCode}");
+
       if (response.statusCode != 200) {
+        debugPrint("❌ Erreur HTTP ${response.statusCode}: ${response.body}");
         throw Exception(
             "Erreur de l'API de recherche Yahoo: ${response.statusCode}");
       }
@@ -163,6 +169,8 @@ class ApiService {
       final jsonData = jsonDecode(response.body);
       final List<dynamic> quotes = jsonData['quotes'] ?? [];
       final List<TickerSuggestion> suggestions = [];
+
+      debugPrint("📊 ${quotes.length} résultats trouvés");
 
       for (final quote in quotes) {
         final String? ticker = quote['symbol'];
@@ -180,13 +188,22 @@ class ApiService {
         }
       }
 
+      debugPrint("✅ ${suggestions.length} suggestions valides");
+
       // 3. Mettre en cache
       _searchCache[query] = suggestions;
       _searchCacheTimestamps[query] = DateTime.now();
 
       return suggestions;
+    } on SocketException catch (e) {
+      debugPrint("❌ Erreur réseau (SocketException) pour '$query': $e");
+      debugPrint("💡 Vérifiez la permission INTERNET et la connexion réseau");
+      return [];
+    } on TimeoutException catch (e) {
+      debugPrint("❌ Timeout lors de la recherche de '$query': $e");
+      return [];
     } catch (e) {
-      debugPrint("Erreur lors de la recherche de ticker pour '$query': $e");
+      debugPrint("❌ Erreur lors de la recherche de ticker pour '$query': $e");
       return []; // Retourner une liste vide en cas d'erreur
     }
   }
