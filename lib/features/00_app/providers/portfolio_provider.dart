@@ -118,9 +118,28 @@ class PortfolioProvider extends ChangeNotifier {
     // 1. Sauvegarder la nouvelle transaction
     await _repository.saveTransaction(transaction);
 
+    // --- NOUVELLE LOGIQUE ---
+    // Si c'est un achat, mettons immédiatement à jour le prix de l'actif
+    // avec le prix d'achat, pour que l'actif ait une valeur immédiate.
+    if (transaction.type == TransactionType.Buy &&
+        transaction.assetTicker != null &&
+        transaction.price != null) {
+
+      // Récupère ou crée les métadonnées pour cet actif
+      final metadata = _repository.getOrCreateAssetMetadata(transaction.assetTicker!);
+
+      // Met à jour le prix actuel avec le prix de la transaction
+      // (La synchro API l'écrasera plus tard, mais c'est OK)
+      metadata.updatePrice(transaction.price!);
+
+      // Sauvegarde les métadonnées
+      await _repository.saveAssetMetadata(metadata);
+    }
+    // --- FIN NOUVELLE LOGIQUE ---
+
     // 2. Recharger les portefeuilles
     // Cela force la ré-injection des transactions (via getAllPortfolios)
-    // et le recalcul des getters.
+    // et le recalcul des getters (y compris le nouveau prix).
     await loadAllPortfolios();
 
     // 3. Notifier (déjà fait par loadAllPortfolios)
