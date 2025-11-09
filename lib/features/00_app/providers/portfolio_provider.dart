@@ -34,8 +34,7 @@ class PortfolioProvider extends ChangeNotifier {
 
   void setActivePortfolio(String portfolioId) {
     try {
-      _activePortfolio =
-          _portfolios.firstWhere((p) => p.id == portfolioId);
+      _activePortfolio = _portfolios.firstWhere((p) => p.id == portfolioId);
       notifyListeners();
     } catch (e) {
       debugPrint("Portefeuille non trouvé : $portfolioId");
@@ -116,18 +115,33 @@ class PortfolioProvider extends ChangeNotifier {
 
   void addInstitution(Institution newInstitution) {
     if (_activePortfolio == null) return;
-    _activePortfolio!.institutions.add(newInstitution);
-    updateActivePortfolio();
+
+    // 1. Créer une copie immuable
+    final updatedPortfolio = _activePortfolio!.deepCopy();
+
+    // 2. Modifier la copie
+    updatedPortfolio.institutions.add(newInstitution);
+
+    // 3. Sauvegarder la nouvelle instance (ceci remplacera l'ancienne)
+    // C'est la fonction savePortfolio qui notifie les listeners.
+    savePortfolio(updatedPortfolio);
   }
 
   void addAccount(String institutionId, Account newAccount) {
     if (_activePortfolio == null) return;
+
+    // 1. Créer une copie immuable
+    final updatedPortfolio = _activePortfolio!.deepCopy();
+
+    // 2. Modifier la copie
     try {
-      _activePortfolio!.institutions
+      updatedPortfolio.institutions
           .firstWhere((inst) => inst.id == institutionId)
           .accounts
           .add(newAccount);
-      updateActivePortfolio();
+
+      // 3. Sauvegarder la nouvelle instance
+      savePortfolio(updatedPortfolio);
     } catch (e) {
       debugPrint("Institution non trouvée : $institutionId");
     }
@@ -135,12 +149,19 @@ class PortfolioProvider extends ChangeNotifier {
 
   void addAsset(String accountId, Asset newAsset) {
     if (_activePortfolio == null) return;
+
+    // 1. Créer une copie immuable
+    final updatedPortfolio = _activePortfolio!.deepCopy();
+
+    // 2. Modifier la copie
     try {
-      for (var inst in _activePortfolio!.institutions) {
+      for (var inst in updatedPortfolio.institutions) {
         for (var acc in inst.accounts) {
           if (acc.id == accountId) {
             acc.assets.add(newAsset);
-            updateActivePortfolio();
+
+            // 3. Sauvegarder la nouvelle instance
+            savePortfolio(updatedPortfolio);
             return;
           }
         }
