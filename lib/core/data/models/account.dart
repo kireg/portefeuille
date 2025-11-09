@@ -31,6 +31,9 @@ class Account {
 
   // Doit être injecté par le Repository
   List<Transaction> transactions = [];
+  
+  // NOUVEAU : Cache des assets avec métadonnées injectées
+  List<Asset>? _cachedAssets;
 
   // NOUVEAU : Outil pour générer des ID d'Assets
   static const _uuid = Uuid();
@@ -45,6 +48,12 @@ class Account {
 
   // NOUVEAU : Les actifs sont maintenant calculés
   List<Asset> get assets {
+    // Si le cache existe, le retourner directement
+    if (_cachedAssets != null) {
+      return _cachedAssets!;
+    }
+    
+    // Sinon, générer les assets (sans métadonnées)
     final assetTransactions = transactions
         .where((tr) =>
     tr.type == TransactionType.Buy || tr.type == TransactionType.Sell)
@@ -86,6 +95,16 @@ class Account {
     });
 
     return generatedAssets;
+  }
+  
+  // NOUVEAU : Méthode pour rafraîchir le cache avec les métadonnées
+  void refreshAssetsCache(List<Asset> assetsWithMetadata) {
+    _cachedAssets = assetsWithMetadata;
+  }
+  
+  // NOUVEAU : Méthode pour vider le cache
+  void clearAssetsCache() {
+    _cachedAssets = null;
   }
 
   Account({

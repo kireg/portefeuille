@@ -39,6 +39,7 @@ class Asset {
   @HiveField(6)
   final String id;
 
+  @HiveField(7)
   final AssetType type;
 
   // Injecté par le getter `Account.assets`

@@ -20,6 +20,7 @@ import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
+import 'package:portefeuille/core/data/models/asset_metadata.dart';
 
 // Features
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -43,6 +44,7 @@ void main() async {
   Hive.registerAdapter(TransactionTypeAdapter());
   Hive.registerAdapter(TransactionAdapter());
   Hive.registerAdapter(AssetTypeAdapter());
+  Hive.registerAdapter(AssetMetadataAdapter());
 
   // 3. Ouvrir les boîtes
   await Hive.openBox<Portfolio>(AppConstants.kPortfolioBoxName);
@@ -50,6 +52,9 @@ void main() async {
 
   // NOUVEAU : Ouvrir la boîte des transactions
   await Hive.openBox<Transaction>(AppConstants.kTransactionBoxName);
+  
+  // NOUVEAU : Ouvrir la boîte des métadonnées d'actifs
+  await Hive.openBox<AssetMetadata>(AppConstants.kAssetMetadataBoxName);
 
   // 4. Instancier le Repository
   final portfolioRepository = PortfolioRepository();

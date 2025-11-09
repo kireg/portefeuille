@@ -1,10 +1,8 @@
 // lib/core/data/repositories/portfolio_repository.dart
-// REMPLACEZ LE FICHIER COMPLET
 
 import 'package:hive/hive.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/account_type.dart';
-import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
@@ -14,6 +12,7 @@ import 'package:uuid/uuid.dart';
 // --- NOUVEAUX IMPORTS ---
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
+import 'package:portefeuille/core/data/models/asset_metadata.dart';
 // --- FIN NOUVEAUX IMPORTS ---
 
 /// Classe responsable de la gestion des données du portefeuille.
@@ -25,6 +24,10 @@ class PortfolioRepository {
   // NOUVEAU : Box pour les transactions
   late final Box<Transaction> _transactionBox =
   Hive.box(AppConstants.kTransactionBoxName);
+  
+  // NOUVEAU : Box pour les métadonnées des actifs
+  late final Box<AssetMetadata> _assetMetadataBox =
+  Hive.box(AppConstants.kAssetMetadataBoxName);
 
   final _uuid = const Uuid();
 
@@ -33,6 +36,7 @@ class PortfolioRepository {
   List<Portfolio> getAllPortfolios() {
     final portfolios = _portfolioBox.values.toList();
     final allTransactions = getAllTransactions();
+    final allMetadata = getAllAssetMetadata();
 
     // Créer un dictionnaire pour un accès rapide : { accountId: [Liste de Tx] }
     final transactionsByAccount = <String, List<Transaction>>{};
@@ -45,6 +49,25 @@ class PortfolioRepository {
       for (final institution in portfolio.institutions) {
         for (final account in institution.accounts) {
           account.transactions = transactionsByAccount[account.id] ?? [];
+          
+          // Vider le cache pour forcer la régénération des assets
+          account.clearAssetsCache();
+          
+          // IMPORTANT: Récupérer les assets APRÈS avoir injecté les transactions
+          // car le getter assets dépend des transactions
+          final assets = account.assets;
+          
+          // Injecter les métadonnées dans les assets
+          for (final asset in assets) {
+            final metadata = allMetadata[asset.ticker];
+            if (metadata != null) {
+              asset.currentPrice = metadata.currentPrice;
+              asset.estimatedAnnualYield = metadata.estimatedAnnualYield;
+            }
+          }
+          
+          // Mettre en cache les assets avec métadonnées injectées
+          account.refreshAssetsCache(assets);
         }
       }
     }
@@ -99,6 +122,40 @@ class PortfolioRepository {
   }
 
   // --- FIN DES NOUVELLES MÉTHODES ---
+
+  // --- MÉTHODES POUR LES MÉTADONNÉES D'ACTIFS ---
+
+  /// Récupère les métadonnées d'un actif par son ticker.
+  /// Retourne null si aucune métadonnée n'existe.
+  AssetMetadata? getAssetMetadata(String ticker) {
+    return _assetMetadataBox.get(ticker);
+  }
+
+  /// Récupère ou crée les métadonnées d'un actif.
+  /// Si aucune métadonnée n'existe, crée une instance par défaut.
+  AssetMetadata getOrCreateAssetMetadata(String ticker) {
+    final existing = _assetMetadataBox.get(ticker);
+    if (existing != null) return existing;
+
+    final newMetadata = AssetMetadata(ticker: ticker);
+    saveAssetMetadata(newMetadata);
+    return newMetadata;
+  }
+
+  /// Sauvegarde ou met à jour les métadonnées d'un actif.
+  Future<void> saveAssetMetadata(AssetMetadata metadata) async {
+    await _assetMetadataBox.put(metadata.ticker, metadata);
+  }
+
+  /// Récupère toutes les métadonnées d'actifs.
+  Map<String, AssetMetadata> getAllAssetMetadata() {
+    final metadata = Map.fromEntries(
+      _assetMetadataBox.values.map((m) => MapEntry(m.ticker, m)),
+    );
+    return metadata;
+  }
+
+  // --- FIN MÉTHODES MÉTADONNÉES ---
 
   /// Crée un portefeuille de démonstration et le sauvegarde.
   /// MODIFIÉ : Crée et sauvegarde également les transactions de démo.

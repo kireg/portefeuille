@@ -40,12 +40,9 @@ extension AssetTypeExtension on AssetType {
         return 'Crypto';
       case AssetType.Bond:
         return 'Obligation';
-    // --- NOUVEAU ---
       case AssetType.Cash:
         return 'Liquidités';
-    // --- FIN NOUVEAU ---
       case AssetType.Other:
-      default:
         return 'Autre';
     }
   }

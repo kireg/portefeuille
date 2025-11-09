@@ -483,8 +483,6 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
       case TransactionType.Buy:
       case TransactionType.Sell:
         return _buildAssetFields();
-      default:
-        return const SizedBox.shrink();
     }
   }
 

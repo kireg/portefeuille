@@ -43,8 +43,6 @@ extension TransactionTypeExtension on TransactionType {
         return 'Intérêts';
       case TransactionType.Fees:
         return 'Frais';
-      default:
-        return name;
     }
   }
 }

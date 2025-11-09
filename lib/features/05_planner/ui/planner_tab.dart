@@ -3,11 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:provider/provider.dart';
-import 'package:fl_chart/fl_chart.dart'; // <--- NOUVEL IMPORT
-import 'package:portefeuille/core/data/models/portfolio.dart'; // <--- NOUVEL IMPORT
-import 'package:portefeuille/core/utils/currency_formatter.dart'; // <--- NOUVEL IMPORT
-import 'package:portefeuille/core/data/models/transaction.dart'; // <--- NOUVEAU
-import 'package:portefeuille/core/data/models/transaction_type.dart'; // <--- NOUVEAU
+import 'package:fl_chart/fl_chart.dart';
+import 'package:portefeuille/core/data/models/portfolio.dart';
+import 'package:portefeuille/core/utils/currency_formatter.dart';
 import '../../../core/data/models/asset.dart';
 import '../../00_app/providers/portfolio_provider.dart';
 import '../../07_management/ui/screens/add_savings_plan_screen.dart';
@@ -100,7 +98,7 @@ class _PlannerTabState extends State<PlannerTab> {
   List<ProjectionData> _generateProjectionData(Portfolio portfolio) {
     List<ProjectionData> data = [];
     final double initialPortfolioValue = portfolio.totalValue;
-    final double portfolioAnnualYield = portfolio.estimatedAnnualYield;
+    final double portfolioAnnualYield = portfolio.estimatedAnnualYield / 100.0;
 
     // Calculer le total des versements mensuels et le rendement pondéré des plans
     double totalMonthlyInvestment = 0;
@@ -108,7 +106,7 @@ class _PlannerTabState extends State<PlannerTab> {
 
     for (var plan in portfolio.savingsPlans.where((p) => p.isActive)) {
       final targetAsset = _findAssetByTicker(portfolio, plan.targetTicker);
-      final assetYield = targetAsset?.estimatedAnnualYield ?? 0.0;
+      final assetYield = (targetAsset?.estimatedAnnualYield ?? 0.0) / 100.0;
 
       totalMonthlyInvestment += plan.monthlyAmount;
       weightedPlansYield += plan.monthlyAmount * assetYield;

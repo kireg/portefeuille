@@ -85,7 +85,6 @@ class _TransactionsViewState extends State<TransactionsView> {
         transactions.sort((a, b) => a.type.name.compareTo(b.type.name));
         break;
       case TransactionSortOption.dateDesc:
-      default:
         transactions.sort((a, b) => b.date.compareTo(a.date));
         break;
     }
