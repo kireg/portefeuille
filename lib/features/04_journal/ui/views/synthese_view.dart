@@ -3,12 +3,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
-import 'package:portefeuille/core/data/models/asset_type.dart';
-import 'package:portefeuille/core/data/models/transaction.dart';
+// import 'package:portefeuille/core/data/models/asset_type.dart'; // Plus nécessaire ici
+// import 'package:portefeuille/core/data/models/transaction.dart'; // Plus nécessaire ici
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
+// import 'package:uuid/uuid.dart'; // <--- SUPPRIMÉ
 
 // Classe temporaire pour l'agrégation
 class AggregatedAsset {
@@ -18,7 +18,6 @@ class AggregatedAsset {
   final double averagePrice; // PRU agrégé
   final double currentPrice;
   final double estimatedAnnualYield;
-
   AggregatedAsset({
     required this.ticker,
     required this.name,
@@ -27,7 +26,6 @@ class AggregatedAsset {
     required this.currentPrice,
     required this.estimatedAnnualYield,
   });
-
   double get totalValue => quantity * currentPrice;
   double get profitAndLoss => (currentPrice - averagePrice) * quantity;
 }
@@ -40,71 +38,70 @@ class SyntheseView extends StatefulWidget {
 }
 
 class _SyntheseViewState extends State<SyntheseView> {
-
+  // --- MÉTHODE ENTIÈREMENT OPTIMISÉE ---
   /// Logique d'agrégation des actifs
   List<AggregatedAsset> _aggregateAssets(PortfolioProvider provider) {
-    final allTransactions = provider.activePortfolio?.institutions
-        .expand((inst) => inst.accounts)
-        .expand((acc) => acc.transactions)
-        .toList() ??
-        [];
-
+    // 1. Aplatir tous les actifs (qui contiennent déjà P/L, PRU, Prix)
+    //    de tous les comptes.
     final allAssets = provider.activePortfolio?.institutions
         .expand((inst) => inst.accounts)
         .expand((acc) => acc.assets) // Utilise le getter 'assets'
         .toList() ??
         [];
 
-    // 1. Grouper les transactions d'achat/vente par ticker
-    final Map<String, List<Transaction>> groupedTransactions = {};
-    for (final tr in allTransactions) {
-      if (tr.assetTicker != null) {
-        (groupedTransactions[tr.assetTicker!] ??= []).add(tr);
-      }
+    if (allAssets.isEmpty) return [];
+
+    // 2. Grouper les actifs par ticker
+    final Map<String, List<Asset>> groupedByTicker = {};
+    for (final asset in allAssets) {
+      (groupedByTicker[asset.ticker] ??= []).add(asset);
     }
 
     final List<AggregatedAsset> aggregatedList = [];
-    const uuid = Uuid();
 
-    // 2. Calculer les métriques agrégées pour chaque ticker
-    groupedTransactions.forEach((ticker, transactions) {
-      // 3. Recréer un objet Asset temporaire (comme le fait Account.assets)
-      //    pour utiliser ses getters (quantity, averagePrice)
-      final lastTx =
-      transactions.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
-      final tempAsset = Asset(
-        id: uuid.v4(),
-        name: lastTx.assetName ?? ticker,
-        ticker: ticker,
-        type: lastTx.assetType ?? AssetType.Other,
-        transactions: transactions,
-      );
+    // 3. Agréger les métriques pour chaque ticker
+    groupedByTicker.forEach((ticker, assets) {
+      if (assets.isEmpty) return;
 
-      // 4. Récupérer le prix actuel (déjà synchronisé dans le provider)
-      final currentAsset = allAssets.firstWhere(
-            (a) => a.ticker == ticker,
-        orElse: () => tempAsset, // Fallback si non trouvé
-      );
+      final firstAsset = assets.first;
+      double totalQuantity = 0;
+      double totalCost = 0; // Somme de (Quantité * PRU) pour la pondération
 
-      // N'ajoute pas l'actif si la quantité est nulle
-      if (tempAsset.quantity > 0) {
+      for (final asset in assets) {
+        totalQuantity += asset.quantity;
+        totalCost += (asset.quantity * asset.averagePrice);
+      }
+
+      // Calculer le PRU pondéré agrégé
+      final double aggregatedAveragePrice =
+      (totalQuantity > 0) ? totalCost / totalQuantity : 0.0;
+
+      // N'ajoute pas l'actif si la quantité totale est nulle
+      if (totalQuantity > 0) {
         aggregatedList.add(
           AggregatedAsset(
             ticker: ticker,
-            name: currentAsset.name,
-            quantity: tempAsset.quantity,
-            averagePrice: tempAsset.averagePrice,
-            currentPrice: currentAsset.currentPrice,
-            estimatedAnnualYield: currentAsset.estimatedAnnualYield,
+            name: firstAsset.name, // Le nom est le même
+            quantity: totalQuantity,
+            averagePrice: aggregatedAveragePrice,
+            currentPrice: firstAsset.currentPrice, // Le prix est le même
+            estimatedAnnualYield:
+            firstAsset.estimatedAnnualYield, // Le rendement est le même
           ),
         );
       }
     });
 
-    // Trier par valeur totale
-    aggregatedList.sort((a, b) => b.totalValue.compareTo(a.totalValue));
+    // Trier par valeur totale (calculée à partir des données agrégées)
+    aggregatedList.sort((a, b) {
+      final bValue = b.quantity * b.currentPrice;
+      final aValue = a.quantity * a.currentPrice;
+      return bValue.compareTo(aValue);
+    });
+
     return aggregatedList;
   }
+  // --- FIN DE L'OPTIMISATION ---
 
   @override
   Widget build(BuildContext context) {
@@ -112,14 +109,14 @@ class _SyntheseViewState extends State<SyntheseView> {
       builder: (context, provider, child) {
         // Force le rebuild en accédant au timestamp
         final _ = provider.lastUpdateTimestamp;
-        
+
         final aggregatedAssets = _aggregateAssets(provider);
 
         // Vérification de présence de portfolio
         if (provider.activePortfolio == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (aggregatedAssets.isEmpty) {
           return const Center(
             child: Padding(
@@ -192,21 +189,26 @@ class _SyntheseViewState extends State<SyntheseView> {
                           // Prix actuel (ÉDITABLE)
                           DataCell(
                             InkWell(
-                              onTap: () => _showEditPriceDialog(context, asset, provider),
+                              onTap: () =>
+                                  _showEditPriceDialog(context, asset, provider),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     CurrencyFormatter.format(asset.currentPrice),
                                     style: TextStyle(
-                                      color: asset.currentPrice > 0 ? Colors.blue : Colors.red,
+                                      color: asset.currentPrice > 0
+                                          ? Colors.blue
+                                          : Colors.red,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
                                   Icon(
-                                    Icons.edit, 
-                                    size: 16, 
-                                    color: asset.currentPrice > 0 ? Colors.blue : Colors.red,
+                                    Icons.edit,
+                                    size: 16,
+                                    color: asset.currentPrice > 0
+                                        ? Colors.blue
+                                        : Colors.red,
                                   ),
                                 ],
                               ),
@@ -226,7 +228,8 @@ class _SyntheseViewState extends State<SyntheseView> {
                           // Rendement annuel estimé (ÉDITABLE)
                           DataCell(
                             InkWell(
-                              onTap: () => _showEditYieldDialog(context, asset, provider),
+                              onTap: () =>
+                                  _showEditYieldDialog(context, asset, provider),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -235,7 +238,8 @@ class _SyntheseViewState extends State<SyntheseView> {
                                     style: const TextStyle(color: Colors.blue),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.edit, size: 16, color: Colors.blue),
+                                  const Icon(Icons.edit,
+                                      size: 16, color: Colors.blue),
                                 ],
                               ),
                             ),
@@ -257,8 +261,7 @@ class _SyntheseViewState extends State<SyntheseView> {
   void _showEditYieldDialog(
       BuildContext context, AggregatedAsset asset, PortfolioProvider provider) {
     final controller =
-        TextEditingController(text: asset.estimatedAnnualYield.toStringAsFixed(2));
-
+    TextEditingController(text: asset.estimatedAnnualYield.toStringAsFixed(2));
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -280,7 +283,8 @@ class _SyntheseViewState extends State<SyntheseView> {
           ),
           TextButton(
             onPressed: () {
-              final newYield = double.tryParse(controller.text) ?? asset.estimatedAnnualYield;
+              final newYield = double.tryParse(controller.text) ??
+                  asset.estimatedAnnualYield;
               provider.updateAssetYield(asset.ticker, newYield);
               Navigator.of(ctx).pop();
             },
@@ -295,8 +299,7 @@ class _SyntheseViewState extends State<SyntheseView> {
   void _showEditPriceDialog(
       BuildContext context, AggregatedAsset asset, PortfolioProvider provider) {
     final controller =
-        TextEditingController(text: asset.currentPrice.toStringAsFixed(2));
-
+    TextEditingController(text: asset.currentPrice.toStringAsFixed(2));
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -318,7 +321,9 @@ class _SyntheseViewState extends State<SyntheseView> {
           ),
           TextButton(
             onPressed: () {
-              final newPrice = double.tryParse(controller.text.replaceAll(',', '.')) ?? asset.currentPrice;
+              final newPrice =
+                  double.tryParse(controller.text.replaceAll(',', '.')) ??
+                      asset.currentPrice;
               provider.updateAssetPrice(asset.ticker, newPrice);
               Navigator.of(ctx).pop();
             },
