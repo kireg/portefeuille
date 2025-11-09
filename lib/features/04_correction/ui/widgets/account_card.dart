@@ -5,9 +5,8 @@ import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/account_type.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'account_type_label.dart';
-import 'package:portefeuille/features/04_correction/ui/widgets/asset_grid.dart';
-import 'cash_field.dart';
 import 'asset_grid.dart';
+import 'cash_field.dart';
 
 /// Affiche une carte éditable pour un Compte (Account)
 class AccountCard extends StatelessWidget {

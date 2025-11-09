@@ -2,8 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
-import 'package:portefeuille/features/04_correction/ui/widgets/insitution_card.dart';
-
+import 'package:portefeuille/features/04_correction/ui/widgets/institution_card.dart';
 
 /// Affiche le contenu principal (bouton + liste des institutions)
 class CorrectionContent extends StatelessWidget {
