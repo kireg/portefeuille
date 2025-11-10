@@ -10,7 +10,6 @@ import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
-
 // --- NOUVEAUX IMPORTS MIGRATION ---
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
@@ -26,17 +25,21 @@ class PortfolioProvider extends ChangeNotifier {
 
   // NOUVEAU : Pour générer les ID de migration
   final _uuid = const Uuid();
-
   List<Portfolio> _portfolios = [];
   Portfolio? _activePortfolio;
   bool _isLoading = true;
   bool _isSyncing = false;
 
+  // NOUVEAU : Message pour la SnackBar de synchronisation
+  String? _syncMessage;
 
   List<Portfolio> get portfolios => _portfolios;
   Portfolio? get activePortfolio => _activePortfolio;
   bool get isLoading => _isLoading;
   bool get isSyncing => _isSyncing;
+
+  // NOUVEAU : Getter pour le message de synchro
+  String? get syncMessage => _syncMessage;
 
   PortfolioProvider({
     required PortfolioRepository repository,
@@ -54,11 +57,9 @@ class PortfolioProvider extends ChangeNotifier {
     final bool wasOffline = _settingsProvider?.isOnlineMode ?? false;
     final bool wasNull = _settingsProvider == null;
     _settingsProvider = settingsProvider;
-
     // --- MODIFICATION MAJEURE : GESTION DE LA MIGRATION ---
     if (_isFirstSettingsUpdate) {
       _isFirstSettingsUpdate = false;
-
       // 1. VÉRIFIER ET LANCER LA MIGRATION
       // Doit être 'async' mais la méthode update ne peut pas l'être,
       // donc on utilise un Future anonyme avec gestion d'erreur.
@@ -68,7 +69,7 @@ class PortfolioProvider extends ChangeNotifier {
           while (_isLoading) {
             await Future.delayed(const Duration(milliseconds: 100));
           }
-          
+
           if (!settingsProvider.migrationV1Done) {
             await _runDataMigrationV1(settingsProvider);
           }
@@ -83,7 +84,6 @@ class PortfolioProvider extends ChangeNotifier {
           // L'application continue de fonctionner même en cas d'erreur réseau
         }
       });
-
       return; // Fin de la logique du premier chargement
     }
     // --- FIN MODIFICATION ---
@@ -102,8 +102,22 @@ class PortfolioProvider extends ChangeNotifier {
   Future<void> loadAllPortfolios() async {
     _portfolios = _repository.getAllPortfolios();
     if (_portfolios.isNotEmpty) {
-      _activePortfolio = _portfolios.first;
+      // MODIFIÉ : S'assurer que _activePortfolio est ré-assigné depuis la nouvelle liste
+      if (_activePortfolio == null) {
+        _activePortfolio = _portfolios.first;
+      } else {
+        // Regarder si l'ancien ID existe toujours
+        try {
+          _activePortfolio = _portfolios.firstWhere((p) => p.id == _activePortfolio!.id);
+        } catch (e) {
+          // L'ancien portfolio a été supprimé, prendre le premier
+          _activePortfolio = _portfolios.isNotEmpty ? _portfolios.first : null;
+        }
+      }
+    } else {
+      _activePortfolio = null;
     }
+
     _isLoading = false;
     notifyListeners();
     // La synchronisation des prix est déplacée dans updateSettings
@@ -114,7 +128,6 @@ class PortfolioProvider extends ChangeNotifier {
   Future<void> addTransaction(Transaction transaction) async {
     // 1. Sauvegarder la nouvelle transaction
     await _repository.saveTransaction(transaction);
-
     // --- NOUVELLE LOGIQUE ---
     // Si c'est un achat, mettons immédiatement à jour le prix de l'actif
     // avec le prix d'achat, pour que l'actif ait une valeur immédiate.
@@ -124,11 +137,9 @@ class PortfolioProvider extends ChangeNotifier {
 
       // Récupère ou crée les métadonnées pour cet actif
       final metadata = _repository.getOrCreateAssetMetadata(transaction.assetTicker!);
-
       // Met à jour le prix actuel avec le prix de la transaction
       // (La synchro API l'écrasera plus tard, mais c'est OK)
       metadata.updatePrice(transaction.price!);
-
       // Sauvegarde les métadonnées
       await _repository.saveAssetMetadata(metadata);
     }
@@ -166,7 +177,6 @@ class PortfolioProvider extends ChangeNotifier {
     final bool needsMigration = _portfolios.any((p) => p.institutions
         .any((i) => i.accounts.any((a) =>
     a.stale_cashBalance != null || (a.stale_assets?.isNotEmpty ?? false))));
-
     if (!needsMigration) {
       debugPrint("Migration V1 : Aucune donnée périmée trouvée. Ignoré.");
       await settingsProvider.setMigrationV1Done();
@@ -175,7 +185,6 @@ class PortfolioProvider extends ChangeNotifier {
 
     debugPrint("--- DÉBUT MIGRATION V1 ---");
     final List<Transaction> newTransactions = [];
-
     for (final portfolio in _portfolios) {
       bool portfolioNeedsSave = false;
       for (final inst in portfolio.institutions) {
@@ -183,10 +192,8 @@ class PortfolioProvider extends ChangeNotifier {
           // Date fictive pour les transactions migrées
           // MODIFICATION : Utiliser une date antérieure pour ne pas perturber l'historique récent
           final migrationDate = DateTime(2020, 1, 1);
-
           // Variables pour gérer le solde total
           double totalCashFromAssets = 0.0;
-
           // 1. D'abord, calculer le total de cash nécessaire pour les actifs
           if (acc.stale_assets != null && acc.stale_assets!.isNotEmpty) {
             for (final asset in acc.stale_assets!) {
@@ -201,12 +208,10 @@ class PortfolioProvider extends ChangeNotifier {
           // 2. Migrer les liquidités (stale_cashBalance)
           // MODIFICATION : Créer UN SEUL dépôt pour le solde initial + coût des actifs
           final totalCashNeeded = (acc.stale_cashBalance ?? 0.0) + totalCashFromAssets;
-          
           if (totalCashNeeded > 0) {
             debugPrint(
                 "Migration : Ajout Dépôt initial de ${totalCashNeeded.toStringAsFixed(2)}€ pour ${acc.name} "
-                "(Liquidités: ${acc.stale_cashBalance?.toStringAsFixed(2) ?? '0.00'}€ + Actifs: ${totalCashFromAssets.toStringAsFixed(2)}€)");
-            
+                    "(Liquidités: ${acc.stale_cashBalance?.toStringAsFixed(2) ?? '0.00'}€ + Actifs: ${totalCashFromAssets.toStringAsFixed(2)}€)");
             newTransactions.add(Transaction(
               id: _uuid.v4(),
               accountId: acc.id,
@@ -215,7 +220,7 @@ class PortfolioProvider extends ChangeNotifier {
               amount: totalCashNeeded,
               notes: "Migration v1 - Dépôt initial (Solde: ${acc.stale_cashBalance?.toStringAsFixed(2) ?? '0.00'}€)",
             ));
-            acc.stale_cashBalance = null; // Nettoyer
+            acc.stale_cashBalance = null;
             portfolioNeedsSave = true;
           }
 
@@ -223,7 +228,6 @@ class PortfolioProvider extends ChangeNotifier {
           if (acc.stale_assets != null && acc.stale_assets!.isNotEmpty) {
             debugPrint(
                 "Migration : ${acc.stale_assets!.length} actifs pour ${acc.name}");
-
             for (final asset in acc.stale_assets!) {
               // Lire les données périmées de l'asset
               final qty = asset.stale_quantity;
@@ -233,7 +237,6 @@ class PortfolioProvider extends ChangeNotifier {
                 final totalCost = qty * pru;
                 debugPrint(
                     "Migration : Actif ${asset.ticker} (Qty: $qty, PRU: ${pru.toStringAsFixed(2)}€, Type: ${asset.type.displayName})");
-
                 // Étape 3a: Achat de l'actif (impact cash négatif)
                 // MODIFICATION : Utiliser le type d'actif existant
                 newTransactions.add(Transaction(
@@ -252,7 +255,7 @@ class PortfolioProvider extends ChangeNotifier {
                 ));
               }
             }
-            acc.stale_assets = null; // Nettoyer
+            acc.stale_assets = null;
             portfolioNeedsSave = true;
           }
         }
@@ -273,7 +276,6 @@ class PortfolioProvider extends ChangeNotifier {
 
     // 5. Marquer la migration comme terminée
     await settingsProvider.setMigrationV1Done();
-
     // 6. Recharger les données (Portfolio + Transactions injectées)
     debugPrint("--- FIN MIGRATION V1 : Rechargement des données ---");
     await loadAllPortfolios();
@@ -281,8 +283,12 @@ class PortfolioProvider extends ChangeNotifier {
   // --- FIN NOUVELLE MÉTHODE ---
 
 
-  // --- Le reste du fichier (synchroniserLesPrix, addDemoPortfolio, etc.) reste identique ---
-  // ... (Collez le reste du fichier PortfolioProvider à partir d'ici) ...
+  // --- NOUVEAU : Synchro manuelle ---
+  /// Force la synchronisation des prix en vidant d'abord le cache.
+  Future<void> forceSynchroniserLesPrix() async {
+    _apiService.clearCache();
+    await synchroniserLesPrix();
+  }
 
   Future<void> synchroniserLesPrix() async {
     if (_activePortfolio == null) return;
@@ -290,19 +296,20 @@ class PortfolioProvider extends ChangeNotifier {
     if (_settingsProvider?.isOnlineMode != true) return;
 
     _isSyncing = true;
+    // NOUVEAU : Définir le message de la SnackBar
+    _syncMessage = _settingsProvider!.hasFmpApiKey
+        ? "Synchro via API FMP..."
+        : "Synchro via Yahoo Finance...";
     notifyListeners();
 
     try {
       bool hasChanges = false;
       final portfolioToSync = _activePortfolio!;
-
       // 1. Collecter tous les actifs (MAJ : utilise le getter)
       List<Asset> allAssets = [];
       for (var inst in portfolioToSync.institutions) {
         for (var acc in inst.accounts) {
-          // NOTE : 'assets' est maintenant un getter qui sera vide
-          // car la logique n'est pas implémentée.
-          // La synchro ne fonctionnera qu'après l'implémentation des getters.
+          // NOTE : 'assets' est maintenant un getter
           allAssets.addAll(acc.assets);
         }
       }
@@ -311,6 +318,7 @@ class PortfolioProvider extends ChangeNotifier {
       allAssets.map((a) => a.ticker).where((t) => t.isNotEmpty).toSet();
       if (tickers.isEmpty) {
         _isSyncing = false;
+        _syncMessage = null; // NOUVEAU
         notifyListeners();
         return;
       }
@@ -331,7 +339,6 @@ class PortfolioProvider extends ChangeNotifier {
         }),
         eagerError: false, // Continue même si un Future échoue
       );
-      
       // 3. Mettre à jour les métadonnées des actifs
       for (var ticker in prices.keys) {
         final newPrice = prices[ticker];
@@ -355,6 +362,7 @@ class PortfolioProvider extends ChangeNotifier {
       debugPrint("⚠️ Erreur lors de la synchronisation des prix : $e");
     } finally {
       _isSyncing = false;
+      _syncMessage = null; // NOUVEAU
       notifyListeners();
     }
   }
@@ -375,7 +383,6 @@ class PortfolioProvider extends ChangeNotifier {
     final demo = _repository.createDemoPortfolio();
     _portfolios.add(demo);
     _activePortfolio = demo;
-
     // MODIFIÉ : Recharger pour hydrater les transactions de démo
     loadAllPortfolios();
   }
@@ -442,7 +449,6 @@ class PortfolioProvider extends ChangeNotifier {
 
     // 4. Maintenant que les transactions sont supprimées, supprimer le portefeuille
     await _repository.deletePortfolio(portfolioId);
-
     // 5. Mettre à jour l'état local (logique existante)
     _portfolios.removeWhere((p) => p.id == portfolioId);
     if (_activePortfolio?.id == portfolioId) {
@@ -457,7 +463,8 @@ class PortfolioProvider extends ChangeNotifier {
     _activePortfolio = null;
 
     // NOUVEAU : Réinitialiser aussi le drapeau de migration
-    await _settingsProvider?.setMigrationV1Done(); // Marque comme fait (car vide)
+    await _settingsProvider?.setMigrationV1Done();
+    // Marque comme fait (car vide)
 
     notifyListeners();
   }
@@ -532,7 +539,6 @@ class PortfolioProvider extends ChangeNotifier {
     final metadata = _repository.getOrCreateAssetMetadata(ticker);
     metadata.updatePrice(newPrice);
     await _repository.saveAssetMetadata(metadata);
-
     // Recharger les portfolios (qui notifiera les listeners)
     await loadAllPortfolios();
   }

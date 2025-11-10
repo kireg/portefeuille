@@ -1,12 +1,13 @@
 // lib/features/06_settings/ui/widgets/app_settings.dart
+// REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
 class AppSettings extends StatefulWidget {
   const AppSettings({super.key});
-
   @override
   State<AppSettings> createState() => _AppSettingsState();
 }
@@ -16,15 +17,22 @@ class _AppSettingsState extends State<AppSettings> {
   bool _obscureKey = true;
   bool _isKeyCurrentlySaved = false;
 
+  // NOUVEAU : État pour la vérification de l'utilisation
+  bool _isLoadingUsage = false;
+  String? _apiUsageText;
+  late final ApiService _apiService;
+
   @override
   void initState() {
     super.initState();
     _fmpKeyController = TextEditingController();
 
-    // On vérifie l'état initial (si une clé est déjà sauvegardée)
     // On utilise listen: false car on est dans initState
-    _isKeyCurrentlySaved =
-        Provider.of<SettingsProvider>(context, listen: false).hasFmpApiKey;
+    final settingsProvider = context.read<SettingsProvider>();
+    _isKeyCurrentlySaved = settingsProvider.hasFmpApiKey;
+
+    // NOUVEAU : Récupérer l'ApiService
+    _apiService = context.read<ApiService>();
   }
 
   @override
@@ -40,18 +48,17 @@ class _AppSettingsState extends State<AppSettings> {
 
     // Cacher le clavier
     FocusScope.of(context).unfocus();
-
     try {
       // 1. Sauvegarder la clé (ou la supprimer si le champ est vide)
       await provider.setFmpApiKey(key);
-
       // 2. Mettre à jour l'état local
       setState(() {
         _isKeyCurrentlySaved = provider.hasFmpApiKey;
         // 3. Vider le champ pour la sécurité
         _fmpKeyController.clear();
+        // NOUVEAU : Réinitialiser le texte d'utilisation si la clé change
+        _apiUsageText = null;
       });
-
       // 4. Afficher la confirmation
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -68,6 +75,23 @@ class _AppSettingsState extends State<AppSettings> {
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
+    }
+  }
+
+  // NOUVEAU : Logique pour vérifier l'utilisation de l'API
+  Future<void> _checkApiUsage() async {
+    setState(() {
+      _isLoadingUsage = true;
+      _apiUsageText = null;
+    });
+
+    final result = await _apiService.getApiUsage();
+
+    if (mounted) {
+      setState(() {
+        _apiUsageText = result;
+        _isLoadingUsage = false;
+      });
     }
   }
 
@@ -146,10 +170,45 @@ class _AppSettingsState extends State<AppSettings> {
                     if (_isKeyCurrentlySaved)
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          "✓ Une clé API est actuellement enregistrée.",
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: Colors.green[400]),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "✓ Une clé API est actuellement enregistrée.",
+                              style: theme.textTheme.bodySmall
+                                  ?.copyWith(color: Colors.green[400]),
+                            ),
+                            const SizedBox(height: 8),
+                            // --- NOUVEAU : BOUTON ET AFFICHAGE UTILISATION ---
+                            if (_isLoadingUsage)
+                              const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            else if (_apiUsageText != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  _apiUsageText!,
+                                  style: theme.textTheme.bodySmall
+                                      ?.copyWith(color: Colors.grey[400]),
+                                ),
+                              )
+                            else
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                                onPressed: _checkApiUsage,
+                                child: const Text("Vérifier l'utilisation"),
+                              ),
+                            // --- FIN NOUVEAU ---
+                          ],
                         ),
                       ),
                   ],

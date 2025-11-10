@@ -1,4 +1,5 @@
 // lib/core/data/services/api_service.dart
+// REMPLACEZ LE FICHIER COMPLET
 
 import 'dart:async';
 import 'dart:io';
@@ -11,7 +12,6 @@ import 'dart:convert';
 class _CacheEntry {
   final double value;
   final DateTime timestamp;
-
   _CacheEntry(this.value) : timestamp = DateTime.now();
 
   bool get isStale =>
@@ -23,7 +23,6 @@ class TickerSuggestion {
   final String ticker;
   final String name;
   final String exchange;
-
   TickerSuggestion(
       {required this.ticker, required this.name, required this.exchange});
 }
@@ -55,7 +54,8 @@ class ApiService {
       }
 
       // 2. Si le cache est vide ou obsolète, appeler le réseau
-      double? price;
+      double?
+      price;
       final bool hasFmpKey = _settingsProvider.hasFmpApiKey;
 
       if (hasFmpKey) {
@@ -83,15 +83,12 @@ class ApiService {
   /// Tente de récupérer un prix via FMP (Financial Modeling Prep)
   Future<double?> _fetchFromFmp(String ticker) async {
     if (!_settingsProvider.hasFmpApiKey) return null;
-
     final apiKey = _settingsProvider.fmpApiKey!;
     final uri = Uri.parse(
         'https://financialmodelingprep.com/api/v3/quote-short/$ticker?apikey=$apiKey');
-
     try {
       final response =
       await _httpClient.get(uri).timeout(const Duration(seconds: 5));
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data is List && data.isNotEmpty) {
@@ -112,12 +109,10 @@ class ApiService {
   Future<double?> _fetchFromYahoo(String ticker) async {
     final yahooUrl = Uri.parse(
         'https://query1.finance.yahoo.com/v7/finance/spark?symbols=$ticker&range=1d&interval=1d');
-
     try {
       final response = await _httpClient.get(yahooUrl, headers: {
         'User-Agent': 'Mozilla/5.0'
       }).timeout(const Duration(seconds: 8));
-
       if (response.statusCode != 200) {
         debugPrint(
             'Erreur de l\'API Yahoo Finance (spark) pour $ticker: ${response.body}');
@@ -126,13 +121,12 @@ class ApiService {
 
       final jsonData = jsonDecode(response.body);
       final List<dynamic>? results = jsonData['spark']?['result'];
-
       if (results != null && results.isNotEmpty) {
         final result = results[0];
-        final String? resultSymbol = result['symbol'];
+        final String?
+        resultSymbol = result['symbol'];
         final num? newPriceNum =
         result['response']?[0]?['meta']?['regularMarketPrice'];
-
         if (resultSymbol == ticker && newPriceNum != null) {
           return newPriceNum.toDouble();
         }
@@ -157,14 +151,11 @@ class ApiService {
     // 2. Appeler l'API de recherche Yahoo
     final url = Uri.parse(
         'https://query1.finance.yahoo.com/v1/finance/search?q=$query&lang=fr-FR&region=FR');
-
     try {
       debugPrint("🔍 Recherche de ticker: '$query' - URL: $url");
-      
       final response = await _httpClient.get(url, headers: {
         'User-Agent': 'Mozilla/5.0'
       }).timeout(const Duration(seconds: 5));
-
       debugPrint("✅ Réponse reçue - Status: ${response.statusCode}");
 
       if (response.statusCode != 200) {
@@ -180,10 +171,10 @@ class ApiService {
       debugPrint("📊 ${quotes.length} résultats trouvés");
 
       for (final quote in quotes) {
-        final String? ticker = quote['symbol'];
+        final String?
+        ticker = quote['symbol'];
         final String? name = quote['longname'] ?? quote['shortname'];
         final String? exchange = quote['exchDisp'];
-
         if (ticker != null && name != null && exchange != null) {
           // Filtrer les résultats non pertinents
           if (quote['quoteType'] == 'EQUITY' ||
@@ -196,7 +187,6 @@ class ApiService {
       }
 
       debugPrint("✅ ${suggestions.length} suggestions valides");
-
       // 3. Mettre en cache
       _searchCache[query] = suggestions;
       _searchCacheTimestamps[query] = DateTime.now();
@@ -212,6 +202,49 @@ class ApiService {
     } catch (e) {
       debugPrint("❌ Erreur lors de la recherche de ticker pour '$query': $e");
       return []; // Retourner une liste vide en cas d'erreur
+    }
+  }
+
+  // --- NOUVEAU ---
+  /// Vide les caches de prix et de recherche.
+  void clearCache() {
+    _priceCache.clear();
+    _searchCache.clear();
+    _searchCacheTimestamps.clear();
+    debugPrint("ℹ️ Caches de l'ApiService vidés.");
+  }
+
+  // --- NOUVEAU ---
+  /// Récupère l'état de la consommation de l'API FMP.
+  /// Retourne une chaîne formatée ou un message d'erreur.
+  Future<String> getApiUsage() async {
+    if (!_settingsProvider.hasFmpApiKey) {
+      return "Aucune clé FMP n'est configurée.";
+    }
+
+    final apiKey = _settingsProvider.fmpApiKey!;
+    // Note : C'est un endpoint FMP typique, ajustez si nécessaire.
+    final uri = Uri.parse(
+        'https://financialmodelingprep.com/api/v3/api-limitation?apikey=$apiKey');
+
+    try {
+      final response =
+      await _httpClient.get(uri).timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is Map && data.containsKey('apiCallsLimit') && data.containsKey('apiCallsMade')) {
+          final limit = data['apiCallsLimit'];
+          final made = data['apiCallsMade'];
+          return "Utilisation : $made / $limit requêtes";
+        }
+        return "Réponse API FMP inattendue.";
+      } else {
+        return "Erreur FMP : Statut ${response.statusCode}";
+      }
+    } catch (e) {
+      debugPrint("Erreur lors de la récupération de l'utilisation FMP : $e");
+      return "Impossible de contacter le service FMP.";
     }
   }
 }
