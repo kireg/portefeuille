@@ -48,14 +48,39 @@ class OverviewTab extends StatelessWidget {
                     PortfolioHeader(portfolio: portfolio),
                     const SizedBox(height: 24),
 
-                    // 1b. AllocationChart
-                    AllocationChart(portfolio: portfolio),
-                    const SizedBox(height: 24),
-
-                    // 1c. AssetTypeAllocationChart
-                    AssetTypeAllocationChart(
-                      allocationData: portfolio.valueByAssetType,
-                      totalValue: portfolio.totalValue,
+                    // 1b. Graphiques d'allocation (côte à côte si largeur suffisante)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Si largeur >= 800px, afficher en ligne
+                        if (constraints.maxWidth >= 800) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: AllocationChart(portfolio: portfolio),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: AssetTypeAllocationChart(
+                                  allocationData: portfolio.valueByAssetType,
+                                  totalValue: portfolio.totalValue,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        // Sinon, afficher en colonne
+                        return Column(
+                          children: [
+                            AllocationChart(portfolio: portfolio),
+                            const SizedBox(height: 24),
+                            AssetTypeAllocationChart(
+                              allocationData: portfolio.valueByAssetType,
+                              totalValue: portfolio.totalValue,
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
 
@@ -78,7 +103,8 @@ class OverviewTab extends StatelessWidget {
                             showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
-                              builder: (context) => const AddInstitutionScreen(),
+                              builder: (context) =>
+                                  const AddInstitutionScreen(),
                             );
                           },
                         ),
@@ -97,7 +123,7 @@ class OverviewTab extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                      (context, index) {
+                  (context, index) {
                     final institution = institutions[index];
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8.0),
@@ -126,8 +152,8 @@ class OverviewTab extends StatelessWidget {
                               showModalBottomSheet(
                                 context: context,
                                 isScrollControlled: true,
-                                builder: (context) =>
-                                    AddAccountScreen(institutionId: institution.id),
+                                builder: (context) => AddAccountScreen(
+                                    institutionId: institution.id),
                               );
                             },
                           ),

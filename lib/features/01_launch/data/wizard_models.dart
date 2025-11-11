@@ -47,6 +47,7 @@ class WizardAsset {
   double quantity;
   double averagePrice; // PRU
   double currentPrice; // Prix actuel (pour calculer la valeur actuelle)
+  double? estimatedYield; // Rendement annuel estimé (optionnel, en %)
   DateTime firstPurchaseDate;
   final String accountDisplayName; // Référence au compte parent
 
@@ -59,6 +60,7 @@ class WizardAsset {
     required this.firstPurchaseDate,
     required this.accountDisplayName,
     this.type,
+    this.estimatedYield,
   });
 
   bool get isValid =>

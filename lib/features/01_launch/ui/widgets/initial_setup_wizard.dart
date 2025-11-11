@@ -272,14 +272,28 @@ class _InitialSetupWizardState extends State<InitialSetupWizard> {
           provider.addAccount(institution.id, account);
           await Future.delayed(const Duration(milliseconds: 50));
 
-          // 3. Créer une transaction Deposit pour le solde initial
-          if (wizardAccount.cashBalance > 0) {
+          // 3. Calculer le total des actifs pour ce compte
+          final accountAssets = _assets
+              .where((a) => a.accountDisplayName == wizardAccount.displayName)
+              .toList();
+
+          final totalAssetsValue = accountAssets.fold<double>(
+            0.0,
+            (sum, asset) => sum + (asset.quantity * asset.averagePrice),
+          );
+
+          // 4. Créer une transaction Deposit pour le solde initial
+          // IMPORTANT : On ajoute le cash + la valeur des actifs car les actifs
+          // vont être "achetés" via des transactions Buy qui vont déduire du cash
+          final totalDeposit = wizardAccount.cashBalance + totalAssetsValue;
+
+          if (totalDeposit > 0) {
             final depositTransaction = Transaction(
               id: uuid.v4(),
               accountId: account.id,
               type: TransactionType.Deposit,
               date: DateTime.now(),
-              amount: wizardAccount.cashBalance,
+              amount: totalDeposit,
               fees: 0.0,
               notes: 'Solde initial (assistant de configuration)',
             );
@@ -287,10 +301,7 @@ class _InitialSetupWizardState extends State<InitialSetupWizard> {
             await Future.delayed(const Duration(milliseconds: 50));
           }
 
-          // 4. Créer les transactions Buy pour les actifs
-          final accountAssets = _assets
-              .where((a) => a.accountDisplayName == wizardAccount.displayName)
-              .toList();
+          // 5. Créer les transactions Buy pour les actifs
 
           for (final wizardAsset in accountAssets) {
             final buyTransaction = Transaction(
@@ -315,6 +326,13 @@ class _InitialSetupWizardState extends State<InitialSetupWizard> {
             await provider.updateAssetPrice(
                 wizardAsset.ticker, wizardAsset.currentPrice);
             await Future.delayed(const Duration(milliseconds: 50));
+
+            // Sauvegarder le rendement estimé dans les métadonnées (si fourni)
+            if (wizardAsset.estimatedYield != null) {
+              await provider.updateAssetYield(
+                  wizardAsset.ticker, wizardAsset.estimatedYield!);
+              await Future.delayed(const Duration(milliseconds: 50));
+            }
           }
         }
       }

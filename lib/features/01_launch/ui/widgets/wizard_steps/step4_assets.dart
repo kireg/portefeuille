@@ -33,6 +33,7 @@ class _Step4AssetsState extends State<Step4Assets> {
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _pruController = TextEditingController();
   final TextEditingController _currentPriceController = TextEditingController();
+  final TextEditingController _yieldController = TextEditingController();
 
   WizardAccount? _selectedAccount;
   AssetType? _selectedAssetType;
@@ -62,6 +63,7 @@ class _Step4AssetsState extends State<Step4Assets> {
     _quantityController.dispose();
     _pruController.dispose();
     _currentPriceController.dispose();
+    _yieldController.dispose();
     super.dispose();
   }
 
@@ -106,13 +108,20 @@ class _Step4AssetsState extends State<Step4Assets> {
       _suggestions = [];
     });
 
-    // Récupérer le prix actuel
+    // Récupérer le prix actuel et le mettre dans le champ "Prix actuel"
     if (widget.enableOnlineMode) {
       final apiService = context.read<ApiService>();
       apiService.getPrice(suggestion.ticker).then((priceResult) {
         if (priceResult.price != null && mounted) {
-          _pruController.text = priceResult.price!.toStringAsFixed(2);
+          _currentPriceController.text = priceResult.price!.toStringAsFixed(2);
+          debugPrint(
+              '💰 Prix actuel récupéré pour ${suggestion.ticker}: ${priceResult.price}€');
+        } else {
+          debugPrint('⚠️ Prix non disponible pour ${suggestion.ticker}');
         }
+      }).catchError((error) {
+        debugPrint(
+            '❌ Erreur lors de la récupération du prix pour ${suggestion.ticker}: $error');
       });
     }
   }
@@ -125,6 +134,7 @@ class _Step4AssetsState extends State<Step4Assets> {
     final quantityStr = _quantityController.text.trim();
     final pruStr = _pruController.text.trim();
     final currentPriceStr = _currentPriceController.text.trim();
+    final yieldStr = _yieldController.text.trim();
 
     if (ticker.isEmpty ||
         name.isEmpty ||
@@ -141,6 +151,9 @@ class _Step4AssetsState extends State<Step4Assets> {
     final quantity = double.tryParse(quantityStr);
     final pru = double.tryParse(pruStr);
     final currentPrice = double.tryParse(currentPriceStr);
+    // Convertir le rendement de pourcentage (3.0) en décimal (0.03)
+    final yieldValue = yieldStr.isNotEmpty ? double.tryParse(yieldStr) : null;
+    final estimatedYield = yieldValue != null ? yieldValue / 100 : null;
 
     if (quantity == null || quantity <= 0 || pru == null || pru <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -163,6 +176,7 @@ class _Step4AssetsState extends State<Step4Assets> {
       quantity: quantity,
       averagePrice: pru,
       currentPrice: currentPrice,
+      estimatedYield: estimatedYield,
       firstPurchaseDate: _firstPurchaseDate,
       accountDisplayName: _selectedAccount!.displayName,
       type: _selectedAssetType,
@@ -177,6 +191,7 @@ class _Step4AssetsState extends State<Step4Assets> {
     _quantityController.clear();
     _pruController.clear();
     _currentPriceController.clear();
+    _yieldController.clear();
     _selectedAssetType = null;
     _firstPurchaseDate = DateTime.now();
 
@@ -412,6 +427,26 @@ class _Step4AssetsState extends State<Step4Assets> {
                       helperText:
                           'Prix actuel de l\'actif (pour calcul de la valeur)',
                       prefixIcon: Icon(Icons.attach_money),
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d+\.?\d{0,2}')),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Rendement annuel estimé (optionnel)
+                  TextField(
+                    controller: _yieldController,
+                    decoration: const InputDecoration(
+                      labelText: 'Rendement annuel estimé (%)',
+                      hintText: '3.5',
+                      helperText:
+                          'Optionnel : dividendes ou intérêts annuels attendus',
+                      prefixIcon: Icon(Icons.percent),
                       border: OutlineInputBorder(),
                     ),
                     keyboardType:

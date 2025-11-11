@@ -15,12 +15,15 @@ class ProjectionData {
   final int year;
   final double
       initialInvestedCapital; // Capital initial réellement investi (PRU)
+  final double
+      currentPortfolioValue; // Valeur actuelle du portefeuille (année 0)
   final double newInvestments; // Nouveaux versements via plans d'épargne
   final double totalValue; // Valeur totale projetée (base + apports + intérêts)
 
   ProjectionData({
     required this.year,
     required this.initialInvestedCapital,
+    required this.currentPortfolioValue,
     required this.newInvestments,
     required this.totalValue,
   });
@@ -30,6 +33,13 @@ class ProjectionData {
 
   // Gain total = valeur totale - capital investi
   double get totalGain => totalValue - investedCapital;
+
+  // Gains déjà réalisés (P/L actuel)
+  double get realizedGains => currentPortfolioValue - initialInvestedCapital;
+
+  // Gains projetés (rendement futur)
+  double get projectedGains =>
+      totalValue - currentPortfolioValue - newInvestments;
 }
 
 class PlannerTab extends StatefulWidget {
@@ -104,9 +114,8 @@ class _PlannerTabState extends State<PlannerTab> {
     // NOUVEAU : Récupérer le capital réellement investi dans le portefeuille actuel
     final double initialInvestedCapital = portfolio.totalInvestedCapital;
 
-    // --- CORRECTION ICI (ne plus diviser par 100) ---
+    // Le rendement est stocké en décimal (0.03 pour 3%)
     final double portfolioAnnualYield = portfolio.estimatedAnnualYield;
-    // --- FIN CORRECTION ---
 
     // Calculer le total des versements mensuels et le rendement pondéré des plans
     double totalMonthlyInvestment = 0;
@@ -115,9 +124,8 @@ class _PlannerTabState extends State<PlannerTab> {
     for (var plan in portfolio.savingsPlans.where((p) => p.isActive)) {
       final targetAsset = _findAssetByTicker(portfolio, plan.targetTicker);
 
-      // --- CORRECTION ICI (ne plus diviser par 100) ---
+      // Le rendement est stocké en décimal (0.03 pour 3%)
       final assetYield = (targetAsset?.estimatedAnnualYield ?? 0.0);
-      // --- FIN CORRECTION ---
 
       totalMonthlyInvestment += plan.monthlyAmount;
       weightedPlansYield += plan.monthlyAmount * assetYield;
@@ -148,6 +156,7 @@ class _PlannerTabState extends State<PlannerTab> {
       data.add(ProjectionData(
         year: year,
         initialInvestedCapital: initialInvestedCapital,
+        currentPortfolioValue: initialPortfolioValue,
         newInvestments: newInvestments,
         totalValue: totalValue,
       ));
@@ -351,6 +360,35 @@ class _PlannerTabState extends State<PlannerTab> {
                       ),
                       // --- FIN MODIFICATION ---
                       const SizedBox(height: 16),
+                      // Légende du graphique
+                      Wrap(
+                        spacing: 16,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          _buildLegendItem(
+                            theme.colorScheme.primary.withOpacity(0.6),
+                            'Capital investi',
+                            theme,
+                          ),
+                          _buildLegendItem(
+                            Colors.green.shade200,
+                            'Gains réalisés',
+                            theme,
+                          ),
+                          _buildLegendItem(
+                            Colors.green.shade600,
+                            'Gains projetés',
+                            theme,
+                          ),
+                          _buildLegendItem(
+                            theme.colorScheme.secondary.withOpacity(0.8),
+                            'Nouveaux versements',
+                            theme,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       // --- MODIFIÉ : Contrôles de durée ---
                       ToggleButtons(
                         isSelected: _durations
@@ -394,26 +432,56 @@ class _PlannerTabState extends State<PlannerTab> {
             toY: d.totalValue,
             borderRadius: BorderRadius.zero,
             width: 18,
-            rodStackItems: [
-              // 1. Capital initial investi (PRU du portefeuille actuel)
-              BarChartRodStackItem(
-                0,
-                d.initialInvestedCapital,
-                theme.colorScheme.primary.withOpacity(0.6),
-              ),
-              // 2. Nouveaux versements (Plans d'épargne)
-              BarChartRodStackItem(
-                d.initialInvestedCapital,
-                d.investedCapital, // initialInvestedCapital + newInvestments
-                theme.colorScheme.secondary.withOpacity(0.8),
-              ),
-              // 3. Gains (intérêts composés)
-              BarChartRodStackItem(
-                d.investedCapital,
-                d.totalValue,
-                Colors.green.shade400,
-              ),
-            ],
+            rodStackItems: d.year == 1
+                ? [
+                    // ANNÉE 1 : Affichage détaillé avec gains réalisés séparés
+                    // 1. Capital initial investi
+                    BarChartRodStackItem(
+                      0,
+                      d.initialInvestedCapital,
+                      theme.colorScheme.primary.withOpacity(0.6),
+                    ),
+                    // 2. Gains déjà réalisés (P/L actuel)
+                    BarChartRodStackItem(
+                      d.initialInvestedCapital,
+                      d.currentPortfolioValue,
+                      Colors.green.shade200,
+                    ),
+                    // 3. Nouveaux versements (si plans d'épargne)
+                    if (d.newInvestments > 0)
+                      BarChartRodStackItem(
+                        d.currentPortfolioValue,
+                        d.currentPortfolioValue + d.newInvestments,
+                        theme.colorScheme.secondary.withOpacity(0.8),
+                      ),
+                    // 4. Gains projetés (rendement futur)
+                    BarChartRodStackItem(
+                      d.currentPortfolioValue + d.newInvestments,
+                      d.totalValue,
+                      Colors.green.shade600,
+                    ),
+                  ]
+                : [
+                    // ANNÉES 2+ : Affichage standard
+                    // 1. Capital initial investi
+                    BarChartRodStackItem(
+                      0,
+                      d.initialInvestedCapital,
+                      theme.colorScheme.primary.withOpacity(0.6),
+                    ),
+                    // 2. Nouveaux versements
+                    BarChartRodStackItem(
+                      d.initialInvestedCapital,
+                      d.investedCapital,
+                      theme.colorScheme.secondary.withOpacity(0.8),
+                    ),
+                    // 3. Gains totaux (tout est projection)
+                    BarChartRodStackItem(
+                      d.investedCapital,
+                      d.totalValue,
+                      Colors.green.shade400,
+                    ),
+                  ],
           ),
         ],
       );
@@ -500,6 +568,18 @@ class _PlannerTabState extends State<PlannerTab> {
         touchTooltipData: BarTouchTooltipData(
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
             final d = data[groupIndex];
+            // Tooltip détaillé pour l'année 1
+            if (d.year == 1) {
+              return BarTooltipItem(
+                'Année ${d.year}\n'
+                'Total: ${CurrencyFormatter.format(d.totalValue)}\n'
+                'Investi: ${CurrencyFormatter.format(d.investedCapital)}\n'
+                'Gains réalisés: ${CurrencyFormatter.format(d.realizedGains)}\n'
+                'Gains projetés: ${CurrencyFormatter.format(d.projectedGains)}',
+                theme.textTheme.bodySmall!.copyWith(color: Colors.white),
+              );
+            }
+            // Tooltip standard pour les autres années
             return BarTooltipItem(
               'Année ${d.year}\n'
               'Total: ${CurrencyFormatter.format(d.totalValue)}\n'
@@ -510,6 +590,28 @@ class _PlannerTabState extends State<PlannerTab> {
           },
         ),
       ),
+    );
+  }
+
+  // Fonction helper pour créer un élément de légende
+  Widget _buildLegendItem(Color color, String label, ThemeData theme) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall,
+        ),
+      ],
     );
   }
 }
