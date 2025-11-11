@@ -62,9 +62,8 @@ class Asset {
   // NOUVEAU : Getter pour le PRU
   double get averagePrice {
     if (transactions.isEmpty) return 0.0;
-    final buyTransactions = transactions
-        .where((tr) => tr.type == TransactionType.Buy)
-        .toList();
+    final buyTransactions =
+        transactions.where((tr) => tr.type == TransactionType.Buy).toList();
     if (buyTransactions.isEmpty) return 0.0;
 
     double totalCost = 0.0;
@@ -95,7 +94,7 @@ class Asset {
     this.stale_quantity,
     this.stale_averagePrice,
   }) : type = type ??
-      AssetType.Other; // <--- MODIFICATION 2: Assignation par défaut
+            AssetType.Other; // <--- MODIFICATION 2: Assignation par défaut
 
   double get totalValue => quantity * currentPrice;
 

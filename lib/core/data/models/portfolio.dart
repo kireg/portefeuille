@@ -44,14 +44,15 @@ class Portfolio {
 
   // NOUVEAU : Capital investi total (somme de tous les achats)
   double get totalInvestedCapital {
-    return institutions.fold(0.0, (sum, inst) => sum + inst.totalInvestedCapital);
+    return institutions.fold(
+        0.0, (sum, inst) => sum + inst.totalInvestedCapital);
   }
 
   // NOUVEAU : Logique de P/L en pourcentage
   // CORRIGÉ : Formule correcte basée sur le capital investi
   double get profitAndLossPercentage {
     final capitalInvested = totalInvestedCapital;
-    
+
     // Si aucun capital investi, pas de P/L
     if (capitalInvested == 0) {
       return 0.0;
@@ -66,8 +67,8 @@ class Portfolio {
     if (totalVal == 0) {
       return 0.0;
     }
-    final weightedYield = institutions.fold(
-        0.0, (sum, inst) => sum + (inst.totalValue * inst.estimatedAnnualYield));
+    final weightedYield = institutions.fold(0.0,
+        (sum, inst) => sum + (inst.totalValue * inst.estimatedAnnualYield));
     return weightedYield / totalVal;
   }
 
@@ -87,7 +88,6 @@ class Portfolio {
 
     for (var inst in institutions) {
       for (var acc in inst.accounts) {
-
         // 1. Ajouter les liquidités du compte
         totalCash += acc.cashBalance; // <-- NOUVEAU
 
@@ -95,7 +95,7 @@ class Portfolio {
         for (var asset in acc.assets) {
           allocation.update(
             asset.type,
-                (value) => value + asset.totalValue,
+            (value) => value + asset.totalValue,
             ifAbsent: () => asset.totalValue,
           );
         }
@@ -106,7 +106,7 @@ class Portfolio {
     if (totalCash > 0) {
       allocation.update(
         AssetType.Cash,
-            (value) => value + totalCash,
+        (value) => value + totalCash,
         ifAbsent: () => totalCash,
       );
     }

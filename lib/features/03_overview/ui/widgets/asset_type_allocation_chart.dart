@@ -44,38 +44,38 @@ class _AssetTypeAllocationChartState extends State<AssetTypeAllocationChart> {
               height: 180,
               child: hasData
                   ? PieChart(
-                PieChartData(
-                  pieTouchData: PieTouchData(
-                    touchCallback:
-                        (FlTouchEvent event, pieTouchResponse) {
-                      setState(() {
-                        if (!event.isInterestedForInteractions ||
-                            pieTouchResponse == null ||
-                            pieTouchResponse.touchedSection == null) {
-                          touchedIndex = -1;
-                          return;
-                        }
-                        touchedIndex = pieTouchResponse
-                            .touchedSection!.touchedSectionIndex;
-                      });
-                    },
-                  ),
-                  sections: _generateSections(
-                    context,
-                    widget.allocationData,
-                    widget.totalValue,
-                  ),
-                  centerSpaceRadius: 40,
-                  sectionsSpace: 2,
-                ),
-              )
+                      PieChartData(
+                        pieTouchData: PieTouchData(
+                          touchCallback:
+                              (FlTouchEvent event, pieTouchResponse) {
+                            setState(() {
+                              if (!event.isInterestedForInteractions ||
+                                  pieTouchResponse == null ||
+                                  pieTouchResponse.touchedSection == null) {
+                                touchedIndex = -1;
+                                return;
+                              }
+                              touchedIndex = pieTouchResponse
+                                  .touchedSection!.touchedSectionIndex;
+                            });
+                          },
+                        ),
+                        sections: _generateSections(
+                          context,
+                          widget.allocationData,
+                          widget.totalValue,
+                        ),
+                        centerSpaceRadius: 40,
+                        sectionsSpace: 2,
+                      ),
+                    )
                   : Center(
-                child: Text(
-                  'Aucune donnée d\'allocation disponible.',
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: Colors.grey),
-                ),
-              ),
+                      child: Text(
+                        'Aucune donnée d\'allocation disponible.',
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: Colors.grey),
+                      ),
+                    ),
             ),
           ],
         ),
@@ -84,10 +84,10 @@ class _AssetTypeAllocationChartState extends State<AssetTypeAllocationChart> {
   }
 
   List<PieChartSectionData> _generateSections(
-      BuildContext context,
-      Map<AssetType, double> allocationData,
-      double totalValue,
-      ) {
+    BuildContext context,
+    Map<AssetType, double> allocationData,
+    double totalValue,
+  ) {
     // Palette de couleurs statique
     final List<Color> colors = [
       Colors.blue.shade400,
@@ -110,7 +110,7 @@ class _AssetTypeAllocationChartState extends State<AssetTypeAllocationChart> {
       final assetType = entry.key;
       final value = entry.value;
 
-      // CORRIGÉ : Le pourcentage est calculé ici (0-100), 
+      // CORRIGÉ : Le pourcentage est calculé ici (0-100),
       // ne pas multiplier par 100 une seconde fois
       final percentage = (value / totalValue) * 100;
       final radius = isTouched ? 60.0 : 50.0;

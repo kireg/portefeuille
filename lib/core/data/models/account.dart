@@ -31,7 +31,7 @@ class Account {
 
   // Doit être injecté par le Repository
   List<Transaction> transactions = [];
-  
+
   // NOUVEAU : Cache des assets avec métadonnées injectées
   List<Asset>? _cachedAssets;
 
@@ -52,11 +52,11 @@ class Account {
     if (_cachedAssets != null) {
       return _cachedAssets!;
     }
-    
+
     // Sinon, générer les assets (sans métadonnées)
     final assetTransactions = transactions
         .where((tr) =>
-    tr.type == TransactionType.Buy || tr.type == TransactionType.Sell)
+            tr.type == TransactionType.Buy || tr.type == TransactionType.Sell)
         .toList();
 
     if (assetTransactions.isEmpty) return [];
@@ -72,9 +72,9 @@ class Account {
     // Créer les objets Asset
     final List<Asset> generatedAssets = [];
     groupedByTicker.forEach((ticker, tickerTransactions) {
-
       // Trouver la transaction la plus récente pour obtenir le nom
-      final lastTx = tickerTransactions.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
+      final lastTx =
+          tickerTransactions.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
 
       // Créer l'objet Asset.
       // Le 'currentPrice' et 'yield' seront à 0.0 par défaut.
@@ -96,12 +96,12 @@ class Account {
 
     return generatedAssets;
   }
-  
+
   // NOUVEAU : Méthode pour rafraîchir le cache avec les métadonnées
   void refreshAssetsCache(List<Asset> assetsWithMetadata) {
     _cachedAssets = assetsWithMetadata;
   }
-  
+
   // NOUVEAU : Méthode pour vider le cache
   void clearAssetsCache() {
     _cachedAssets = null;
@@ -119,7 +119,7 @@ class Account {
 
   double get totalValue {
     final assetsValue =
-    assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
+        assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
     return assetsValue + cashBalance;
   }
 
@@ -134,14 +134,12 @@ class Account {
 
   double get estimatedAnnualYield {
     final assetsValue =
-    assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
+        assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
     if (assetsValue == 0) {
       return 0.0;
     }
-    final weightedYield = assets.fold(
-        0.0,
-            (sum, asset) =>
-        sum + (asset.totalValue * asset.estimatedAnnualYield));
+    final weightedYield = assets.fold(0.0,
+        (sum, asset) => sum + (asset.totalValue * asset.estimatedAnnualYield));
 
     // Éviter la division par zéro si assetsValue est nul
     if (assetsValue == 0) return 0.0;

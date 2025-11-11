@@ -30,13 +30,14 @@ class Institution {
 
   // NOUVEAU : Capital investi total
   double get totalInvestedCapital {
-    return accounts.fold(0.0, (sum, account) => sum + account.totalInvestedCapital);
+    return accounts.fold(
+        0.0, (sum, account) => sum + account.totalInvestedCapital);
   }
 
   // CORRIGÉ : Formule correcte basée sur le capital investi
   double get profitAndLossPercentage {
     final capitalInvested = totalInvestedCapital;
-    
+
     // Si aucun capital investi, pas de P/L
     if (capitalInvested == 0) {
       return 0.0;

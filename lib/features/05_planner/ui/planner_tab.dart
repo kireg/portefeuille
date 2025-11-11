@@ -13,19 +13,23 @@ import '../../07_management/ui/screens/add_savings_plan_screen.dart';
 // NOUVEAU : Classe pour les données de projection
 class ProjectionData {
   final int year;
-  final double baseValue; // Valeur du portefeuille initial
-  final double investedCapital; // Total des apports (plans)
+  final double
+      initialInvestedCapital; // Capital initial réellement investi (PRU)
+  final double newInvestments; // Nouveaux versements via plans d'épargne
   final double totalValue; // Valeur totale projetée (base + apports + intérêts)
 
   ProjectionData({
     required this.year,
-    required this.baseValue,
-    required this.investedCapital,
+    required this.initialInvestedCapital,
+    required this.newInvestments,
     required this.totalValue,
   });
 
-  // Gain total (hors capital initial)
-  double get totalGain => totalValue - baseValue - investedCapital;
+  // Capital total investi (initial + nouveaux versements)
+  double get investedCapital => initialInvestedCapital + newInvestments;
+
+  // Gain total = valeur totale - capital investi
+  double get totalGain => totalValue - investedCapital;
 }
 
 class PlannerTab extends StatefulWidget {
@@ -41,8 +45,7 @@ class _PlannerTabState extends State<PlannerTab> {
   final List<int> _durations = [5, 10, 20, 30];
 
   /// Trouve un actif dans le portefeuille par son ticker
-  Asset?
-  _findAssetByTicker(portfolio, String ticker) {
+  Asset? _findAssetByTicker(portfolio, String ticker) {
     for (var institution in portfolio.institutions) {
       for (var account in institution.accounts) {
         for (var asset in account.assets) {
@@ -56,7 +59,8 @@ class _PlannerTabState extends State<PlannerTab> {
   }
 
   /// Affiche le dialogue de confirmation de suppression
-  void _showDeleteConfirmation(BuildContext context, PortfolioProvider provider, String planId, String planName) {
+  void _showDeleteConfirmation(BuildContext context, PortfolioProvider provider,
+      String planId, String planName) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -64,8 +68,7 @@ class _PlannerTabState extends State<PlannerTab> {
         content: Text('Voulez-vous vraiment supprimer le plan "$planName" ?'),
         actions: [
           TextButton(
-            onPressed: ()
-            => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('Annuler'),
           ),
           TextButton(
@@ -73,7 +76,6 @@ class _PlannerTabState extends State<PlannerTab> {
               provider.deleteSavingsPlan(planId);
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-
                 const SnackBar(content: Text('Plan d\'épargne supprimé')),
               );
             },
@@ -95,10 +97,12 @@ class _PlannerTabState extends State<PlannerTab> {
   }
 
   // NOUVEAU : Logique de génération des données pour le graphique
-  // NOUVEAU : Logique de génération des données pour le graphique
   List<ProjectionData> _generateProjectionData(Portfolio portfolio) {
     List<ProjectionData> data = [];
     final double initialPortfolioValue = portfolio.totalValue;
+
+    // NOUVEAU : Récupérer le capital réellement investi dans le portefeuille actuel
+    final double initialInvestedCapital = portfolio.totalInvestedCapital;
 
     // --- CORRECTION ICI (ne plus diviser par 100) ---
     final double portfolioAnnualYield = portfolio.estimatedAnnualYield;
@@ -134,12 +138,17 @@ class _PlannerTabState extends State<PlannerTab> {
         monthlyAmount: totalMonthlyInvestment,
         targetTicker: '',
       ).futureValue(year, averagePlansYield);
-      final double totalCapitalInvested = totalMonthlyInvestment * 12 * year;
+
+      // 3. Nouveaux versements cumulés (sans intérêts)
+      final double newInvestments = totalMonthlyInvestment * 12 * year;
+
+      // 4. Valeur totale = portefeuille initial + épargne future
       final double totalValue = futureBaseValue + futureSavingsValue;
+
       data.add(ProjectionData(
         year: year,
-        baseValue: futureBaseValue,
-        investedCapital: totalCapitalInvested,
+        initialInvestedCapital: initialInvestedCapital,
+        newInvestments: newInvestments,
         totalValue: totalValue,
       ));
     }
@@ -163,32 +172,27 @@ class _PlannerTabState extends State<PlannerTab> {
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
-          child:
-          Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Titre avec bouton d'ajout
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-
                   Expanded(
                     child: Text(
                       'Plans d\'Épargne Mensuels',
                       style: theme.textTheme.titleLarge,
                     ),
-
                   ),
                   IconButton(
                     icon: Icon(
                       Icons.add_circle_outline,
-                      color:
-                      theme.colorScheme.primary,
+                      color: theme.colorScheme.primary,
                     ),
                     tooltip: 'Ajouter un plan d\'épargne',
                     onPressed: () => _openPlanForm(context),
                   ),
-
                 ],
               ),
               const SizedBox(height: 8),
@@ -196,53 +200,45 @@ class _PlannerTabState extends State<PlannerTab> {
               // Affichage des plans d'épargne (Logique existante inchangée [cite: 681-715])
               if (savingsPlans.isEmpty)
                 Card(
-
                   child: Padding(
                     padding: const EdgeInsets.all(32.0),
                     child: Column(
                       children: [
-
                         Icon(
                           Icons.savings_outlined,
                           size: 64,
                           color: Colors.grey.shade400,
-
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'Aucun plan d\'épargne configuré',
-
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: Colors.grey,
                           ),
                         ),
-
                         const SizedBox(height: 8),
                         Text(
                           'Créez un plan pour simuler vos investissements futurs',
-
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: Colors.grey,
                           ),
                           textAlign: TextAlign.center,
-
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _openPlanForm(context),
-
                           icon: const Icon(Icons.add),
                           label: const Text('Créer un plan'),
                         ),
                       ],
-
                     ),
                   ),
                 )
               else
                 ...savingsPlans.map((plan) {
                   // Trouver l'actif correspondant au ticker du plan
-                  final targetAsset = _findAssetByTicker(portfolio, plan.targetTicker);
+                  final targetAsset =
+                      _findAssetByTicker(portfolio, plan.targetTicker);
                   final assetName = targetAsset?.name ?? 'Actif inconnu';
                   final assetYield = targetAsset?.estimatedAnnualYield ?? 0.0;
                   return Card(
@@ -250,98 +246,83 @@ class _PlannerTabState extends State<PlannerTab> {
                       leading: Icon(
                         Icons.add_shopping_cart,
                         color: plan.isActive ? Colors.cyan : Colors.grey,
-
                       ),
                       title: Text(
                         plan.name,
                         overflow: TextOverflow.ellipsis,
-
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-
                           Text(
                             'Cible : $assetName (${plan.targetTicker})',
                             overflow: TextOverflow.ellipsis,
                           ),
-
                           const SizedBox(height: 4),
                           Row(
                             children: [
-
                               Text(
                                 '${plan.monthlyAmount.toStringAsFixed(0)} €/mois',
                                 style: theme.textTheme.bodySmall?.copyWith(
-
                                   fontWeight: FontWeight.bold,
                                   color: Colors.green,
                                 ),
-
                               ),
                               const SizedBox(width: 8),
                               Text(
-
                                 '• ${(assetYield * 100).toStringAsFixed(1)}% /an',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: Colors.grey,
-
                                 ),
                               ),
                             ],
                           ),
-
                         ],
                       ),
                       trailing: PopupMenuButton(
                         itemBuilder: (context) => [
-
                           PopupMenuItem(
                             child: Row(
                               children: [
-
-                                Icon(Icons.edit_outlined, size: 20, color: Colors.grey.shade700),
+                                Icon(Icons.edit_outlined,
+                                    size: 20, color: Colors.grey.shade700),
                                 const SizedBox(width: 8),
                                 const Text('Modifier'),
-
                               ],
                             ),
                             onTap: () {
                               // Délai pour fermer le menu avant d'ouvrir le formulaire
-                              Future.delayed(const Duration(milliseconds: 100), () {
+                              Future.delayed(const Duration(milliseconds: 100),
+                                  () {
                                 _openPlanForm(context, existingPlan: plan);
                               });
                             },
                           ),
                           PopupMenuItem(
                             child: Row(
-
                               children: [
-                                Icon(Icons.delete_outline, size: 20, color: Colors.red.shade700),
+                                Icon(Icons.delete_outline,
+                                    size: 20, color: Colors.red.shade700),
                                 const SizedBox(width: 8),
-
-                                const Text('Supprimer', style: TextStyle(color: Colors.red)),
+                                const Text('Supprimer',
+                                    style: TextStyle(color: Colors.red)),
                               ],
                             ),
-
                             onTap: () {
-                              Future.delayed(const Duration(milliseconds: 100), () {
+                              Future.delayed(const Duration(milliseconds: 100),
+                                  () {
                                 _showDeleteConfirmation(
-
                                   context,
                                   portfolioProvider,
                                   plan.id,
-
                                   plan.name,
                                 );
                               });
                             },
-
                           ),
                         ],
                       ),
                     ),
-
                   );
                 }),
 
@@ -363,17 +344,18 @@ class _PlannerTabState extends State<PlannerTab> {
                         height: 250,
                         child: projectionData.isEmpty
                             ? const Center(
-                            child: Text('Aucune donnée à projeter.'))
+                                child: Text('Aucune donnée à projeter.'))
                             : BarChart(
-                          _buildChartData(projectionData, theme),
-                        ),
+                                _buildChartData(projectionData, theme),
+                              ),
                       ),
                       // --- FIN MODIFICATION ---
                       const SizedBox(height: 16),
                       // --- MODIFIÉ : Contrôles de durée ---
                       ToggleButtons(
-                        isSelected:
-                        _durations.map((d) => d == _selectedDuration).toList(),
+                        isSelected: _durations
+                            .map((d) => d == _selectedDuration)
+                            .toList(),
                         onPressed: (index) {
                           setState(() {
                             _selectedDuration = _durations[index];
@@ -381,9 +363,9 @@ class _PlannerTabState extends State<PlannerTab> {
                         },
                         borderRadius: BorderRadius.circular(8),
                         constraints:
-                        const BoxConstraints(minHeight: 40, minWidth: 60),
+                            const BoxConstraints(minHeight: 40, minWidth: 60),
                         children:
-                        _durations.map((d) => Text('$d ans')).toList(),
+                            _durations.map((d) => Text('$d ans')).toList(),
                       ),
                       // --- FIN MODIFICATION ---
                     ],
@@ -411,21 +393,21 @@ class _PlannerTabState extends State<PlannerTab> {
             borderRadius: BorderRadius.zero,
             width: 18,
             rodStackItems: [
-              // 1. Capital initial (Portefeuille)
+              // 1. Capital initial investi (PRU du portefeuille actuel)
               BarChartRodStackItem(
                 0,
-                d.baseValue,
+                d.initialInvestedCapital,
                 theme.colorScheme.primary.withOpacity(0.6),
               ),
-              // 2. Capital investi (Plans)
+              // 2. Nouveaux versements (Plans d'épargne)
               BarChartRodStackItem(
-                d.baseValue,
-                d.baseValue + d.investedCapital,
+                d.initialInvestedCapital,
+                d.investedCapital, // initialInvestedCapital + newInvestments
                 theme.colorScheme.secondary.withOpacity(0.8),
               ),
-              // 3. Gains
+              // 3. Gains (intérêts composés)
               BarChartRodStackItem(
-                d.baseValue + d.investedCapital,
+                d.investedCapital,
                 d.totalValue,
                 Colors.green.shade400,
               ),
@@ -499,7 +481,8 @@ class _PlannerTabState extends State<PlannerTab> {
         // --- FIN CORRECTION BLOC bottomTitles ---
 
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles:
+            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),
       borderData: FlBorderData(show: false),
       gridData: FlGridData(
@@ -517,10 +500,9 @@ class _PlannerTabState extends State<PlannerTab> {
             final d = data[groupIndex];
             return BarTooltipItem(
               'Année ${d.year}\n'
-                  'Total: ${CurrencyFormatter.format(d.totalValue)}\n'
-                  'Gains: ${CurrencyFormatter.format(d.totalGain)}\n'
-                  'Investi: ${CurrencyFormatter.format(d.investedCapital)}\n'
-                  'Initial: ${CurrencyFormatter.format(d.baseValue)}',
+              'Total: ${CurrencyFormatter.format(d.totalValue)}\n'
+              'Investi: ${CurrencyFormatter.format(d.investedCapital)}\n'
+              'Gains: ${CurrencyFormatter.format(d.totalGain)}',
               theme.textTheme.bodySmall!.copyWith(color: Colors.white),
             );
           },
