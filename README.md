@@ -1,6 +1,7 @@
 ﻿# Portefeuille — Gestionnaire de Finances Personnelles (Flutter)
 
-Une application Flutter moderne pour agréger et analyser vos comptes et investissements (banques, courtiers, cryptos). Suivez votre patrimoine, visualisez vos performances et planifiez votre avenir financier.
+Une application Flutter moderne pour agréger et analyser vos comptes et investissements (banques, courtiers, cryptos).
+Suivez votre patrimoine, visualisez vos performances et planifiez votre avenir financier.
 
 ## Résumé
 
@@ -15,29 +16,29 @@ Une application Flutter moderne pour agréger et analyser vos comptes et investi
 
 - **Multi-portefeuilles** : Créez et gérez plusieurs portefeuilles d'investissement
 - **Synchronisation en ligne** : Récupération automatique des prix en temps réel (FMP et Yahoo Finance)
-- **Recherche intelligente** : Auto-complétion des tickers et ISIN lors de l'ajout d'actifs
+- **Recherche intelligente** : Auto-complétion des tickers et ISIN lors de l'ajout de transactions
 - **Types de comptes supportés** :
-  - PEA (Plan d'Épargne en Actions)
-  - CTO (Compte-Titres Ordinaire)
-  - Assurance Vie
-  - PER (Plan Épargne Retraite)
-  - Crypto-monnaies
-  - Autres comptes personnalisés
+    - PEA (Plan d'Épargne en Actions)
+    - CTO (Compte-Titres Ordinaire)
+    - Assurance Vie
+    - PER (Plan Épargne Retraite)
+    - Crypto-monnaies
+    - Autres comptes personnalisés
 - **Suivi en temps réel** : Visualisez la valeur totale de vos actifs
 - **Analyse de performance** : Calcul automatique des plus/moins-values (P/L) et rendements
 - **Graphiques interactifs** : Visualisations avec fl_chart pour suivre l'évolution de votre patrimoine
 - **Mode démo** : Découvrez l'application avec des données de démonstration
 - **Personnalisation** : Choix de couleurs pour l'interface
 - **Gestion complète** :
-  - Ajout/modification/suppression d'institutions financières
-  - Gestion de comptes et d'actifs
-  - Correction manuelle des données
+    - Ajout/modification/suppression d'institutions financières
+    - Gestion de comptes et de transactions
+    - Correction manuelle des prix et rendements
 - **Planificateur** : Simulez vos investissements futurs
 - **Persistance des données** : Sauvegarde automatique locale avec Hive
 
 ## 🌐 Mode En Ligne et Synchronisation des Prix
 
-L'application propose un **mode en ligne optionnel** qui permet de synchroniser automatiquement les prix de vos actifs et de bénéficier d'une aide à la saisie lors de l'ajout de nouveaux actifs.
+L'application propose un **mode en ligne optionnel** qui permet de synchroniser automatiquement les prix de vos actifs et de bénéficier d'une aide à la saisie lors de l'ajout de nouvelles transactions.
 
 ### Activation du Mode En Ligne
 
@@ -52,12 +53,12 @@ L'application propose un **mode en ligne optionnel** qui permet de synchroniser 
 L'application utilise une **stratégie de fallback intelligente** :
 
 1. **Financial Modeling Prep (FMP)** : Si vous avez configuré une clé API (optionnel)
-   - Plus fiable et complète
-   - Requiert une inscription gratuite sur [financialmodelingprep.com](https://financialmodelingprep.com)
-   
+    - Plus fiable et complète
+    - Requiert une inscription gratuite sur [financialmodelingprep.com](https://financialmodelingprep.com)
+
 2. **Yahoo Finance** : Utilisé automatiquement en fallback ou si aucune clé FMP n'est configurée
-   - Gratuit et sans inscription
-   - Fonctionne pour la majorité des tickers (actions, ETF, cryptos)
+    - Gratuit et sans inscription
+    - Fonctionne pour la majorité des tickers (actions, ETF, cryptos)
 
 #### Cache Intelligent
 
@@ -72,23 +73,23 @@ Pour améliorer la fiabilité de la synchronisation, vous pouvez configurer une 
 1. Créez un compte gratuit sur [financialmodelingprep.com](https://financialmodelingprep.com)
 2. Récupérez votre clé API depuis votre tableau de bord
 3. Dans l'application :
-   - Ouvrez **Paramètres** > **Paramètres de l'Application**
-   - Activez le **Mode en ligne**
-   - Dans le champ **"Clé API FMP (Optionnel)"**, saisissez votre clé
-   - Cliquez sur l'icône 💾 pour sauvegarder
+    - Ouvrez **Paramètres** > **Paramètres de l'Application**
+    - Activez le **Mode en ligne**
+    - Dans le champ **"Clé API FMP (Optionnel)"**, saisissez votre clé
+    - Cliquez sur l'icône 💾 pour sauvegarder
 
 **Sécurité** : La clé API est stockée de manière sécurisée dans le Keystore (Android) / Keychain (iOS) / Credential Manager (Windows).
 
 ### Recherche de Tickers et Auto-complétion
 
-Lors de l'ajout d'un actif (écran "Ajouter un actif") :
+Lors de l'ajout d'une transaction (écran "Nouvelle Transaction") :
 
 1. Commencez à taper un **ticker** (ex: "AAPL") ou un **ISIN** dans le champ dédié
 2. Après 500ms, des suggestions apparaissent automatiquement (si le mode en ligne est actif)
 3. Sélectionnez une suggestion pour :
-   - Remplir automatiquement le **nom** de l'actif
-   - Récupérer le **prix actuel** en temps réel
-   - Pré-remplir le **prix de revient unitaire** (PRU) avec le prix actuel
+    - Remplir automatiquement le **nom** de l'actif
+    - Récupérer le **prix actuel** en temps réel
+    - Pré-remplir le **prix unitaire** avec le prix actuel
 
 **Types de résultats supportés** : Actions (EQUITY), ETF, Crypto-monnaies
 
@@ -133,56 +134,64 @@ L'AppBar du Dashboard affiche l'état actuel de la connectivité :
 ```powershell
 git clone <URL_DU_DEPOT_GIT>
 cd Portefeuille
-```
 
-2. Récupérez les packages :
+    Récupérez les packages :
 
-```powershell
+PowerShell
+
 flutter pub get
-```
 
-3. Générez les fichiers de sérialisation Hive (codegen) :
+    Générez les fichiers de sérialisation Hive (codegen) :
 
-```powershell
+PowerShell
+
 flutter pub run build_runner build --delete-conflicting-outputs
-```
 
-4. Lancez l'application (ex. sur l'émulateur Android par défaut) :
+    Lancez l'application (ex. sur l'émulateur Android par défaut) :
 
-```powershell
+PowerShell
+
 flutter run
-```
 
-## Notes de développement
+Notes de développement
 
-- Le point d'entrée est `lib/features/00_app/main.dart`. Le `main` initialise Hive, enregistre les adapters et ouvre les boxes principales avant d'instancier le repository.
-- **Important** : Le mode debug ne supprime plus automatiquement la base de données Hive (le `Hive.deleteFromDisk()` est commenté), permettant ainsi de tester la persistance des données.
-- Pour générer ou regénérer les fichiers `.g.dart` liés à Hive après modification des modèles, utilisez :
+    Le point d'entrée est lib/features/00_app/main.dart. Le main initialise Hive, enregistre les adapters et ouvre les boxes principales avant d'instancier le repository.
 
-```powershell
+    Important : Le mode debug ne supprime plus automatiquement la base de données Hive (le Hive.deleteFromDisk() est commenté), permettant ainsi de tester la persistance des données.
+
+    Pour générer ou regénérer les fichiers .g.dart liés à Hive après modification des modèles, utilisez :
+
+PowerShell
+
 flutter pub run build_runner build --delete-conflicting-outputs
-```
 
-- L'application utilise deux boxes Hive :
-  - `kPortfolioBoxName` : pour les données de portefeuille
-  - `kSettingsBoxName` : pour les paramètres de l'application (couleur, etc.)
+    L'application utilise quatre boxes Hive :
 
-## Compilation — APK (Android) et EXE (Windows)
+        kPortfolioBoxName : pour les données de portefeuille (institutions, comptes)
 
-Voici les commandes et prérequis pour compiler des binaires pour Android (APK / AAB) et Windows (EXE).
+        kSettingsBoxName : pour les paramètres de l'application (couleur, etc.)
 
-**Prérequis généraux :**
-- Avoir le SDK Flutter installé et configuré (exécutez `flutter doctor` pour vérifier)
+        kTransactionBoxName : pour toutes les transactions
 
-### Android (APK / App Bundle)
+        kAssetMetadataBoxName : pour les prix et rendements des actifs
 
-**Prérequis :**
-- Android SDK et Android Studio (installe Java/Gradle)
-- Un device ou un émulateur configuré
+Compilation — APK (Android) et EXE (Windows)
 
-**Commandes de compilation :**
+Voici les commandes et prérequis pour compiler des binaires pour Android (APK / AAB) et Windows (EXE). Prérequis généraux :
 
-```powershell
+    Avoir le SDK Flutter installé et configuré (exécutez flutter doctor pour vérifier)
+
+Android (APK / App Bundle)
+
+Prérequis :
+
+    Android SDK et Android Studio (installe Java/Gradle)
+
+    Un device ou un émulateur configuré
+
+Commandes de compilation :
+PowerShell
+
 # APK release (tous les ABIs)
 flutter build apk --release
 
@@ -191,40 +200,41 @@ flutter build apk --split-per-abi --release
 
 # Android App Bundle (AAB) pour le Play Store
 flutter build appbundle --release
-```
 
-**Signature :** Pour créer un APK signé, configurez un keystore et la section `signingConfigs` dans `android/app/build.gradle`. Placez vos informations de keystore dans `android/key.properties`.
+Signature : Pour créer un APK signé, configurez un keystore et la section signingConfigs dans android/app/build.gradle. Placez vos informations de keystore dans android/key.properties.
 
-### Windows (EXE)
+Windows (EXE)
 
-**Prérequis :**
-- Machine Windows avec Visual Studio (Desktop development with C++) installé
-- Support desktop activé :
+Prérequis :
 
-```powershell
+    Machine Windows avec Visual Studio (Desktop development with C++) installé
+
+    Support desktop activé :
+
+PowerShell
+
 flutter config --enable-windows-desktop
 flutter doctor
-```
 
-**Commande de build :**
+Commande de build :
+PowerShell
 
-```powershell
 flutter build windows --release
-```
 
-L'exécutable généré se trouve dans : `build\windows\x64\runner\Release\`
+L'exécutable généré se trouve dans : build\windows\x64\runner\Release\
 
-**Recommandations :**
-- Testez d'abord en mode `debug`, puis en `profile`/`release`
-- Sur Android, vérifiez les permissions et la configuration du `AndroidManifest.xml` avant publication
-- Sur Windows, vérifiez les dépendances runtime (VC++ redistribuables) si vous distribuez l'exécutable
+Recommandations :
 
+    Testez d'abord en mode debug, puis en profile/release
 
-## Structure Détaillée de l'Application
+    Sur Android, vérifiez les permissions et la configuration du AndroidManifest.xml avant publication
 
-Le projet suit une architecture **feature-first**, où chaque fonctionnalité est organisée dans son propre dossier.
+    Sur Windows, vérifiez les dépendances runtime (VC++ redistribuables) si vous distribuez l'exécutable
 
-```
+Structure Détaillée de l'Application
+
+Le projet suit une architecture feature-first, où chaque fonctionnalité est organisée dans son propre dossier.
+
 lib/
 ├── features/                             # Organisation par fonctionnalités
 │   ├── 00_app/                           # Configuration de l'application
@@ -245,9 +255,14 @@ lib/
 │   │   └── ui/
 │   │       └── overview_tab.dart         # Rapports et synthèse
 │   │
-│   ├── 04_correction/                    # Correction manuelle des données
+│   ├── 04_journal/                       # Journal des transactions
 │   │   └── ui/
-│   │       └── correction_tab.dart       # Formulaires de correction
+│   │       ├── journal_tab.dart          # Onglet principal (Synthèse, Transactions)
+│   │       ├── views/
+│   │       │   ├── synthese_view.dart
+│   │       │   └── transactions_view.dart
+│   │       └── widgets/
+│   │           └── transaction_list_item.dart
 │   │
 │   ├── 05_planner/                       # Planification financière
 │   │   └── ui/
@@ -264,10 +279,14 @@ lib/
 │   │
 │   └── 07_management/                    # Gestion des entités
 │       └── ui/
-│           └── screens/                  # Écrans de gestion
-│               ├── add_institution_screen.dart
-│               ├── add_account_screen.dart
-│               └── add_asset_screen.dart
+│           ├── screens/                  # Écrans de gestion
+│           │   ├── add_institution_screen.dart
+│           │   ├── add_account_screen.dart
+│           │   ├── add_transaction_screen.dart
+│           │   ├── edit_transaction_screen.dart
+│           │   └── add_savings_plan_screen.dart
+│           └── widgets/
+│               └── transaction_form_body.dart # Formulaire partagé
 │
 ├── core/                                 # Fondations de l'application
 │   ├── data/                             # Couche données
@@ -278,6 +297,8 @@ lib/
 │   │   │   ├── asset.dart                # Actif/Position
 │   │   │   ├── account_type.dart         # Enum des types de comptes
 │   │   │   ├── savings_plan.dart         # Plans d'épargne
+│   │   │   ├── transaction.dart          # Transaction (Achat, Vente, etc.)
+│   │   │   ├── asset_metadata.dart       # Métadonnées (Prix, Rendement)
 │   │   │   └── *.g.dart                  # Fichiers générés par Hive
 │   │   ├── repositories/                 # Logique d'accès aux données
 │   │   │   └── portfolio_repository.dart # Repository principal
@@ -301,113 +322,5 @@ macos/                                    # Configuration macOS
 
 pubspec.yaml                              # Dépendances et assets
 analysis_options.yaml                     # Configuration Dart analyzer
-```
 
-### Description des Principaux Éléments
-
-- **`lib/features/00_app/main.dart`** : Initialise Hive, enregistre les adapters TypeId (Portfolio, Institution, Account, Asset, AccountType), ouvre les boxes et démarre l'application avec les providers
-
-- **`lib/core/data/models/`** : Contient les modèles métiers annotés avec `@HiveType` et `@HiveField`. Toute modification nécessite de relancer `build_runner` pour regénérer les fichiers `.g.dart`
-
-- **`lib/core/data/repositories/`** : Encapsule la logique d'accès et d'écriture des données, abstrayant le stockage Hive du reste de l'application
-
-- **`lib/features/00_app/providers/`** : Providers (ChangeNotifier) qui gèrent l'état global :
-  - `PortfolioProvider` : Opérations CRUD sur les portefeuilles, institutions, comptes et actifs + synchronisation des prix en ligne
-  - `SettingsProvider` : Gestion des préférences utilisateur (couleur de thème, mode en ligne, clé API FMP, etc.)
-
-- **`lib/core/data/services/api_service.dart`** : Service centralisé pour les appels réseau (FMP, Yahoo Finance) avec cache intelligent et gestion des fallbacks
-
-- **`lib/features/07_management/`** : Écrans dédiés à l'ajout et la modification d'institutions, comptes et actifs avec formulaires validés
-
-### Navigation dans le Code
-
-1. **Point d'entrée** : Commencez par `lib/features/00_app/main.dart` pour comprendre l'initialisation
-2. **Modèles de données** : Consultez `lib/core/data/models/` pour la structure des données
-3. **Logique métier** : Recherchez `PortfolioRepository` et `PortfolioProvider` pour les opérations principales
-4. **Interface utilisateur** : Explorez `lib/features/02_dashboard/` pour l'écran principal et naviguez dans les autres features selon vos besoins
-
-
-## Dépendances Importantes
-
-### Dépendances de Production
-
-- **`provider`** (^6.1.2) : Gestion d'état réactive et injection de dépendances
-- **`hive`** (^2.2.3) : Base de données NoSQL légère et rapide pour le stockage local
-- **`hive_flutter`** (^1.1.0) : Intégration de Hive avec Flutter
-- **`fl_chart`** (^1.1.1) : Bibliothèque de graphiques interactifs pour les visualisations financières
-- **`intl`** (^0.19.0) : Internationalisation et formatage (dates, devises)
-- **`uuid`** (^4.4.0) : Génération d'identifiants uniques pour les entités
-- **`shimmer`** (^3.0.0) : Effets de chargement élégants
-- **`animated_text_kit`** (^4.2.2) : Animations de texte pour l'interface
-- **`http`** (^1.2.1) : Client HTTP pour les appels API
-- **`flutter_secure_storage`** (^9.1.1) : Stockage sécurisé pour les clés API (Keystore/Keychain)
-
-### Dépendances de Développement
-
-- **`hive_generator`** (^2.0.1) : Génération de code pour les adapters Hive
-- **`build_runner`** (^2.4.9) : Outil de génération de code
-- **`flutter_lints`** (^5.0.0) : Règles de lint recommandées pour Flutter
-
-Consultez `pubspec.yaml` pour la liste complète et les versions exactes.
-
-## Conseils et Bonnes Pratiques
-
-### Développement
-
-- **Persistance des données** : Le `Hive.deleteFromDisk()` est désormais commenté en mode debug pour permettre de tester la persistance des données entre les relances
-- **Génération de code** : Après toute modification des modèles annotés avec `@HiveType`, relancez :
-  ```powershell
-  flutter pub run build_runner build --delete-conflicting-outputs
-  ```
-- **Adapters Hive** : Vérifiez que tous les TypeId sont uniques et que les adapters sont bien enregistrés dans `main.dart`
-- **Multi-portefeuilles** : L'application supporte désormais plusieurs portefeuilles simultanés avec des identifiants UUID uniques
-
-### Performance
-
-- Utilisez `flutter run --profile` pour tester les performances réelles
-- Les graphiques fl_chart peuvent être gourmands : limitez les points de données si nécessaire
-- Hive est optimisé pour les lectures fréquentes, évitez les écritures massives en boucle
-
-### Tests
-
-- Testez d'abord en mode debug : `flutter run`
-- Validez en mode profile : `flutter run --profile`
-- Compilez en release pour distribution : `flutter build <platform> --release`
-
-### Production
-
-- Configurez correctement la signature Android (keystore) avant publication
-- Vérifiez les permissions dans `AndroidManifest.xml`
-- Sur Windows, incluez les redistributables Visual C++ si nécessaire
-- Activez les analytics/crash reporting pour suivre les erreurs en production
-
-## Contribuer
-
-Les contributions sont les bienvenues ! Pour contribuer :
-
-1. Forkez le projet
-2. Créez une branche pour votre fonctionnalité (`git checkout -b feature/AmazingFeature`)
-3. Commitez vos changements (`git commit -m 'Add some AmazingFeature'`)
-4. Pushez vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrez une Pull Request
-
-### Guidelines
-
-- Respectez l'architecture feature-first existante
-- Ajoutez des commentaires pour les logiques complexes
-- Testez vos modifications sur plusieurs plateformes si possible
-- Mettez à jour la documentation si nécessaire
-
----
-
-## Licence
-
-Ce projet est un projet personnel. Consultez le fichier LICENSE pour plus d'informations.
-
-## Contact
-
-Pour toute question ou suggestion, n'hésitez pas à ouvrir une issue sur le dépôt.
-
----
-
-**Dernière mise à jour** : Novembre 2025
+Nous avons maintenant une version stable, corrigée, optimisée et dont la documentation est à jour.

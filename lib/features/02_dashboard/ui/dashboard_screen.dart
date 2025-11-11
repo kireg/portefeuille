@@ -4,7 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../00_app/providers/portfolio_provider.dart';
-import '../../00_app/providers/settings_provider.dart';
+// import '../../00_app/providers/settings_provider.dart'; // Géré par l'AppBar
 
 // Ecrans des onglets
 import '../../03_overview/ui/overview_tab.dart';
@@ -13,23 +13,22 @@ import 'package:portefeuille/features/04_journal/ui/journal_tab.dart';
 import '../../06_settings/ui/settings_screen.dart';
 
 import '../../07_management/ui/screens/add_transaction_screen.dart';
+// NOUVEL IMPORT
+import 'widgets/dashboard_app_bar.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
-
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
-
   static const List<Widget> _widgetOptions = <Widget>[
     OverviewTab(),
     PlannerTab(),
     JournalTab(),
   ];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -44,69 +43,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  /// Construit l'indicateur d'état pour l'AppBar.
-  Widget _buildStatusIndicator(
-      SettingsProvider settings, PortfolioProvider portfolio) {
-    // ... (code inchangé)
-    final theme = Theme.of(context);
-    final textStyle = theme.appBarTheme.titleTextStyle?.copyWith(
-      fontSize: 12,
-      fontWeight: FontWeight.normal,
-    ) ??
-        const TextStyle(color: Colors.white, fontSize: 12);
-
-    Widget child;
-
-    if (portfolio.isSyncing) {
-      child = Row(
-        children: [
-          const SizedBox(
-            width: 12,
-            height: 12,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text("Synchro...", style: textStyle),
-        ],
-      );
-    } else if (settings.isOnlineMode) {
-      child = Row(
-        children: [
-          Icon(Icons.cloud_queue_outlined,
-              size: 16, color: textStyle.color),
-          const SizedBox(width: 8),
-          Text("En ligne", style: textStyle),
-        ],
-      );
-    } else {
-      child = Row(
-        children: [
-          Icon(Icons.cloud_off_outlined,
-              size: 16, color: textStyle.color?.withOpacity(0.7)),
-          const SizedBox(width: 8),
-          Text("Hors ligne", style: textStyle),
-        ],
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: child,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final portfolioProvider = Provider.of<PortfolioProvider>(context);
-    final settingsProvider = Provider.of<SettingsProvider>(context);
+    // Le provider est juste lu ici pour vérifier si un portefeuille existe
+    final portfolioProvider = context.read<PortfolioProvider>();
     final portfolio = portfolioProvider.activePortfolio;
 
     if (portfolio == null) {
       // ... (code "aucun portefeuille" inchangé)
       return Scaffold(
+        // MODIFIÉ : Utilise la nouvelle AppBar même s'il n'y a pas de portefeuille
+        appBar: DashboardAppBar(
+          onPressed: _openAddTransactionModal,
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -128,48 +77,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        // --- MODIFICATION : Bouton "+" à gauche ---
-        leading: IconButton(
-          icon: const Icon(Icons.add_circle_outline),
-          tooltip: 'Ajouter une transaction',
-          onPressed: _openAddTransactionModal,
-        ),
-        // --- FIN MODIFICATION ---
-
-        // --- MODIFICATION : Titre centré ---
-        title: Text(portfolio.name),
-        centerTitle: true,
-        // --- FIN MODIFICATION ---
-
-        actions: [
-          _buildStatusIndicator(settingsProvider, portfolioProvider),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                builder: (context) => const SettingsScreen(),
-              );
-            },
-          ),
-        ],
+      // MODIFIÉ : Utilise la nouvelle AppBar personnalisée
+      appBar: DashboardAppBar(
+        onPressed: _openAddTransactionModal,
       ),
       body: IndexedStack(
         index: _selectedIndex,
         children: _widgetOptions,
       ),
 
-      // --- SUPPRESSION DU FAB ---
-      // floatingActionButton: FloatingActionButton(...),
-      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      // --- FIN SUPPRESSION ---
+      // --- FAB Supprimé ---
 
       bottomNavigationBar: BottomNavigationBar(
-        // --- MODIFICATION : 'centerDocked' n'est plus nécessaire ---
         type: BottomNavigationBarType.fixed,
-        // --- FIN MODIFICATION ---
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard_outlined),
