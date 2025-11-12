@@ -165,6 +165,7 @@ class PortfolioRepository {
     final demoData = _getDemoData();
     final portfolio = demoData.portfolio;
     final transactions = demoData.transactions;
+    final metadata = demoData.metadata;
 
     // 2. Sauvegarder le portefeuille
     savePortfolio(portfolio);
@@ -174,12 +175,21 @@ class PortfolioRepository {
       saveTransaction(tx);
     }
 
-    // 4. Retourner le portefeuille (il sera hydraté au prochain chargement)
+    // 4. Sauvegarder les métadonnées (prix et rendements)
+    for (final meta in metadata) {
+      saveAssetMetadata(meta);
+    }
+
+    // 5. Retourner le portefeuille (il sera hydraté au prochain chargement)
     return portfolio;
   }
 
   /// Logique de génération des données de démo, MISE À JOUR AVEC LES TRANSACTIONS.
-  ({Portfolio portfolio, List<Transaction> transactions}) _getDemoData() {
+  ({
+    Portfolio portfolio,
+    List<Transaction> transactions,
+    List<AssetMetadata> metadata
+  }) _getDemoData() {
     final demoPortfolioId = _uuid.v4();
     final ctoAccountId = _uuid.v4();
     final peaAccountId = _uuid.v4();
@@ -585,6 +595,79 @@ class PortfolioRepository {
       ],
     );
 
-    return (portfolio: demoPortfolio, transactions: demoTransactions);
+    // --- MÉTADONNÉES DES ACTIFS (Prix et Rendements) ---
+    final List<AssetMetadata> demoMetadata = [
+      // ETF
+      AssetMetadata(
+        ticker: 'CW8.PA',
+        currentPrice: 500.0,
+        estimatedAnnualYield: 8.5, // 8.5% annuel
+        lastUpdated: DateTime(2025, 11, 12),
+        isManualYield: false,
+      ),
+      
+      // Actions françaises
+      AssetMetadata(
+        ticker: 'MC.PA',
+        currentPrice: 750.0,
+        estimatedAnnualYield: 2.0, // Dividende ~2%
+        lastUpdated: DateTime(2025, 11, 12),
+        isManualYield: false,
+      ),
+      AssetMetadata(
+        ticker: 'TTE.PA',
+        currentPrice: 65.0,
+        estimatedAnnualYield: 5.5, // Dividende élevé ~5.5%
+        lastUpdated: DateTime(2025, 11, 12),
+        isManualYield: false,
+      ),
+      
+      // Actions US
+      AssetMetadata(
+        ticker: 'AAPL',
+        currentPrice: 220.0,
+        estimatedAnnualYield: 0.5, // Dividende faible
+        lastUpdated: DateTime(2025, 11, 12),
+        isManualYield: false,
+      ),
+      AssetMetadata(
+        ticker: 'MSFT',
+        currentPrice: 430.0,
+        estimatedAnnualYield: 0.8, // Dividende faible
+        lastUpdated: DateTime(2025, 11, 12),
+        isManualYield: false,
+      ),
+      
+      // Crypto
+      AssetMetadata(
+        ticker: 'BTC-EUR',
+        currentPrice: 75000.0,
+        estimatedAnnualYield: 0.0, // Pas de rendement
+        lastUpdated: DateTime(2025, 11, 12),
+        isManualYield: false,
+      ),
+      AssetMetadata(
+        ticker: 'ETH-EUR',
+        currentPrice: 3000.0,
+        estimatedAnnualYield: 0.0, // Pas de rendement
+        lastUpdated: DateTime(2025, 11, 12),
+        isManualYield: false,
+      ),
+      
+      // Fonds euros
+      AssetMetadata(
+        ticker: 'FONDS-EUROS',
+        currentPrice: 1.025,
+        estimatedAnnualYield: 2.5, // 2.5% garanti
+        lastUpdated: DateTime(2025, 11, 12),
+        isManualYield: true, // Saisi manuellement
+      ),
+    ];
+
+    return (
+      portfolio: demoPortfolio,
+      transactions: demoTransactions,
+      metadata: demoMetadata,
+    );
   }
 }
