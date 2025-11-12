@@ -13,6 +13,7 @@ import 'package:uuid/uuid.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
 // --- FIN NOUVEAUX IMPORTS ---
 
 /// Classe responsable de la gestion des données du portefeuille.
@@ -182,86 +183,373 @@ class PortfolioRepository {
     final demoPortfolioId = _uuid.v4();
     final ctoAccountId = _uuid.v4();
     final peaAccountId = _uuid.v4();
+    final assuranceVieAccountId = _uuid.v4();
+    final cryptoAccountId = _uuid.v4();
 
-    // --- TRANSACTIONS DE DÉMO ---
+    // --- TRANSACTIONS DE DÉMO (2020-2025) ---
     final List<Transaction> demoTransactions = [
-      // 1. Dépôt initial sur le CTO
+      // ===== 2020 : OUVERTURE DES COMPTES =====
+      
+      // PEA - Dépôt initial
+      Transaction(
+        id: _uuid.v4(),
+        accountId: peaAccountId,
+        type: TransactionType.Deposit,
+        date: DateTime(2020, 1, 15),
+        amount: 5000.0,
+      ),
+      // PEA - Premier achat ETF World (CW8)
+      Transaction(
+        id: _uuid.v4(),
+        accountId: peaAccountId,
+        type: TransactionType.Buy,
+        date: DateTime(2020, 1, 20),
+        assetTicker: 'CW8.PA',
+        assetName: 'Amundi MSCI World UCITS ETF',
+        assetType: AssetType.ETF,
+        quantity: 15,
+        price: 300.0,
+        fees: 7.50,
+        amount: -4500.0,
+      ),
+      
+      // CTO - Dépôt initial
       Transaction(
         id: _uuid.v4(),
         accountId: ctoAccountId,
         type: TransactionType.Deposit,
-        date: DateTime(2024, 1, 15),
-        amount: 5000.0, // +5000€
+        date: DateTime(2020, 3, 1),
+        amount: 3000.0,
       ),
-      // 2. Achat de "CW8" (ETF Amundi) sur le CTO
+      // CTO - Achat AAPL
       Transaction(
         id: _uuid.v4(),
         accountId: ctoAccountId,
         type: TransactionType.Buy,
-        date: DateTime(2024, 1, 20),
-        assetTicker: 'CW8',
-        assetName: 'AMUNDI MSCI WORLD UCITS ETF ACC',
-        quantity: 5,
-        price: 450.0, // 5 * 450 = 2250€
+        date: DateTime(2020, 3, 10),
+        assetTicker: 'AAPL',
+        assetName: 'Apple Inc.',
+        assetType: AssetType.Stock,
+        quantity: 20,
+        price: 120.0,
         fees: 9.90,
-        amount: -2250.0, // Sortie d'argent
+        amount: -2400.0,
       ),
-      // 3. Dépôt initial sur le PEA
+
+      // ===== 2021 : RENFORCEMENT RÉGULIER =====
+      
+      // PEA - Dépôt mensuel
       Transaction(
         id: _uuid.v4(),
         accountId: peaAccountId,
         type: TransactionType.Deposit,
-        date: DateTime(2024, 2, 1),
-        amount: 10000.0, // +10000€
+        date: DateTime(2021, 1, 5),
+        amount: 500.0,
       ),
-      // 4. Achat de "LVMH" sur le PEA
+      // PEA - Achat LVMH
       Transaction(
         id: _uuid.v4(),
         accountId: peaAccountId,
         type: TransactionType.Buy,
-        date: DateTime(2024, 2, 5),
+        date: DateTime(2021, 1, 10),
         assetTicker: 'MC.PA',
-        assetName: 'LVMH Moët Hennessy Louis Vuitton SE',
-        quantity: 10,
-        price: 800.0, // 10 * 800 = 8000€
-        fees: 15.0,
-        amount: -8000.0,
+        assetName: 'LVMH Moët Hennessy Louis Vuitton',
+        assetType: AssetType.Stock,
+        quantity: 1,
+        price: 480.0,
+        fees: 5.0,
+        amount: -480.0,
       ),
-      // 5. Dividende reçu sur le PEA (LVMH)
+      
+      // CTO - Dépôt
+      Transaction(
+        id: _uuid.v4(),
+        accountId: ctoAccountId,
+        type: TransactionType.Deposit,
+        date: DateTime(2021, 6, 15),
+        amount: 2000.0,
+      ),
+      // CTO - Achat MSFT
+      Transaction(
+        id: _uuid.v4(),
+        accountId: ctoAccountId,
+        type: TransactionType.Buy,
+        date: DateTime(2021, 6, 20),
+        assetTicker: 'MSFT',
+        assetName: 'Microsoft Corporation',
+        assetType: AssetType.Stock,
+        quantity: 5,
+        price: 280.0,
+        fees: 9.90,
+        amount: -1400.0,
+      ),
+      
+      // Crypto - Premier investissement
+      Transaction(
+        id: _uuid.v4(),
+        accountId: cryptoAccountId,
+        type: TransactionType.Deposit,
+        date: DateTime(2021, 11, 1),
+        amount: 1500.0,
+      ),
+      Transaction(
+        id: _uuid.v4(),
+        accountId: cryptoAccountId,
+        type: TransactionType.Buy,
+        date: DateTime(2021, 11, 5),
+        assetTicker: 'BTC-EUR',
+        assetName: 'Bitcoin',
+        assetType: AssetType.Crypto,
+        quantity: 0.03,
+        price: 50000.0,
+        fees: 7.50,
+        amount: -1500.0,
+      ),
+
+      // ===== 2022 : DIVERSIFICATION =====
+      
+      // PEA - Renforcement CW8 (PRU)
+      Transaction(
+        id: _uuid.v4(),
+        accountId: peaAccountId,
+        type: TransactionType.Deposit,
+        date: DateTime(2022, 3, 1),
+        amount: 2000.0,
+      ),
+      Transaction(
+        id: _uuid.v4(),
+        accountId: peaAccountId,
+        type: TransactionType.Buy,
+        date: DateTime(2022, 3, 5),
+        assetTicker: 'CW8.PA',
+        assetName: 'Amundi MSCI World UCITS ETF',
+        assetType: AssetType.ETF,
+        quantity: 5,
+        price: 380.0,
+        fees: 5.0,
+        amount: -1900.0,
+      ),
+      
+      // PEA - Achat TotalEnergies
+      Transaction(
+        id: _uuid.v4(),
+        accountId: peaAccountId,
+        type: TransactionType.Buy,
+        date: DateTime(2022, 5, 10),
+        assetTicker: 'TTE.PA',
+        assetName: 'TotalEnergies SE',
+        assetType: AssetType.Stock,
+        quantity: 15,
+        price: 48.0,
+        fees: 5.0,
+        amount: -720.0,
+      ),
+      
+      // Assurance Vie - Ouverture
+      Transaction(
+        id: _uuid.v4(),
+        accountId: assuranceVieAccountId,
+        type: TransactionType.Deposit,
+        date: DateTime(2022, 9, 1),
+        amount: 10000.0,
+      ),
+      Transaction(
+        id: _uuid.v4(),
+        accountId: assuranceVieAccountId,
+        type: TransactionType.Buy,
+        date: DateTime(2022, 9, 5),
+        assetTicker: 'FONDS-EUROS',
+        assetName: 'Fonds en Euros Suravenir',
+        assetType: AssetType.Other,
+        quantity: 10000,
+        price: 1.0,
+        fees: 0.0,
+        amount: -10000.0,
+      ),
+
+      // ===== 2023 : PREMIERS DIVIDENDES =====
+      
+      // Dividende LVMH
       Transaction(
         id: _uuid.v4(),
         accountId: peaAccountId,
         type: TransactionType.Dividend,
-        date: DateTime(2024, 5, 10),
+        date: DateTime(2023, 4, 15),
         assetTicker: 'MC.PA',
         assetName: 'Dividende LVMH',
-        amount: 70.0, // +70€
+        amount: 12.0,
         fees: 0.0,
+      ),
+      
+      // Dividende TotalEnergies
+      Transaction(
+        id: _uuid.v4(),
+        accountId: peaAccountId,
+        type: TransactionType.Dividend,
+        date: DateTime(2023, 6, 20),
+        assetTicker: 'TTE.PA',
+        assetName: 'Dividende TotalEnergies',
+        amount: 9.75,
+        fees: 0.0,
+      ),
+      
+      // Intérêts Fonds Euros
+      Transaction(
+        id: _uuid.v4(),
+        accountId: assuranceVieAccountId,
+        type: TransactionType.Interest,
+        date: DateTime(2023, 12, 31),
+        assetTicker: 'FONDS-EUROS',
+        assetName: 'Intérêts Fonds Euros 2023',
+        amount: 250.0,
+        fees: 0.0,
+      ),
+
+      // ===== 2024 : PRISE DE PROFIT =====
+      
+      // CTO - Vente partielle AAPL (plus-value)
+      Transaction(
+        id: _uuid.v4(),
+        accountId: ctoAccountId,
+        type: TransactionType.Sell,
+        date: DateTime(2024, 2, 10),
+        assetTicker: 'AAPL',
+        assetName: 'Apple Inc.',
+        assetType: AssetType.Stock,
+        quantity: 10,
+        price: 185.0,
+        fees: 9.90,
+        amount: 1850.0,
+      ),
+      
+      // Crypto - Achat ETH
+      Transaction(
+        id: _uuid.v4(),
+        accountId: cryptoAccountId,
+        type: TransactionType.Deposit,
+        date: DateTime(2024, 5, 1),
+        amount: 1000.0,
+      ),
+      Transaction(
+        id: _uuid.v4(),
+        accountId: cryptoAccountId,
+        type: TransactionType.Buy,
+        date: DateTime(2024, 5, 5),
+        assetTicker: 'ETH-EUR',
+        assetName: 'Ethereum',
+        assetType: AssetType.Crypto,
+        quantity: 0.5,
+        price: 2000.0,
+        fees: 5.0,
+        amount: -1000.0,
+      ),
+      
+      // PEA - Dividendes 2024
+      Transaction(
+        id: _uuid.v4(),
+        accountId: peaAccountId,
+        type: TransactionType.Dividend,
+        date: DateTime(2024, 4, 15),
+        assetTicker: 'MC.PA',
+        assetName: 'Dividende LVMH',
+        amount: 13.0,
+        fees: 0.0,
+      ),
+      Transaction(
+        id: _uuid.v4(),
+        accountId: peaAccountId,
+        type: TransactionType.Dividend,
+        date: DateTime(2024, 6, 20),
+        assetTicker: 'TTE.PA',
+        assetName: 'Dividende TotalEnergies',
+        amount: 10.50,
+        fees: 0.0,
+      ),
+
+      // ===== 2025 : RENFORCEMENT RÉCENT =====
+      
+      // PEA - Dernier renforcement CW8
+      Transaction(
+        id: _uuid.v4(),
+        accountId: peaAccountId,
+        type: TransactionType.Deposit,
+        date: DateTime(2025, 1, 10),
+        amount: 3000.0,
+      ),
+      Transaction(
+        id: _uuid.v4(),
+        accountId: peaAccountId,
+        type: TransactionType.Buy,
+        date: DateTime(2025, 1, 15),
+        assetTicker: 'CW8.PA',
+        assetName: 'Amundi MSCI World UCITS ETF',
+        assetType: AssetType.ETF,
+        quantity: 6,
+        price: 480.0,
+        fees: 5.0,
+        amount: -2880.0,
+      ),
+      
+      // CTO - Renforcement MSFT
+      Transaction(
+        id: _uuid.v4(),
+        accountId: ctoAccountId,
+        type: TransactionType.Deposit,
+        date: DateTime(2025, 3, 1),
+        amount: 1500.0,
+      ),
+      Transaction(
+        id: _uuid.v4(),
+        accountId: ctoAccountId,
+        type: TransactionType.Buy,
+        date: DateTime(2025, 3, 5),
+        assetTicker: 'MSFT',
+        assetName: 'Microsoft Corporation',
+        assetType: AssetType.Stock,
+        quantity: 3,
+        price: 420.0,
+        fees: 9.90,
+        amount: -1260.0,
+      ),
+      
+      // Frais de gestion annuels
+      Transaction(
+        id: _uuid.v4(),
+        accountId: assuranceVieAccountId,
+        type: TransactionType.Fees,
+        date: DateTime(2025, 1, 1),
+        amount: -50.0,
+        notes: 'Frais de gestion annuels Assurance Vie',
       ),
     ];
 
     // --- PORTEFEUILLE DE DÉMO ---
     final demoPortfolio = Portfolio(
       id: demoPortfolioId,
-      name: "Portefeuille de Démo",
+      name: "Portefeuille de Démo (2020-2025)",
       institutions: [
         Institution(
           id: _uuid.v4(),
           name: 'Boursorama Banque',
           accounts: [
             Account(
-              id: ctoAccountId, // ID défini ci-dessus
-              name: 'Compte-Titres Ordinaire',
-              type: AccountType.cto,
-              // transactions: [], // Sera injecté au chargement
-            ),
-            Account(
-              id: peaAccountId, // ID défini ci-dessus
+              id: peaAccountId,
               name: "Plan d'Épargne en Actions",
               type: AccountType.pea,
             ),
             Account(
-              id: _uuid.v4(),
+              id: ctoAccountId,
+              name: 'Compte-Titres Ordinaire',
+              type: AccountType.cto,
+            ),
+          ],
+        ),
+        Institution(
+          id: _uuid.v4(),
+          name: 'Linxea Avenir',
+          accounts: [
+            Account(
+              id: assuranceVieAccountId,
               name: 'Assurance Vie',
               type: AccountType.assuranceVie,
             ),
@@ -269,10 +557,10 @@ class PortfolioRepository {
         ),
         Institution(
           id: _uuid.v4(),
-          name: 'Coinbase',
+          name: 'Kraken',
           accounts: [
             Account(
-              id: _uuid.v4(),
+              id: cryptoAccountId,
               name: 'Portefeuille Crypto',
               type: AccountType.crypto,
             ),
@@ -282,9 +570,16 @@ class PortfolioRepository {
       savingsPlans: [
         SavingsPlan(
           id: _uuid.v4(),
-          name: 'Achat mensuel d\'ETF World',
-          monthlyAmount: 150.0,
-          targetTicker: 'CW8', // Fait référence à l'actif du CTO
+          name: 'DCA ETF World (PEA)',
+          monthlyAmount: 300.0,
+          targetTicker: 'CW8.PA',
+          isActive: true,
+        ),
+        SavingsPlan(
+          id: _uuid.v4(),
+          name: 'DCA Bitcoin',
+          monthlyAmount: 100.0,
+          targetTicker: 'BTC-EUR',
           isActive: true,
         ),
       ],
