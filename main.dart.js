@@ -111542,7 +111542,7 @@ b4=A.b7(a3,11,12,0,0,0,0)
 b5=A.b7(a3,11,12,0,0,0,0)
 r=A.b7(a3,11,12,0,0,0,0)
 q=A.b7(a3,11,12,0,0,0,0)
-p=[new A.ek(l,500,8.5,b0,!1),new A.ek(g,750,2,b1,!1),new A.ek(b,65,5.5,b2,!1),new A.ek(j,220,0.5,b3,!1),new A.ek(f,430,0.8,b4,!1),new A.ek(d,75e3,0,b5,!1),new A.ek("ETH-EUR",3000,0,r,!1),new A.ek(a,1.025,2.5,q,!0)]
+p=[new A.ek(l,500,0.085,b0,!1),new A.ek(g,750,0.02,b1,!1),new A.ek(b,65,0.055,b2,!1),new A.ek(j,220,0.005,b3,!1),new A.ek(f,430,0.008,b4,!1),new A.ek(d,75e3,0,b5,!1),new A.ek("ETH-EUR",3000,0,r,!1),new A.ek(a,1.025,0.025,q,!0)]
 this.j5(s)
 for(o=0;o<28;++o)this.pT(a9[o])
 for(o=0;o<8;++o)this.mY(p[o])
