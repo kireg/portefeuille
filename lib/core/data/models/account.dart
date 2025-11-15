@@ -29,12 +29,15 @@ class Account {
   @HiveField(4)
   final String id;
 
+  // --- NOUVEAU CHAMP ---
+  @HiveField(5)
+  final String currency; // Ex: "EUR", "USD"
+  // --- FIN NOUVEAU ---
+
   // Doit être injecté par le Repository
   List<Transaction> transactions = [];
-
   // NOUVEAU : Cache des assets avec métadonnées injectées
   List<Asset>? _cachedAssets;
-
   // NOUVEAU : Outil pour générer des ID d'Assets
   static const _uuid = Uuid();
 
@@ -56,9 +59,8 @@ class Account {
     // Sinon, générer les assets (sans métadonnées)
     final assetTransactions = transactions
         .where((tr) =>
-            tr.type == TransactionType.Buy || tr.type == TransactionType.Sell)
+    tr.type == TransactionType.Buy || tr.type == TransactionType.Sell)
         .toList();
-
     if (assetTransactions.isEmpty) return [];
 
     // Grouper les transactions par ticker
@@ -74,7 +76,7 @@ class Account {
     groupedByTicker.forEach((ticker, tickerTransactions) {
       // Trouver la transaction la plus récente pour obtenir le nom
       final lastTx =
-          tickerTransactions.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
+      tickerTransactions.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
 
       // Créer l'objet Asset.
       // Le 'currentPrice' et 'yield' seront à 0.0 par défaut.
@@ -93,7 +95,6 @@ class Account {
         generatedAssets.add(asset);
       }
     });
-
     return generatedAssets;
   }
 
@@ -111,15 +112,18 @@ class Account {
     required this.id,
     required this.name,
     required this.type,
+    this.currency = 'EUR', // <-- MODIFIÉ (défaut)
     this.transactions = const [],
     // Migration
     this.stale_assets,
     this.stale_cashBalance,
   });
 
+  // ATTENTION: Ces getters devront être refactorisés
+  // car 'asset.totalValue' dépendra des taux de change
   double get totalValue {
     final assetsValue =
-        assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
+    assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
     return assetsValue + cashBalance;
   }
 
@@ -127,23 +131,20 @@ class Account {
     return assets.fold(0.0, (sum, asset) => sum + asset.profitAndLoss);
   }
 
-  // NOUVEAU : Capital investi total (coût d'acquisition de tous les actifs)
   double get totalInvestedCapital {
     return assets.fold(0.0, (sum, asset) => sum + asset.totalInvestedCapital);
   }
 
   double get estimatedAnnualYield {
     final assetsValue =
-        assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
+    assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
     if (assetsValue == 0) {
       return 0.0;
     }
     final weightedYield = assets.fold(0.0,
-        (sum, asset) => sum + (asset.totalValue * asset.estimatedAnnualYield));
-
+            (sum, asset) => sum + (asset.totalValue * asset.estimatedAnnualYield));
     // Éviter la division par zéro si assetsValue est nul
     if (assetsValue == 0) return 0.0;
-
     return weightedYield / assetsValue;
   }
 
@@ -152,6 +153,7 @@ class Account {
       id: id,
       name: name,
       type: type,
+      currency: currency, // <-- MODIFIÉ
       transactions: List.from(transactions),
       // Migration
       stale_assets: stale_assets?.map((e) => e.deepCopy()).toList(),

@@ -1,4 +1,5 @@
 // lib/features/07_management/ui/screens/add_account_screen.dart
+// REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/account.dart';
@@ -6,12 +7,10 @@ import 'package:portefeuille/core/data/models/account_type.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+
 class AddAccountScreen extends StatefulWidget {
   final String institutionId;
-  /// Si onAccountCreated est fourni, le compte sera retourné via ce callback
-  /// au lieu d'être ajouté directement au provider (utile pour l'onglet Correction)
-  final void Function(Account)?
-  onAccountCreated;
+  final void Function(Account)? onAccountCreated;
 
   const AddAccountScreen({
     super.key,
@@ -25,13 +24,16 @@ class AddAccountScreen extends StatefulWidget {
 class _AddAccountScreenState extends State<AddAccountScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-// final _cashController = TextEditingController(text: "0.0"); // <--- SUPPRIMÉ
   AccountType _selectedType = AccountType.cto;
+  String _selectedCurrency = 'EUR'; // <-- NOUVEAU
   final _uuid = const Uuid();
+
+  // Liste simplifiée des devises
+  final List<String> _currencies = ['EUR', 'USD', 'CHF', 'GBP', 'CAD', 'JPY'];
+
   @override
   void dispose() {
     _nameController.dispose();
-    // _cashController.dispose(); // <--- SUPPRIMÉ
     super.dispose();
   }
 
@@ -41,11 +43,9 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         id: _uuid.v4(),
         name: _nameController.text,
         type: _selectedType,
-        // cashBalance: double.tryParse(_cashController.text) ?? 0.0, // <--- SUPPRIMÉ
-        // assets: [], // <--- SUPPRIMÉ
+        currency: _selectedCurrency, // <-- MODIFIÉ
       );
-// Si un callback est fourni, on retourne le compte
-      // Sinon, on l'ajoute directement au provider
+
       if (widget.onAccountCreated != null) {
         widget.onAccountCreated!(newAccount);
       } else {
@@ -60,7 +60,6 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
   @override
   Widget build(BuildContext context) {
     final keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
-// MODIFIÉ : Retrait du Scaffold, ajout du SingleChildScrollView
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.only(
@@ -70,78 +69,83 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
           bottom: keyboardPadding + 16.0,
         ),
         child: Form(
-
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-            Text(
-            'Ajouter un Compte',
-            style: Theme.of(context).textTheme.titleLarge,
-
+              Text(
+                'Ajouter un Compte',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 24),
+              TextFormField(
+                controller: _nameController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Nom du compte (ex: PEA, CTO)',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Le nom est requis';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<AccountType>(
+                value: _selectedType,
+                decoration: const InputDecoration(
+                  labelText: 'Type de compte',
+                  border: OutlineInputBorder(),
+                ),
+                items: AccountType.values.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text(type.displayName),
+                  );
+                }).toList(),
+                onChanged: (type) {
+                  setState(() {
+                    if (type != null) {
+                      _selectedType = type;
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 16), // <-- DEBUT AJOUT
+              DropdownButtonFormField<String>(
+                value: _selectedCurrency,
+                decoration: const InputDecoration(
+                  labelText: 'Devise du compte',
+                  border: OutlineInputBorder(),
+                ),
+                items: _currencies.map((currency) {
+                  return DropdownMenuItem(
+                    value: currency,
+                    child: Text(currency),
+                  );
+                }).toList(),
+                onChanged: (currency) {
+                  setState(() {
+                    if (currency != null) {
+                      _selectedCurrency = currency;
+                    }
+                  });
+                },
+              ), // <-- FIN AJOUT
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _submitForm,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: const Text('Enregistrer'),
+              )
+            ],
           ),
-          const SizedBox(height: 24),
-          TextFormField(
-            controller: _nameController,
-            autofocus: true,
-            decoration: const InputDecoration(
-
-              labelText: 'Nom du compte (ex: PEA, CTO)',
-              border: OutlineInputBorder(),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-
-                return 'Le nom est requis';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<AccountType>(
-            value: _selectedType,
-            decoration: const InputDecoration(
-                labelText: 'Type de compte',
-                border: OutlineInputBorder(),
-          ),
-          items: AccountType.values.map((type) {
-            return DropdownMenuItem(
-              value: type,
-
-              child: Text(type.displayName),
-            );
-          }).toList(),
-          onChanged: (type) {
-            setState(() {
-
-              if (type != null) {
-                _selectedType = type;
-              }
-            });
-          },
-
         ),
-        // --- SUPPRESSION DU CHAMP CASHBALANCE ---
-        // const SizedBox(height: 16),
-        // TextFormField(
-        //   controller: _cashController,
-        //   ...
-        // ),
-        // --- FIN SUPPRESSION ---
-
-        const SizedBox(height: 24),
-        ElevatedButton(
-          onPressed: _submitForm,
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50),
-          ),
-
-          child: const Text('Enregistrer'),
-        )
-        ],
       ),
-    ),
-    ),
     );
   }
 }

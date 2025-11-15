@@ -13,39 +13,38 @@ class SettingsProvider extends ChangeNotifier {
   static const String _kIsOnlineMode = 'isOnlineMode';
   static const String _kUserLevel = 'userLevel';
   static const String _kAppColor = 'appColor';
-
-  // NOUVELLE CLÉ DE MIGRATION
   static const String _kMigrationV1Done = 'migration_v1_done';
+  static const String _kBaseCurrency = 'baseCurrency';
+  static const String _kMigrationV2Done = 'migration_v2_done'; // <-- NOUVEAU
 
   // Clé sécurisée
   static const String _kFmpApiKey = 'fmpApiKey';
-
   // Valeurs par défaut
   static const bool _defaultOnlineMode = false;
   static const int _defaultUserLevelIndex = 0;
   static const int _defaultAppColorValue = 0xFF00bcd4;
+  static const String _defaultBaseCurrency = 'EUR';
 
   late final Box _settingsBox;
   late final FlutterSecureStorage _secureStorage;
-
   // Variables d'état
   bool _isOnlineMode = _defaultOnlineMode;
   UserLevel _userLevel = UserLevel.values[_defaultUserLevelIndex];
   Color _appColor = const Color(_defaultAppColorValue);
+  String _baseCurrency = _defaultBaseCurrency;
   String? _fmpApiKey;
-
-  // NOUVEAU
   bool _migrationV1Done = false;
+  bool _migrationV2Done = false; // <-- NOUVEAU
 
   // Getters publics
   bool get isOnlineMode => _isOnlineMode;
   UserLevel get userLevel => _userLevel;
   Color get appColor => _appColor;
+  String get baseCurrency => _baseCurrency;
   String? get fmpApiKey => _fmpApiKey;
   bool get hasFmpApiKey => _fmpApiKey != null && _fmpApiKey!.isNotEmpty;
-
-  // NOUVEAU
   bool get migrationV1Done => _migrationV1Done;
+  bool get migrationV2Done => _migrationV2Done; // <-- NOUVEAU
 
   SettingsProvider() {
     _settingsBox = Hive.box(AppConstants.kSettingsBoxName);
@@ -78,8 +77,10 @@ class SettingsProvider extends ChangeNotifier {
     );
     _appColor = Color(appColorValue);
 
-    // NOUVEAU : Charger le drapeau de migration
     _migrationV1Done = _settingsBox.get(_kMigrationV1Done, defaultValue: false);
+    _migrationV2Done = _settingsBox.get(_kMigrationV2Done, defaultValue: false); // <-- NOUVEAU
+    _baseCurrency =
+        _settingsBox.get(_kBaseCurrency, defaultValue: _defaultBaseCurrency);
   }
 
   /// Charge les paramètres asynchrones (clé API).
@@ -88,11 +89,21 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // NOUVEAU : Méthode pour définir le drapeau de migration
+  void setBaseCurrency(String currency) {
+    _baseCurrency = currency.toUpperCase();
+    _settingsBox.put(_kBaseCurrency, _baseCurrency);
+    notifyListeners();
+  }
+
   Future<void> setMigrationV1Done() async {
     _migrationV1Done = true;
     await _settingsBox.put(_kMigrationV1Done, true);
-    // Pas besoin de notifyListeners() si appelé depuis le PortfolioProvider
+  }
+
+  // NOUVEAU : Méthode pour définir le drapeau de migration V2
+  Future<void> setMigrationV2Done() async {
+    _migrationV2Done = true;
+    await _settingsBox.put(_kMigrationV2Done, true);
   }
 
   void toggleOnlineMode(bool value) {

@@ -1,5 +1,5 @@
 // lib/core/data/models/asset_metadata.dart
-// Modèle pour stocker les métadonnées des actifs (prix, rendement)
+// REMPLACEZ LE FICHIER COMPLET
 
 import 'package:hive/hive.dart';
 
@@ -31,17 +31,25 @@ class AssetMetadata {
   @HiveField(4)
   bool isManualYield;
 
+  // --- NOUVEAU CHAMP ---
+  /// Devise du prix (ex: "USD", "EUR")
+  @HiveField(5)
+  String priceCurrency;
+  // --- FIN NOUVEAU ---
+
   AssetMetadata({
     required this.ticker,
     this.currentPrice = 0.0,
+    this.priceCurrency = 'EUR', // <-- MODIFIÉ (défaut)
     this.estimatedAnnualYield = 0.0,
     DateTime? lastUpdated,
     this.isManualYield = false,
   }) : lastUpdated = lastUpdated ?? DateTime.now();
 
   /// Met à jour le prix actuel
-  void updatePrice(double newPrice) {
+  void updatePrice(double newPrice, String newCurrency) {
     currentPrice = newPrice;
+    priceCurrency = newCurrency; // <-- MODIFIÉ
     lastUpdated = DateTime.now();
   }
 
@@ -55,6 +63,7 @@ class AssetMetadata {
   AssetMetadata copyWith({
     String? ticker,
     double? currentPrice,
+    String? priceCurrency, // <-- MODIFIÉ
     double? estimatedAnnualYield,
     DateTime? lastUpdated,
     bool? isManualYield,
@@ -62,6 +71,7 @@ class AssetMetadata {
     return AssetMetadata(
       ticker: ticker ?? this.ticker,
       currentPrice: currentPrice ?? this.currentPrice,
+      priceCurrency: priceCurrency ?? this.priceCurrency, // <-- MODIFIÉ
       estimatedAnnualYield: estimatedAnnualYield ?? this.estimatedAnnualYield,
       lastUpdated: lastUpdated ?? this.lastUpdated,
       isManualYield: isManualYield ?? this.isManualYield,

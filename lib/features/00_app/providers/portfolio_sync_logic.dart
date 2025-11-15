@@ -21,10 +21,8 @@ class SyncResult {
     this.cacheUpdates = 0,
     this.failedTickers = const [],
   });
-
   int get updatedCount => fmpUpdates + yahooUpdates;
   int get failedCount => failedTickers.length;
-
   /// Construit un message de résumé détaillé pour l'utilisateur
   String getSummaryMessage() {
     if (updatedCount == 0 && failedCount == 0 && cacheUpdates == 0) {
@@ -39,7 +37,6 @@ class SyncResult {
     if (yahooUpdates > 0) parts.add("$yahooUpdates via Yahoo");
 
     String summary = "Synchro : ${parts.join(', ')}.";
-
     if (failedCount > 0) {
       summary +=
       "\nÉchecs : ${failedCount} (${failedTickers.take(3).join(', ')}${failedCount > 3 ? ', ...' : ''})";
@@ -69,14 +66,10 @@ class PortfolioSyncLogic {
   /// Synchronise les prix en utilisant la logique de fallback de l'ApiService
   Future<SyncResult> synchroniserLesPrix(Portfolio activePortfolio) async {
     if (!settingsProvider.isOnlineMode) {
-      // CORRIGÉ : Constructeur par défaut
       return SyncResult();
     }
 
-    // --- AJOUT : Déclaration de 'tickers' en dehors du try ---
-    // Cela permet au 'catch' d'y accéder en cas d'erreur globale
     Set<String> tickers = {};
-    // --- FIN AJOUT ---
 
     try {
       // 1. Aplatir tous les actifs et extraire les tickers uniques
@@ -86,11 +79,9 @@ class PortfolioSyncLogic {
           allAssets.addAll(acc.assets);
         }
       }
-      tickers = // <-- Assignation (au lieu de 'final')
-      allAssets.map((a) => a.ticker).where((t) => t.isNotEmpty).toSet();
-
+      tickers =
+          allAssets.map((a) => a.ticker).where((t) => t.isNotEmpty).toSet();
       if (tickers.isEmpty) {
-        // CORRIGÉ : Constructeur par défaut
         return SyncResult();
       }
 
@@ -108,17 +99,22 @@ class PortfolioSyncLogic {
 
       for (final result in results) {
         final newPrice = result.price;
+        final newCurrency = result.currency;
         final source = result.source;
 
         if (newPrice != null) {
-          // Si un prix est trouvé (FMP, Yahoo, ou Cache),
-          // on vérifie s'il doit être mis à jour dans Hive.
           final metadata = repository.getOrCreateAssetMetadata(result.ticker);
-          if (metadata.currentPrice != newPrice) {
-            metadata.updatePrice(newPrice);
+
+          // --- CORRECTION DE L'ERREUR ---
+          // On vérifie si le prix OU la devise a changé
+          if (metadata.currentPrice != newPrice ||
+              metadata.priceCurrency != newCurrency) {
+            // On utilise la nouvelle signature
+            metadata.updatePrice(newPrice, newCurrency);
+            // --- FIN CORRECTION ---
+
             saveFutures.add(repository.saveAssetMetadata(metadata));
 
-            // Compter la source de la mise à jour
             if (source == ApiSource.Fmp) fmpUpdates++;
             if (source == ApiSource.Yahoo) yahooUpdates++;
           } else if (source == ApiSource.Cache) {
@@ -143,9 +139,8 @@ class PortfolioSyncLogic {
       );
     } catch (e) {
       debugPrint("⚠️ Erreur lors de la synchronisation des prix : $e");
-      // CORRIGÉ : Constructeur avec les tickers qui ont échoué
       return SyncResult(
-        failedTickers: tickers.toList(), // Retourne tous les tickers comme échoués
+        failedTickers: tickers.toList(),
       );
     }
   }

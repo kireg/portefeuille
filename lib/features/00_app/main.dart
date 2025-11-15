@@ -23,10 +23,14 @@ import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 
+// --- NOUVEAUX IMPORTS ---
+import 'package:portefeuille/core/data/models/price_history_point.dart';
+import 'package:portefeuille/core/data/models/exchange_rate_history.dart';
+// --- FIN NOUVEAUX IMPORTS ---
+
 // Features
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
-
 import 'package:portefeuille/core/ui/splash_screen.dart';
 
 void main() async {
@@ -34,7 +38,6 @@ void main() async {
 
   // 1. Initialiser Hive
   await Hive.initFlutter();
-
   // 2. Enregistrer les Adapters
   Hive.registerAdapter(PortfolioAdapter());
   Hive.registerAdapter(InstitutionAdapter());
@@ -46,16 +49,20 @@ void main() async {
   Hive.registerAdapter(TransactionAdapter());
   Hive.registerAdapter(AssetTypeAdapter());
   Hive.registerAdapter(AssetMetadataAdapter());
+  // --- NOUVEAUX ADAPTERS ---
+  Hive.registerAdapter(PriceHistoryPointAdapter());
+  Hive.registerAdapter(ExchangeRateHistoryAdapter());
+  // --- FIN NOUVEAUX ADAPTERS ---
 
   // 3. Ouvrir les boîtes
   await Hive.openBox<Portfolio>(AppConstants.kPortfolioBoxName);
   await Hive.openBox(AppConstants.kSettingsBoxName);
-
-  // NOUVEAU : Ouvrir la boîte des transactions
   await Hive.openBox<Transaction>(AppConstants.kTransactionBoxName);
-
-  // NOUVEAU : Ouvrir la boîte des métadonnées d'actifs
   await Hive.openBox<AssetMetadata>(AppConstants.kAssetMetadataBoxName);
+  // --- NOUVELLES BOXES ---
+  await Hive.openBox<PriceHistoryPoint>(AppConstants.kPriceHistoryBoxName);
+  await Hive.openBox<ExchangeRateHistory>(AppConstants.kExchangeRateHistoryBoxName);
+  // --- FIN NOUVELLES BOXES ---
 
   // 4. Instancier le Repository
   final portfolioRepository = PortfolioRepository();
@@ -66,7 +73,6 @@ class MyApp extends StatelessWidget {
   final PortfolioRepository repository;
 
   const MyApp({super.key, required this.repository});
-
   @override
   Widget build(BuildContext context) {
     // Le MultiProvider reste inchangé

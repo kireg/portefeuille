@@ -1,3 +1,6 @@
+// lib/core/data/models/transaction.dart
+// REMPLACEZ LE FICHIER COMPLET
+
 import 'package:hive/hive.dart';
 import 'transaction_type.dart';
 import 'asset_type.dart';
@@ -22,27 +25,35 @@ class Transaction {
   final String? assetTicker; // Ticker de l'actif (pour Achat/Vente/Dividende)
 
   @HiveField(5)
-  final String? assetName; // Nom de l'actif (pour Afile:///home/runner/work/gemini/gemini/google/generative-ai/backend/user_data/app_data/2025-11-09-1435_Portfeuille-restore-point/lib/features/03_overview/ui/widgets/asset_list_item.dart Achat/Vente)
+  final String? assetName; // Nom de l'actif
 
   @HiveField(6)
   final double? quantity; // Quantité d'actifs (pour Achat/Vente)
 
   @HiveField(7)
-  final double? price; // Prix unitaire (pour Achat/Vente/Dividende)
+  final double? price; // Prix unitaire DANS LA DEVISE DE L'ACTIF (ex: 150.00 USD)
 
   @HiveField(8)
-  final double amount; // Montant en liquidités (négatif si sortie)
+  final double amount; // Montant DANS LA DEVISE DU COMPTE (ex: -140.00 EUR)
 
   @HiveField(9)
-  final double fees; // Frais (toujours positifs, déduits du montant)
+  final double fees; // Frais DANS LA DEVISE DU COMPTE (ex: 2.00 EUR)
 
   @HiveField(10)
   final String notes;
 
-  // --- NOUVEAU CHAMP ---
   @HiveField(11)
   final AssetType? assetType; // Pour Achat/Vente
-  // --- FIN NOUVEAU ---
+
+  // --- NOUVEAUX CHAMPS DEVISE ---
+  @HiveField(12)
+  final String?
+  priceCurrency; // Devise du 'price' (ex: "USD" pour AAPL)
+
+  @HiveField(13)
+  final double?
+  exchangeRate; // Taux de change (priceCurrency -> account.currency) ex: 1.08
+  // --- FIN NOUVEAUX CHAMPS ---
 
   Transaction({
     required this.id,
@@ -54,16 +65,21 @@ class Transaction {
     this.assetName,
     this.quantity,
     this.price,
+    this.priceCurrency, // <-- MODIFIÉ
+    this.exchangeRate, // <-- MODIFIÉ
     this.fees = 0.0,
     this.notes = '',
     this.assetType,
   });
 
   // Helper pour obtenir le montant total de la transaction (ex: Achat)
+  // 'amount' et 'fees' SONT TOUS LES DEUX dans la devise du compte.
+  // Cette logique reste donc inchangée.
   double get totalAmount {
-    // Pour un achat, amount = (quantity * price) * -1
-    // Pour une vente, amount = (quantity * price)
+    // Pour un achat, amount = (quantity * price * exchangeRate) * -1
+    // Pour une vente, amount = (quantity * price * exchangeRate)
     // Pour un dépôt, amount = montant
+    // 'amount' stocke déjà le résultat de ce calcul.
     return amount - fees;
   }
 }

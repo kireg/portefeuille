@@ -1,46 +1,40 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'account.dart';
+part of 'price_history_point.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class AccountAdapter extends TypeAdapter<Account> {
+class PriceHistoryPointAdapter extends TypeAdapter<PriceHistoryPoint> {
   @override
-  final int typeId = 2;
+  final int typeId = 10;
 
   @override
-  Account read(BinaryReader reader) {
+  PriceHistoryPoint read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Account(
-      id: fields[4] as String,
-      name: fields[0] as String,
-      type: fields[1] as AccountType,
-      currency: fields[5] as String,
-      stale_assets: (fields[2] as List?)?.cast<Asset>(),
-      stale_cashBalance: fields[3] as double?,
+    return PriceHistoryPoint(
+      ticker: fields[0] as String,
+      date: fields[1] as DateTime,
+      price: fields[2] as double,
+      currency: fields[3] as String,
     );
   }
 
   @override
-  void write(BinaryWriter writer, Account obj) {
+  void write(BinaryWriter writer, PriceHistoryPoint obj) {
     writer
-      ..writeByte(6)
-      ..writeByte(0)
-      ..write(obj.name)
-      ..writeByte(1)
-      ..write(obj.type)
-      ..writeByte(2)
-      ..write(obj.stale_assets)
-      ..writeByte(3)
-      ..write(obj.stale_cashBalance)
       ..writeByte(4)
-      ..write(obj.id)
-      ..writeByte(5)
+      ..writeByte(0)
+      ..write(obj.ticker)
+      ..writeByte(1)
+      ..write(obj.date)
+      ..writeByte(2)
+      ..write(obj.price)
+      ..writeByte(3)
       ..write(obj.currency);
   }
 
@@ -50,7 +44,7 @@ class AccountAdapter extends TypeAdapter<Account> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is AccountAdapter &&
+      other is PriceHistoryPointAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

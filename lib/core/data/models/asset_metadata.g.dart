@@ -19,6 +19,7 @@ class AssetMetadataAdapter extends TypeAdapter<AssetMetadata> {
     return AssetMetadata(
       ticker: fields[0] as String,
       currentPrice: fields[1] as double,
+      priceCurrency: fields[5] as String,
       estimatedAnnualYield: fields[2] as double,
       lastUpdated: fields[3] as DateTime?,
       isManualYield: fields[4] as bool,
@@ -28,7 +29,7 @@ class AssetMetadataAdapter extends TypeAdapter<AssetMetadata> {
   @override
   void write(BinaryWriter writer, AssetMetadata obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.ticker)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class AssetMetadataAdapter extends TypeAdapter<AssetMetadata> {
       ..writeByte(3)
       ..write(obj.lastUpdated)
       ..writeByte(4)
-      ..write(obj.isManualYield);
+      ..write(obj.isManualYield)
+      ..writeByte(5)
+      ..write(obj.priceCurrency);
   }
 
   @override
