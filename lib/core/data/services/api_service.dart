@@ -44,15 +44,21 @@ class PriceResult {
 class ApiService {
   final SettingsProvider _settingsProvider;
   final Map<String, _CacheEntry> _priceCache = {};
+
+  // --- CORRECTION : CHAMP MANQUANT ---
   final http.Client _httpClient;
+  // --- FIN CORRECTION ---
 
   // Cache pour la recherche (24h)
   final Map<String, List<TickerSuggestion>> _searchCache = {};
   final Map<String, DateTime> _searchCacheTimestamps = {};
 
-  ApiService({required SettingsProvider settingsProvider})
-      : _settingsProvider = settingsProvider,
-        _httpClient = http.Client();
+  // --- CONSTRUCTEUR REFRACTORISÉ (Injection de dépendances) ---
+  ApiService({
+    required SettingsProvider settingsProvider,
+    http.Client? httpClient, // Optionnel, principalement pour les tests
+  })  : _settingsProvider = settingsProvider,
+        _httpClient = httpClient ?? http.Client(); // Utilise un client réel par défaut
 
   /// Récupère le prix pour un ticker.
   /// Gère le cache et la stratégie de fallback.
@@ -79,7 +85,6 @@ class ApiService {
 
       // 3. Stratégie 2 : Yahoo (Fallback ou si FMP n'a pas de clé)
       price = await _fetchFromYahoo(ticker);
-
       // 4. Mettre à jour le cache et retourner
       if (price != null) {
         _priceCache[ticker] = _CacheEntry(price);
@@ -101,8 +106,12 @@ class ApiService {
   Future<double?> _fetchFromFmp(String ticker) async {
     if (!_settingsProvider.hasFmpApiKey) return null;
     final apiKey = _settingsProvider.fmpApiKey!;
+
+    // --- CORRECTION ENDPOINT (de la réponse précédente) ---
     final uri = Uri.parse(
-        'https://financialmodelingprep.com/api/v3/quote-short/$ticker?apikey=$apiKey');
+        'https://financialmodelingprep.com/api/v3/quote/$ticker?apikey=$apiKey');
+    // --- FIN CORRECTION ---
+
     try {
       final response =
       await _httpClient.get(uri).timeout(const Duration(seconds: 5));

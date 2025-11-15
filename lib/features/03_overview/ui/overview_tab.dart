@@ -1,20 +1,17 @@
 // lib/features/03_overview/ui/overview_tab.dart
-// REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../00_app/providers/portfolio_provider.dart';
 import 'widgets/portfolio_header.dart';
-// import 'widgets/institution_list.dart'; // <-- Logique maintenant inlinée
 import 'widgets/allocation_chart.dart';
 import 'widgets/ai_analysis_card.dart';
 import 'widgets/asset_type_allocation_chart.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_institution_screen.dart';
-
-// NOUVEAUX IMPORTS (pour remplacer InstitutionList)
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/03_overview/ui/widgets/account_tile.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_account_screen.dart';
+import 'package:portefeuille/core/ui/theme/app_theme.dart';
 
 class OverviewTab extends StatelessWidget {
   const OverviewTab({super.key});
@@ -33,149 +30,202 @@ class OverviewTab extends StatelessWidget {
         final theme = Theme.of(context);
 
         return CustomScrollView(
-          // PAS DE PADDING ICI
           slivers: [
-            // --- NOUVELLE STRUCTURE DE PADDING ---
+            // En-tête avec titre
+            SliverToBoxAdapter(
+              child: AppTheme.buildScreenTitle(
+                context: context,
+                title: 'Vue d\'ensemble',
+                centered: true,
+              ),
+            ),
 
-            // 1. Contenu statique (Header, Graphiques, Titre)
-            // Ce bloc contient tout ce qui n'est PAS la liste lazy-loaded.
+            // Contenu principal
             SliverPadding(
               padding: const EdgeInsets.all(16.0),
               sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  [
-                    // 1a. Header
-                    PortfolioHeader(portfolio: portfolio),
-                    const SizedBox(height: 24),
+                delegate: SliverChildListDelegate([
+                  // Header du portfolio
+                  AppTheme.buildStyledCard(
+                    context: context,
+                    child: PortfolioHeader(portfolio: portfolio),
+                  ),
+                  const SizedBox(height: 12),
 
-                    // 1b. Graphiques d'allocation (côte à côte si largeur suffisante)
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        // Si largeur >= 800px, afficher en ligne
-                        if (constraints.maxWidth >= 800) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
+                  // Graphiques d'allocation
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth >= 800) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: AppTheme.buildStyledCard(
+                                context: context,
                                 child: AllocationChart(portfolio: portfolio),
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: AppTheme.buildStyledCard(
+                                context: context,
                                 child: AssetTypeAllocationChart(
                                   allocationData: portfolio.valueByAssetType,
                                   totalValue: portfolio.totalValue,
                                 ),
                               ),
-                            ],
-                          );
-                        }
-                        // Sinon, afficher en colonne
-                        return Column(
-                          children: [
-                            AllocationChart(portfolio: portfolio),
-                            const SizedBox(height: 24),
-                            AssetTypeAllocationChart(
-                              allocationData: portfolio.valueByAssetType,
-                              totalValue: portfolio.totalValue,
                             ),
                           ],
                         );
-                      },
-                    ),
-                    const SizedBox(height: 24),
-
-                    // 1d. Titre "Structure du Portefeuille"
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Structure du Portefeuille',
-                            style: theme.textTheme.titleLarge,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.add_circle_outline,
-                              color: theme.colorScheme.primary),
-                          tooltip: 'Ajouter une institution',
-                          onPressed: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              builder: (context) =>
-                                  const AddInstitutionScreen(),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-              ),
-            ),
-
-            // 2. Liste des Institutions (Lazy-loaded)
-            // On applique seulement un padding horizontal pour que les Cards
-            // s'alignent avec le contenu ci-dessus.
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final institution = institutions[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8.0),
-                      child: ExpansionTile(
-                        title: Text(
-                          institution.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Text(
-                          CurrencyFormatter.format(institution.totalValue),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      }
+                      return Column(
                         children: [
-                          ...institution.accounts.map((account) {
-                            return AccountTile(account: account);
-                          }).toList(),
-                          ListTile(
-                            leading: Icon(Icons.add, color: Colors.grey[400]),
-                            title: Text(
-                              'Ajouter un compte',
-                              style: TextStyle(color: Colors.grey[400]),
+                          AppTheme.buildStyledCard(
+                            context: context,
+                            child: AllocationChart(portfolio: portfolio),
+                          ),
+                          const SizedBox(height: 12),
+                          AppTheme.buildStyledCard(
+                            context: context,
+                            child: AssetTypeAllocationChart(
+                              allocationData: portfolio.valueByAssetType,
+                              totalValue: portfolio.totalValue,
                             ),
-                            onTap: () {
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Analyse IA
+                  AppTheme.buildStyledCard(
+                    context: context,
+                    child: AiAnalysisCard(portfolio: portfolio),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Section Institutions
+                  AppTheme.buildStyledCard(
+                    context: context,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppTheme.buildSectionHeader(
+                          context: context,
+                          icon: Icons.account_balance,
+                          title: 'Structure du Portefeuille',
+                          trailing: IconButton(
+                            icon: const Icon(Icons.add_circle_outline),
+                            tooltip: 'Ajouter une institution',
+                            onPressed: () {
                               showModalBottomSheet(
                                 context: context,
                                 isScrollControlled: true,
-                                builder: (context) => AddAccountScreen(
-                                    institutionId: institution.id),
+                                builder: (context) => const AddInstitutionScreen(),
                               );
                             },
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                  childCount: institutions.length,
-                ),
-              ),
-            ),
+                        ),
+                        const SizedBox(height: 16),
 
-            // 3. Analyse IA (avec son propre padding)
-            SliverPadding(
-              // Padding vertical pour le séparer de la liste
-              // Padding horizontal pour l'aligner
-              padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
-              sliver: SliverToBoxAdapter(
-                child: AiAnalysisCard(portfolio: portfolio),
+                        // Liste des institutions
+                        if (institutions.isEmpty)
+                          AppTheme.buildInfoContainer(
+                            context: context,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Text(
+                                  'Aucune institution. Ajoutez-en une pour commencer.',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          ...institutions.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final institution = entry.value;
+                            return Column(
+                              children: [
+                                if (index > 0) const SizedBox(height: 12),
+                                AppTheme.buildInfoContainer(
+                                  context: context,
+                                  padding: EdgeInsets.zero,
+                                  child: Theme(
+                                    data: theme.copyWith(
+                                      dividerColor: Colors.transparent,
+                                    ),
+                                    child: ExpansionTile(
+                                      tilePadding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 4,
+                                      ),
+                                      childrenPadding: EdgeInsets.zero,
+                                      title: Text(
+                                        institution.name,
+                                        style: theme.textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            CurrencyFormatter.format(institution.totalValue),
+                                            style: theme.textTheme.titleMedium?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Icon(Icons.expand_more),
+                                        ],
+                                      ),
+                                      children: [
+                                        Divider(height: 1, indent: 16),
+                                        ...institution.accounts.map((account) {
+                                          return AccountTile(account: account);
+                                        }),
+                                        ListTile(
+                                          leading: Icon(
+                                            Icons.add,
+                                            color: theme.colorScheme.primary.withOpacity(0.6),
+                                          ),
+                                          title: Text(
+                                            'Ajouter un compte',
+                                            style: TextStyle(
+                                              color: theme.colorScheme.primary.withOpacity(0.6),
+                                            ),
+                                          ),
+                                          onTap: () {
+                                            showModalBottomSheet(
+                                              context: context,
+                                              isScrollControlled: true,
+                                              builder: (context) => AddAccountScreen(
+                                                institutionId: institution.id,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ]),
               ),
             ),
-            // --- FIN NOUVELLE STRUCTURE ---
           ],
         );
       },

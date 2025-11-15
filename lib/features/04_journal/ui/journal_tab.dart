@@ -1,7 +1,7 @@
 // lib/features/04_journal/ui/journal_tab.dart
-// NOUVEAU FICHIER
 
 import 'package:flutter/material.dart';
+import 'package:portefeuille/core/ui/theme/app_theme.dart';
 import 'package:portefeuille/features/04_journal/ui/views/synthese_view.dart';
 import 'package:portefeuille/features/04_journal/ui/views/transactions_view.dart';
 
@@ -30,8 +30,17 @@ class _JournalTabState extends State<JournalTab>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
       children: [
+        // En-tête avec titre
+        AppTheme.buildScreenTitle(
+          context: context,
+          title: 'Journal',
+          centered: true,
+        ),
+        // TabBar
         TabBar(
           controller: _tabController,
           tabs: const [
@@ -45,14 +54,12 @@ class _JournalTabState extends State<JournalTab>
             ),
           ],
         ),
+        // TabBarView
         Expanded(
           child: TabBarView(
             controller: _tabController,
             children: const [
-              // Étape 2 (Vue lecture seule)
               SyntheseView(),
-
-              // Étape 3 (CRUD Transactions)
               TransactionsView(),
             ],
           ),
