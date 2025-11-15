@@ -111647,7 +111647,7 @@ return A.T($async$AY,r)},
 AZ(a){return this.agF(a)},
 agF(a){var s=0,r=A.U(t.PM),q,p=2,o=[],n=this,m,l,k,j,i,h,g,f,e,d,c,b
 var $async$AZ=A.Q(function(a0,a1){if(a0===1){o.push(a1)
-s=p}for(;;)switch(s){case 0:c=A.iN("https://query1.finance.yahoo.com/v7/finance/spark?symbols="+a+"&range=1d&interval=1d")
+s=p}for(;;)switch(s){case 0:c=A.iN("https://corsproxy.io/?https://query1.finance.yahoo.com/v7/finance/spark?symbols="+a+"&range=1d&interval=1d")
 p=4
 f=t.N
 s=7
@@ -111700,7 +111700,7 @@ a3=a2.i(0,a5)
 if(a3!=null&&new A.bW(Date.now(),0,!1).ht(a3).a<864e8){a2=n.d.i(0,a5)
 q=a2==null?A.b([],t.R7):a2
 s=1
-break}m=A.iN("https://query1.finance.yahoo.com/v1/finance/search?q="+a5+"&lang=fr-FR&region=FR")
+break}m=A.iN("https://corsproxy.io/?https://query1.finance.yahoo.com/v1/finance/search?q="+a5+"&lang=fr-FR&region=FR")
 p=4
 A.cm().$1("\ud83d\udd0d Recherche de ticker: '"+a5+"' - URL: "+A.n(m))
 b=t.N
