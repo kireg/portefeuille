@@ -58,7 +58,8 @@ class ApiService {
     required SettingsProvider settingsProvider,
     http.Client? httpClient, // Optionnel, principalement pour les tests
   })  : _settingsProvider = settingsProvider,
-        _httpClient = httpClient ?? http.Client(); // Utilise un client réel par défaut
+        _httpClient =
+            httpClient ?? http.Client(); // Utilise un client réel par défaut
 
   /// Récupère le prix pour un ticker.
   /// Gère le cache et la stratégie de fallback.
@@ -97,7 +98,8 @@ class ApiService {
       return PriceResult(null, ApiSource.None, ticker);
     } catch (e) {
       // Capturer TOUTES les exceptions non gérées
-      debugPrint("⚠️ Erreur inattendue lors de la récupération du prix pour $ticker : $e");
+      debugPrint(
+          "⚠️ Erreur inattendue lors de la récupération du prix pour $ticker : $e");
       return PriceResult(null, ApiSource.None, ticker);
     }
   }
@@ -114,7 +116,7 @@ class ApiService {
 
     try {
       final response =
-      await _httpClient.get(uri).timeout(const Duration(seconds: 5));
+          await _httpClient.get(uri).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data is List && data.isNotEmpty) {
@@ -124,7 +126,8 @@ class ApiService {
           }
         }
       }
-      debugPrint("Erreur FMP pour $ticker (Status: ${response.statusCode}): ${response.body}");
+      debugPrint(
+          "Erreur FMP pour $ticker (Status: ${response.statusCode}): ${response.body}");
       return null;
     } catch (e) {
       debugPrint("Erreur FMP pour $ticker: $e");
@@ -134,8 +137,14 @@ class ApiService {
 
   /// Tente de récupérer un prix via Yahoo Finance (API 'spark')
   Future<double?> _fetchFromYahoo(String ticker) async {
+    // --- CORRECTION WEB : Utiliser un proxy CORS pour contourner les limitations du navigateur ---
+    final String baseUrl = kIsWeb
+        ? 'https://corsproxy.io/?https://query1.finance.yahoo.com'
+        : 'https://query1.finance.yahoo.com';
+
     final yahooUrl = Uri.parse(
-        'https://query1.finance.yahoo.com/v7/finance/spark?symbols=$ticker&range=1d&interval=1d');
+        '$baseUrl/v7/finance/spark?symbols=$ticker&range=1d&interval=1d');
+
     try {
       final response = await _httpClient.get(yahooUrl, headers: {
         'User-Agent': 'Mozilla/5.0'
@@ -152,7 +161,7 @@ class ApiService {
         final result = results[0];
         final String? resultSymbol = result['symbol'];
         final num? newPriceNum =
-        result['response']?[0]?['meta']?['regularMarketPrice'];
+            result['response']?[0]?['meta']?['regularMarketPrice'];
         if (resultSymbol == ticker && newPriceNum != null) {
           return newPriceNum.toDouble();
         }
@@ -175,8 +184,13 @@ class ApiService {
     }
 
     // 2. Appeler l'API de recherche Yahoo
-    final url = Uri.parse(
-        'https://query1.finance.yahoo.com/v1/finance/search?q=$query&lang=fr-FR&region=FR');
+    // --- CORRECTION WEB : Utiliser un proxy CORS ---
+    final String baseUrl = kIsWeb
+        ? 'https://corsproxy.io/?https://query1.finance.yahoo.com'
+        : 'https://query1.finance.yahoo.com';
+
+    final url =
+        Uri.parse('$baseUrl/v1/finance/search?q=$query&lang=fr-FR&region=FR');
     try {
       debugPrint("🔍 Recherche de ticker: '$query' - URL: $url");
       final response = await _httpClient.get(url, headers: {
@@ -205,8 +219,8 @@ class ApiService {
           if (quote['quoteType'] == 'EQUITY' ||
               quote['quoteType'] == 'ETF' ||
               quote['quoteType'] == 'CRYPTOCURRENCY') {
-            suggestions
-                .add(TickerSuggestion(ticker: ticker, name: name, exchange: exchange));
+            suggestions.add(TickerSuggestion(
+                ticker: ticker, name: name, exchange: exchange));
           }
         }
       }
