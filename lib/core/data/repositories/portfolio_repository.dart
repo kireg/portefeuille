@@ -601,7 +601,7 @@ class PortfolioRepository {
       AssetMetadata(
         ticker: 'CW8.PA',
         currentPrice: 500.0,
-        estimatedAnnualYield: 8.5, // 8.5% annuel
+        estimatedAnnualYield: 0.085, // 8.5% annuel
         lastUpdated: DateTime(2025, 11, 12),
         isManualYield: false,
       ),
@@ -610,14 +610,14 @@ class PortfolioRepository {
       AssetMetadata(
         ticker: 'MC.PA',
         currentPrice: 750.0,
-        estimatedAnnualYield: 2.0, // Dividende ~2%
+        estimatedAnnualYield: 0.020, // Dividende ~2%
         lastUpdated: DateTime(2025, 11, 12),
         isManualYield: false,
       ),
       AssetMetadata(
         ticker: 'TTE.PA',
         currentPrice: 65.0,
-        estimatedAnnualYield: 5.5, // Dividende élevé ~5.5%
+        estimatedAnnualYield: 0.055, // Dividende élevé ~5.5%
         lastUpdated: DateTime(2025, 11, 12),
         isManualYield: false,
       ),
@@ -626,14 +626,14 @@ class PortfolioRepository {
       AssetMetadata(
         ticker: 'AAPL',
         currentPrice: 220.0,
-        estimatedAnnualYield: 0.5, // Dividende faible
+        estimatedAnnualYield: 0.005, // Dividende faible ~0.5%
         lastUpdated: DateTime(2025, 11, 12),
         isManualYield: false,
       ),
       AssetMetadata(
         ticker: 'MSFT',
         currentPrice: 430.0,
-        estimatedAnnualYield: 0.8, // Dividende faible
+        estimatedAnnualYield: 0.008, // Dividende faible ~0.8%
         lastUpdated: DateTime(2025, 11, 12),
         isManualYield: false,
       ),
@@ -658,7 +658,7 @@ class PortfolioRepository {
       AssetMetadata(
         ticker: 'FONDS-EUROS',
         currentPrice: 1.025,
-        estimatedAnnualYield: 2.5, // 2.5% garanti
+        estimatedAnnualYield: 0.025, // 2.5% garanti
         lastUpdated: DateTime(2025, 11, 12),
         isManualYield: true, // Saisi manuellement
       ),
