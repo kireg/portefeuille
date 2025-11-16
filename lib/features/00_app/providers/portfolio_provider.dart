@@ -6,6 +6,7 @@ import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
+import 'package:portefeuille/core/data/models/sync_log.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
@@ -182,6 +183,28 @@ class PortfolioProvider extends ChangeNotifier {
   void clearSyncMessage() {
     _syncMessage = null;
   }
+
+  // ========================================================================
+  // MÉTHODES POUR LA GESTION DES SYNC LOGS
+  // ========================================================================
+
+  /// Récupère tous les logs de synchronisation
+  List<SyncLog> getAllSyncLogs() {
+    return _repository.getAllSyncLogs();
+  }
+
+  /// Récupère les N logs les plus récents
+  List<SyncLog> getRecentSyncLogs(int limit) {
+    return _repository.getRecentSyncLogs(limit: limit);
+  }
+
+  /// Efface tous les logs de synchronisation
+  Future<void> clearAllSyncLogs() async {
+    await _repository.clearAllSyncLogs();
+    notifyListeners();
+  }
+
+  // ========================================================================
 
   Future<void> addTransaction(Transaction transaction) async {
     await _transactionLogic.addTransaction(transaction);

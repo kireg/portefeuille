@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
+import 'package:portefeuille/core/data/models/sync_log.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+import 'package:uuid/uuid.dart';
 
 // --- MODIFIÉ : Classe de résultat plus détaillée ---
 class SyncResult {
@@ -52,6 +54,7 @@ class PortfolioSyncLogic {
   final PortfolioRepository repository;
   final ApiService apiService;
   SettingsProvider settingsProvider;
+  final _uuid = const Uuid();
 
   PortfolioSyncLogic({
     required this.repository,
@@ -115,6 +118,16 @@ class PortfolioSyncLogic {
 
             saveFutures.add(repository.saveAssetMetadata(metadata));
 
+            // Enregistrer le log de succès
+            final syncLog = SyncLog.success(
+              id: _uuid.v4(),
+              ticker: result.ticker,
+              source: source.name,
+              price: newPrice,
+              currency: newCurrency,
+            );
+            saveFutures.add(repository.addSyncLog(syncLog));
+
             if (source == ApiSource.Fmp) fmpUpdates++;
             if (source == ApiSource.Yahoo) yahooUpdates++;
           } else if (source == ApiSource.Cache) {
@@ -144,10 +157,28 @@ class PortfolioSyncLogic {
             metadata.lastSyncAttempt = DateTime.now();
             metadata.syncErrorMessage =
                 'Actif non coté : synchronisation automatique impossible';
+
+            // Log d'erreur pour actif non synchronisable
+            final syncLog = SyncLog.error(
+              id: _uuid.v4(),
+              ticker: result.ticker,
+              errorMessage:
+                  'Actif non coté (${ticker}): synchronisation automatique impossible',
+            );
+            saveFutures.add(repository.addSyncLog(syncLog));
           } else {
             // Vraie erreur de synchronisation
             metadata.markSyncError(
                 'Impossible de récupérer le prix depuis les APIs');
+
+            // Log d'erreur
+            final syncLog = SyncLog.error(
+              id: _uuid.v4(),
+              ticker: result.ticker,
+              errorMessage:
+                  'Échec de récupération du prix depuis toutes les APIs',
+            );
+            saveFutures.add(repository.addSyncLog(syncLog));
           }
 
           saveFutures.add(repository.saveAssetMetadata(metadata));
