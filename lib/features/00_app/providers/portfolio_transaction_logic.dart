@@ -1,6 +1,5 @@
 // lib/features/00_app/providers/portfolio_transaction_logic.dart
 
-import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';

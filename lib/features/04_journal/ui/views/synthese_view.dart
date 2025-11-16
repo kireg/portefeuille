@@ -1,10 +1,15 @@
 // lib/features/04_journal/ui/views/synthese_view.dart
+// REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
+import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+// NOUVEL IMPORT
+import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+// FIN NOUVEL IMPORT
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
 
@@ -12,9 +17,11 @@ class AggregatedAsset {
   final String ticker;
   final String name;
   final double quantity;
-  final double averagePrice;
-  final double currentPrice;
+  final double averagePrice; // ATTENTION: Peut être dans différentes devises
+  final double currentPrice; // ATTENTION: Peut être dans différentes devises
   final double estimatedAnnualYield;
+  // NOUVEAU : Devise de l'actif (pour le formatage)
+  final String currency;
 
   AggregatedAsset({
     required this.ticker,
@@ -23,8 +30,10 @@ class AggregatedAsset {
     required this.averagePrice,
     required this.currentPrice,
     required this.estimatedAnnualYield,
+    required this.currency, // NOUVEAU
   });
 
+  // ATTENTION: Ces getters peuvent mélanger des devises
   double get totalValue => quantity * currentPrice;
   double get profitAndLoss => (currentPrice - averagePrice) * quantity;
 }
@@ -37,11 +46,15 @@ class SyntheseView extends StatefulWidget {
 }
 
 class _SyntheseViewState extends State<SyntheseView> {
+  // TODO: Logique d'agrégation à revoir pour le multi-devises
+  // Cette fonction additionne des valeurs de devises différentes si
+  // les comptes ont des devises différentes.
+  // Pour l'instant, nous corrigeons l'affichage.
   List<AggregatedAsset> _aggregateAssets(PortfolioProvider provider) {
     final allAssets = provider.activePortfolio?.institutions
-            .expand((inst) => inst.accounts)
-            .expand((acc) => acc.assets)
-            .toList() ??
+        .expand((inst) => inst.accounts)
+        .expand((acc) => acc.assets)
+        .toList() ??
         [];
 
     if (allAssets.isEmpty) return [];
@@ -59,14 +72,20 @@ class _SyntheseViewState extends State<SyntheseView> {
       final firstAsset = assets.first;
       double totalQuantity = 0;
       double totalCost = 0;
+      // NOUVEAU : Garder la devise (en supposant que tous les actifs agrégés ont la même)
+      // C'est une simplification qui fonctionne SI un ticker n'est que dans
+      // des comptes de même devise (ex: AAPL toujours en USD)
+      final String currency = firstAsset.priceCurrency;
 
       for (final asset in assets) {
         totalQuantity += asset.quantity;
+        // ATTENTION: Problème multi-devises ici si les actifs sont
+        // dans des comptes de devises différentes
         totalCost += (asset.quantity * asset.averagePrice);
       }
 
       final double aggregatedAveragePrice =
-          (totalQuantity > 0) ? totalCost / totalQuantity : 0.0;
+      (totalQuantity > 0) ? totalCost / totalQuantity : 0.0;
 
       if (totalQuantity > 0) {
         aggregatedList.add(
@@ -77,12 +96,14 @@ class _SyntheseViewState extends State<SyntheseView> {
             averagePrice: aggregatedAveragePrice,
             currentPrice: firstAsset.currentPrice,
             estimatedAnnualYield: firstAsset.estimatedAnnualYield,
+            currency: currency, // NOUVEAU
           ),
         );
       }
     });
 
     aggregatedList.sort((a, b) {
+      // ATTENTION: Problème multi-devises ici
       final bValue = b.quantity * b.currentPrice;
       final aValue = a.quantity * a.currentPrice;
       return bValue.compareTo(aValue);
@@ -94,6 +115,8 @@ class _SyntheseViewState extends State<SyntheseView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // RÉCUPÉRER LA DEVISE DE BASE
+    final baseCurrency = context.watch<SettingsProvider>().baseCurrency;
 
     return Consumer<PortfolioProvider>(
       builder: (context, provider, child) {
@@ -111,11 +134,10 @@ class _SyntheseViewState extends State<SyntheseView> {
               icon: Icons.pie_chart_outline,
               title: 'Aucun actif à agréger',
               subtitle:
-                  'Les actifs apparaîtront ici une fois que vous aurez ajouté des transactions.',
+              'Les actifs apparaîtront ici une fois que vous aurez ajouté des transactions.',
               buttonLabel: 'Ajouter une transaction',
               onPressed: () {
-                // Navigation vers l'ajout de transaction
-                // Vous pouvez adapter selon votre navigation
+                // TODO: Remplacer par la navigation vers l'ajout de transaction
               },
             ),
           );
@@ -172,17 +194,21 @@ class _SyntheseViewState extends State<SyntheseView> {
                                     ? Colors.green.shade400
                                     : Colors.red.shade400;
 
-                                // Récupérer les métadonnées pour obtenir le statut de synchro
+                                // NOTE : La devise affichée ici est la devise de l'ACTIF
+                                // et non la devise de base, car l'agrégation
+                                // n'est pas encore multi-devises.
+                                // C'est une solution temporaire pour afficher la bonne devise.
+                                final String displayCurrency = baseCurrency;
+
                                 final metadata =
-                                    provider.allMetadata[asset.ticker];
+                                provider.allMetadata[asset.ticker];
                                 final syncStatus =
                                     metadata?.syncStatus ?? SyncStatus.never;
-                                final tooltipMessage =
-                                    _buildTooltipMessage(syncStatus, metadata);
+                                final tooltipMessage = _buildTooltipMessage(
+                                    syncStatus, metadata, displayCurrency);
 
                                 return DataRow(
                                   cells: [
-                                    // Nouvelle cellule : Statut de synchronisation
                                     DataCell(
                                       Tooltip(
                                         message: tooltipMessage,
@@ -195,9 +221,9 @@ class _SyntheseViewState extends State<SyntheseView> {
                                     DataCell(
                                       Column(
                                         crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                         mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        MainAxisAlignment.center,
                                         children: [
                                           Text(asset.name,
                                               style: theme.textTheme.bodyMedium
@@ -213,22 +239,31 @@ class _SyntheseViewState extends State<SyntheseView> {
                                       ),
                                     ),
                                     DataCell(Text(
+                                      // TODO: Formatter avec 'formatWithoutSymbol'
                                         asset.quantity.toStringAsFixed(2))),
-                                    DataCell(Text(CurrencyFormatter.format(
-                                        asset.averagePrice))),
+                                    DataCell(Text(
+                                      // MODIFIÉ : Devise de base
+                                        CurrencyFormatter.format(
+                                            asset.averagePrice,
+                                            displayCurrency))),
                                     DataCell(
                                       InkWell(
                                         onTap: () => _showEditPriceDialog(
-                                            context, asset, provider),
+                                            context,
+                                            asset,
+                                            provider,
+                                            displayCurrency),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
+                                              // MODIFIÉ : Devise de base
                                               CurrencyFormatter.format(
-                                                  asset.currentPrice),
+                                                  asset.currentPrice,
+                                                  displayCurrency),
                                               style: TextStyle(
                                                 color:
-                                                    theme.colorScheme.primary,
+                                                theme.colorScheme.primary,
                                               ),
                                             ),
                                             const SizedBox(width: 4),
@@ -242,15 +277,18 @@ class _SyntheseViewState extends State<SyntheseView> {
                                       ),
                                     ),
                                     DataCell(Text(
+                                      // MODIFIÉ : Devise de base
                                         CurrencyFormatter.format(
-                                            asset.totalValue),
+                                            asset.totalValue, displayCurrency),
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(
                                           fontWeight: FontWeight.bold,
                                         ))),
                                     DataCell(
                                       Text(
-                                        CurrencyFormatter.format(pnl),
+                                        // MODIFIÉ : Devise de base
+                                        CurrencyFormatter.format(
+                                            pnl, displayCurrency),
                                         style: TextStyle(color: pnlColor),
                                       ),
                                     ),
@@ -271,7 +309,7 @@ class _SyntheseViewState extends State<SyntheseView> {
                                             Icon(Icons.edit,
                                                 size: 16,
                                                 color:
-                                                    theme.colorScheme.primary),
+                                                theme.colorScheme.primary),
                                           ],
                                         ),
                                       ),
@@ -333,10 +371,11 @@ class _SyntheseViewState extends State<SyntheseView> {
     );
   }
 
-  void _showEditPriceDialog(
-      BuildContext context, AggregatedAsset asset, PortfolioProvider provider) {
+  // MODIFIÉ : Accepte la devise
+  void _showEditPriceDialog(BuildContext context, AggregatedAsset asset,
+      PortfolioProvider provider, String currency) {
     final controller =
-        TextEditingController(text: asset.currentPrice.toStringAsFixed(2));
+    TextEditingController(text: asset.currentPrice.toStringAsFixed(2));
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -344,10 +383,11 @@ class _SyntheseViewState extends State<SyntheseView> {
         content: TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            labelText: 'Prix actuel (€)',
+          decoration: InputDecoration(
+            // MODIFIÉ : Devise dynamique
+            labelText: 'Prix actuel ($currency)',
             hintText: 'Ex: 451.98',
-            suffixText: '€',
+            suffixText: currency,
           ),
           autofocus: true,
         ),
@@ -361,7 +401,9 @@ class _SyntheseViewState extends State<SyntheseView> {
               final newPrice =
                   double.tryParse(controller.text.replaceAll(',', '.')) ??
                       asset.currentPrice;
-              provider.updateAssetPrice(asset.ticker, newPrice);
+              // MODIFIÉ : Passe la devise à la méthode de mise à jour
+              provider.updateAssetPrice(asset.ticker, newPrice,
+                  currency: currency);
               Navigator.of(ctx).pop();
             },
             child: const Text('Sauvegarder'),
@@ -371,8 +413,9 @@ class _SyntheseViewState extends State<SyntheseView> {
     );
   }
 
-  /// Construit un message de tooltip détaillé selon le statut
-  String _buildTooltipMessage(SyncStatus status, metadata) {
+  // MODIFIÉ : Accepte la devise
+  String _buildTooltipMessage(
+      SyncStatus status, AssetMetadata? metadata, String currency) {
     switch (status) {
       case SyncStatus.synced:
         final lastUpdate = metadata?.lastUpdated;

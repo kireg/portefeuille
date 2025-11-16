@@ -1,6 +1,10 @@
 // lib/features/04_journal/ui/views/transactions_view.dart
+// REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
+// NOUVEL IMPORT
+import 'package:portefeuille/core/data/models/account.dart';
+// FIN NOUVEL IMPORT
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/04_journal/ui/widgets/transaction_list_item.dart';
@@ -70,7 +74,7 @@ class _TransactionsViewState extends State<TransactionsView> {
         transactions.sort((a, b) => a.date.compareTo(b.date));
         break;
       case TransactionSortOption.amountDesc:
-        transactions.sort((a, b) => b.totalAmount.compareTo(a.totalAmount));
+        transactions.sort((a, b) => b.totalAmount.compareTo(b.totalAmount));
         break;
       case TransactionSortOption.amountAsc:
         transactions.sort((a, b) => a.totalAmount.compareTo(b.totalAmount));
@@ -96,10 +100,11 @@ class _TransactionsViewState extends State<TransactionsView> {
           return const Center(child: Text("Aucun portefeuille."));
         }
 
-        final accountNames = <String, String>{};
+        // MODIFIÉ : Crée une map [id] -> [Account]
+        final accountsMap = <String, Account>{};
         for (var inst in portfolio.institutions) {
           for (var acc in inst.accounts) {
-            accountNames[acc.id] = acc.name;
+            accountsMap[acc.id] = acc;
           }
         }
 
@@ -121,8 +126,7 @@ class _TransactionsViewState extends State<TransactionsView> {
               'Utilisez le bouton "+" en bas de l\'écran pour ajouter votre première transaction.',
               buttonLabel: 'Ajouter une transaction',
               onPressed: () {
-                // Navigation vers l'ajout de transaction
-                // Adapter selon votre navigation
+                // TODO: Navigation vers l'ajout de transaction
               },
             ),
           );
@@ -135,7 +139,8 @@ class _TransactionsViewState extends State<TransactionsView> {
               padding: const EdgeInsets.all(16.0),
               child: AppTheme.buildStyledCard(
                 context: context,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -189,14 +194,19 @@ class _TransactionsViewState extends State<TransactionsView> {
                 itemCount: sortedTransactions.length,
                 itemBuilder: (context, index) {
                   final transaction = sortedTransactions[index];
-                  final accountName =
-                      accountNames[transaction.accountId] ?? 'Compte inconnu';
+                  // MODIFIÉ : Récupère le nom et la devise depuis la map
+                  final account = accountsMap[transaction.accountId];
+                  final accountName = account?.name ?? 'Compte inconnu';
+                  final accountCurrency = account?.activeCurrency ??
+                      'EUR'; // Fallback sur EUR
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: TransactionListItem(
                       transaction: transaction,
                       accountName: accountName,
+                      accountCurrency:
+                      accountCurrency, // <-- MODIFIÉ : Paramètre ajouté
                       onDelete: () =>
                           _confirmDelete(context, provider, transaction),
                       onEdit: () => _editTransaction(context, transaction),

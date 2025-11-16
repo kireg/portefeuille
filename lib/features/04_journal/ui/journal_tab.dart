@@ -30,7 +30,7 @@ class _JournalTabState extends State<JournalTab>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    Theme.of(context);
 
     return Column(
       children: [

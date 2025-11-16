@@ -1,3 +1,6 @@
+// lib/features/05_planner/ui/planner_tab.dart
+// REMPLACEZ LE FICHIER COMPLET
+
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
@@ -7,29 +10,13 @@ import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import '../../../core/data/models/asset.dart';
 import '../../00_app/providers/portfolio_provider.dart';
+// NOUVEL IMPORT
+import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+// FIN NOUVEL IMPORT
 import '../../07_management/ui/screens/add_savings_plan_screen.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
+import 'package:portefeuille/core/data/models/projection_data.dart';
 
-class ProjectionData {
-  final int year;
-  final double initialInvestedCapital;
-  final double currentPortfolioValue;
-  final double newInvestments;
-  final double totalValue;
-
-  ProjectionData({
-    required this.year,
-    required this.initialInvestedCapital,
-    required this.currentPortfolioValue,
-    required this.newInvestments,
-    required this.totalValue,
-  });
-
-  double get investedCapital => initialInvestedCapital + newInvestments;
-  double get totalGain => totalValue - investedCapital;
-  double get realizedGains => currentPortfolioValue - initialInvestedCapital;
-  double get projectedGains => totalValue - currentPortfolioValue - newInvestments;
-}
 
 class PlannerTab extends StatefulWidget {
   const PlannerTab({super.key});
@@ -90,51 +77,40 @@ class _PlannerTabState extends State<PlannerTab> {
   }
 
   List<ProjectionData> _generateProjectionData(Portfolio portfolio) {
-    List<ProjectionData> data = [];
     final double initialPortfolioValue = portfolio.totalValue;
     final double initialInvestedCapital = portfolio.totalInvestedCapital;
     final double portfolioAnnualYield = portfolio.estimatedAnnualYield;
 
     double totalMonthlyInvestment = 0;
     double weightedPlansYield = 0;
-
     for (var plan in portfolio.savingsPlans.where((p) => p.isActive)) {
       final targetAsset = _findAssetByTicker(portfolio, plan.targetTicker);
-      final assetYield = (targetAsset?.estimatedAnnualYield ?? 0.0);
-      totalMonthlyInvestment += plan.monthlyAmount;
-      weightedPlansYield += plan.monthlyAmount * assetYield;
-    }
+       final assetYield = (targetAsset?.estimatedAnnualYield ?? 0.0);
+    totalMonthlyInvestment += plan.monthlyAmount;
+    weightedPlansYield += plan.monthlyAmount * assetYield;
+     }
 
     final double averagePlansYield = (totalMonthlyInvestment > 0)
-        ? weightedPlansYield / totalMonthlyInvestment
+    ? weightedPlansYield / totalMonthlyInvestment
         : 0.0;
 
-    for (int year = 1; year <= _selectedDuration; year++) {
-      final double futureBaseValue =
-          initialPortfolioValue * pow(1 + portfolioAnnualYield, year);
-      final double futureSavingsValue = SavingsPlan(
-        id: '',
-        name: '',
-        monthlyAmount: totalMonthlyInvestment,
-        targetTicker: '',
-      ).futureValue(year, averagePlansYield);
-      final double newInvestments = totalMonthlyInvestment * 12 * year;
-      final double totalValue = futureBaseValue + futureSavingsValue;
-
-      data.add(ProjectionData(
-        year: year,
-        initialInvestedCapital: initialInvestedCapital,
-        currentPortfolioValue: initialPortfolioValue,
-        newInvestments: newInvestments,
-        totalValue: totalValue,
-      ));
-    }
-    return data;
+    // Utilise la classe de calcul dédiée (identique au Provider )
+    return ProjectionCalculator.generateProjectionData(
+    duration: _selectedDuration,
+    initialPortfolioValue: initialPortfolioValue,
+    initialInvestedCapital: initialInvestedCapital,
+    portfolioAnnualYield: portfolioAnnualYield,
+    totalMonthlyInvestment: totalMonthlyInvestment,
+    averagePlansYield: averagePlansYield,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // RÉCUPÉRER LA DEVISE DE BASE
+    final baseCurrency = context.watch<SettingsProvider>().baseCurrency;
+
     return Consumer<PortfolioProvider>(
       builder: (context, portfolioProvider, child) {
         final portfolio = portfolioProvider.activePortfolio;
@@ -185,7 +161,8 @@ class _PlannerTabState extends State<PlannerTab> {
                                 child: Column(
                                   children: [
                                     Icon(Icons.savings_outlined,
-                                        size: 48, color: Colors.grey.shade400),
+                                        size: 48,
+                                        color: Colors.grey.shade400),
                                     const SizedBox(height: 12),
                                     Text(
                                       'Aucun plan d\'épargne configuré',
@@ -216,7 +193,8 @@ class _PlannerTabState extends State<PlannerTab> {
                             final plan = entry.value;
                             final targetAsset =
                             _findAssetByTicker(portfolio, plan.targetTicker);
-                            final assetName = targetAsset?.name ?? 'Actif inconnu';
+                            final assetName =
+                                targetAsset?.name ?? 'Actif inconnu';
                             final assetYield =
                                 targetAsset?.estimatedAnnualYield ?? 0.0;
 
@@ -252,7 +230,8 @@ class _PlannerTabState extends State<PlannerTab> {
                                         Row(
                                           children: [
                                             Text(
-                                              '${plan.monthlyAmount.toStringAsFixed(0)} €/mois',
+                                              // MODIFIÉ : Ajout de la devise
+                                              '${CurrencyFormatter.format(plan.monthlyAmount, baseCurrency)}/mois',
                                               style: theme.textTheme.bodySmall
                                                   ?.copyWith(
                                                 fontWeight: FontWeight.bold,
@@ -263,7 +242,8 @@ class _PlannerTabState extends State<PlannerTab> {
                                             Text(
                                               '• ${(assetYield * 100).toStringAsFixed(1)}% /an',
                                               style: theme.textTheme.bodySmall
-                                                  ?.copyWith(color: Colors.grey),
+                                                  ?.copyWith(
+                                                  color: Colors.grey),
                                             ),
                                           ],
                                         ),
@@ -283,11 +263,11 @@ class _PlannerTabState extends State<PlannerTab> {
                                           ),
                                           onTap: () {
                                             Future.delayed(
-                                                const Duration(milliseconds: 100),
-                                                    () {
-                                                  _openPlanForm(context,
-                                                      existingPlan: plan);
-                                                });
+                                                const Duration(
+                                                    milliseconds: 100), () {
+                                              _openPlanForm(context,
+                                                  existingPlan: plan);
+                                            });
                                           },
                                         ),
                                         PopupMenuItem(
@@ -304,15 +284,15 @@ class _PlannerTabState extends State<PlannerTab> {
                                           ),
                                           onTap: () {
                                             Future.delayed(
-                                                const Duration(milliseconds: 100),
-                                                    () {
-                                                  _showDeleteConfirmation(
-                                                    context,
-                                                    portfolioProvider,
-                                                    plan.id,
-                                                    plan.name,
-                                                  );
-                                                });
+                                                const Duration(
+                                                    milliseconds: 100), () {
+                                              _showDeleteConfirmation(
+                                                context,
+                                                portfolioProvider,
+                                                plan.id,
+                                                plan.name,
+                                              );
+                                            });
                                           },
                                         ),
                                       ],
@@ -344,7 +324,8 @@ class _PlannerTabState extends State<PlannerTab> {
                           child: projectionData.isEmpty
                               ? const Center(
                               child: Text('Aucune donnée à projeter.'))
-                              : BarChart(_buildChartData(projectionData, theme)),
+                              : BarChart(_buildChartData(
+                              projectionData, theme, baseCurrency)),
                         ),
                         const SizedBox(height: 16),
                         Wrap(
@@ -368,7 +349,8 @@ class _PlannerTabState extends State<PlannerTab> {
                               theme: theme,
                             ),
                             AppTheme.buildLegendItem(
-                              color: theme.colorScheme.secondary.withOpacity(0.8),
+                              color: theme.colorScheme.secondary
+                                  .withOpacity(0.8),
                               label: 'Nouveaux versements',
                               theme: theme,
                             ),
@@ -388,7 +370,8 @@ class _PlannerTabState extends State<PlannerTab> {
                             borderRadius: BorderRadius.circular(8),
                             constraints: const BoxConstraints(
                                 minHeight: 40, minWidth: 60),
-                            children: _durations.map((d) => Text('$d ans')).toList(),
+                            children:
+                            _durations.map((d) => Text('$d ans')).toList(),
                           ),
                         ),
                       ],
@@ -404,7 +387,9 @@ class _PlannerTabState extends State<PlannerTab> {
     );
   }
 
-  BarChartData _buildChartData(List<ProjectionData> data, ThemeData theme) {
+  // MODIFIÉ : Accepte la devise de base
+  BarChartData _buildChartData(
+      List<ProjectionData> data, ThemeData theme, String baseCurrency) {
     final lastData = data.last;
     final maxValue = lastData.totalValue;
     final interval = maxValue > 0 ? maxValue / 5 : 1.0;
@@ -444,17 +429,12 @@ class _PlannerTabState extends State<PlannerTab> {
                 : [
               BarChartRodStackItem(
                 0,
-                d.initialInvestedCapital,
+                d.investedCapital, // Total investi (initial + nouveaux)
                 theme.colorScheme.primary.withOpacity(0.6),
               ),
               BarChartRodStackItem(
-                d.initialInvestedCapital,
                 d.investedCapital,
-                theme.colorScheme.secondary.withOpacity(0.8),
-              ),
-              BarChartRodStackItem(
-                d.investedCapital,
-                d.totalValue,
+                d.totalValue, // Total gains (réalisés + projetés)
                 Colors.green.shade400,
               ),
             ],
@@ -499,7 +479,6 @@ class _PlannerTabState extends State<PlannerTab> {
             showTitles: true,
             getTitlesWidget: (value, meta) {
               final year = value.toInt();
-
               if (year % (_selectedDuration > 10 ? 2 : 1) != 0 &&
                   year != 1 &&
                   year != _selectedDuration) {
@@ -533,21 +512,22 @@ class _PlannerTabState extends State<PlannerTab> {
         touchTooltipData: BarTouchTooltipData(
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
             final d = data[groupIndex];
+            // MODIFIÉ : Utilise la devise de base pour les tooltips
             if (d.year == 1) {
               return BarTooltipItem(
                 'Année ${d.year}\n'
-                    'Total: ${CurrencyFormatter.format(d.totalValue)}\n'
-                    'Investi: ${CurrencyFormatter.format(d.investedCapital)}\n'
-                    'Gains réalisés: ${CurrencyFormatter.format(d.realizedGains)}\n'
-                    'Gains projetés: ${CurrencyFormatter.format(d.projectedGains)}',
+                    'Total: ${CurrencyFormatter.format(d.totalValue, baseCurrency)}\n'
+                    'Investi: ${CurrencyFormatter.format(d.investedCapital, baseCurrency)}\n'
+                    'Gains réalisés: ${CurrencyFormatter.format(d.realizedGains, baseCurrency)}\n'
+                    'Gains projetés: ${CurrencyFormatter.format(d.projectedGains, baseCurrency)}',
                 theme.textTheme.bodySmall!.copyWith(color: Colors.white),
               );
             }
             return BarTooltipItem(
               'Année ${d.year}\n'
-                  'Total: ${CurrencyFormatter.format(d.totalValue)}\n'
-                  'Investi: ${CurrencyFormatter.format(d.investedCapital)}\n'
-                  'Gains: ${CurrencyFormatter.format(d.totalGain)}',
+                  'Total: ${CurrencyFormatter.format(d.totalValue, baseCurrency)}\n'
+                  'Investi: ${CurrencyFormatter.format(d.investedCapital, baseCurrency)}\n'
+                  'Gains: ${CurrencyFormatter.format(d.totalGain, baseCurrency)}',
               theme.textTheme.bodySmall!.copyWith(color: Colors.white),
             );
           },

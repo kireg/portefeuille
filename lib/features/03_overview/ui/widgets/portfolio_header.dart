@@ -1,22 +1,36 @@
+// lib/features/03_overview/ui/widgets/portfolio_header.dart
+// REMPLACEZ LE FICHIER COMPLET
+
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/data/models/portfolio.dart';
+// import 'package:portefeuille/core/data/models/portfolio.dart'; // Supprimé
 import 'package:portefeuille/core/utils/currency_formatter.dart';
-import 'package:intl/intl.dart'; // Import pour le format pourcentage
+import 'package:intl/intl.dart';
+// Import pour le format pourcentage
+// NOUVEAUX IMPORTS
+import 'package:provider/provider.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+// import 'package:portefeuille/features/00_app/providers/settings_provider.dart'; // Plus nécessaire
 
 class PortfolioHeader extends StatelessWidget {
-  final Portfolio portfolio;
-
-  const PortfolioHeader({super.key, required this.portfolio});
+  // Le constructeur n'a plus besoin de 'portfolio'
+  const PortfolioHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // CONNEXION AUX VRAIES DONNÉES
-    final totalValue = portfolio.totalValue;
-    final totalPL = portfolio.profitAndLoss;
-    final totalPLPercentage = portfolio.profitAndLossPercentage;
-    final annualYield = portfolio.estimatedAnnualYield;
+    // ▼▼▼ MODIFIÉ : Lecture depuis le Provider ▼▼▼
+    // Nous utilisons 'watch' pour que ce widget se reconstruise
+    // lorsque les valeurs converties changent.
+    final provider = context.watch<PortfolioProvider>();
+
+    // Récupérer les valeurs CONVERTIES depuis le provider
+    final baseCurrency = provider.currentBaseCurrency;
+    final totalValue = provider.activePortfolioTotalValue;
+    final totalPL = provider.activePortfolioTotalPL;
+    final totalPLPercentage = provider.activePortfolioTotalPLPercentage;
+    final annualYield = provider.activePortfolioEstimatedAnnualYield;
+    // ▲▲▲ FIN MODIFICATION ▲▲▲
 
     return Card(
       child: Padding(
@@ -25,12 +39,15 @@ class PortfolioHeader extends StatelessWidget {
           children: [
             Text(
               'Valeur Totale du Portefeuille',
-              style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey[400]),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(color: Colors.grey[400]),
             ),
             const SizedBox(height: 8),
             Text(
-              CurrencyFormatter.format(totalValue),
-              style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+              // Utilise les valeurs converties
+              CurrencyFormatter.format(totalValue, baseCurrency),
+              style: theme.textTheme.headlineMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
@@ -40,8 +57,8 @@ class PortfolioHeader extends StatelessWidget {
                   child: _buildStat(
                     context,
                     'Plus/Moins-value',
-                    // Utilisation de NumberFormat.percentPattern pour un affichage correct
-                    '${CurrencyFormatter.format(totalPL)} (${NumberFormat.percentPattern().format(totalPLPercentage)})',
+                    // Utilise les valeurs converties
+                    '${CurrencyFormatter.format(totalPL, baseCurrency)} (${NumberFormat.percentPattern().format(totalPLPercentage)})',
                     totalPL >= 0 ? Colors.green[400]! : Colors.red[400]!,
                   ),
                 ),
@@ -61,7 +78,8 @@ class PortfolioHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildStat(BuildContext context, String label, String value, Color valueColor) {
+  Widget _buildStat(
+      BuildContext context, String label, String value, Color valueColor) {
     final theme = Theme.of(context);
     return Column(
       children: [
