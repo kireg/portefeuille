@@ -8,6 +8,6 @@ class AppConstants {
 
   static const String kPriceHistoryBoxName = 'price_history_box';
   static const String kExchangeRateHistoryBoxName = 'exchange_rate_history_box';
-  
+
   static const String kSyncLogsBoxName = 'sync_logs_box';
 }

@@ -23,7 +23,8 @@ class AssetMetadataAdapter extends TypeAdapter<AssetMetadata> {
       estimatedAnnualYield: fields[2] as double,
       lastUpdated: fields[3] as DateTime?,
       isManualYield: fields[4] as bool,
-      syncStatus: fields[6] as SyncStatus? ?? SyncStatus.never, // Valeur par défaut
+      syncStatus:
+          fields[6] as SyncStatus? ?? SyncStatus.never, // Valeur par défaut
       lastSyncAttempt: fields[7] as DateTime?,
       syncErrorMessage: fields[8] as String?,
       isin: fields[9] as String?,

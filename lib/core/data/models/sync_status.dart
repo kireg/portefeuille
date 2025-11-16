@@ -9,13 +9,13 @@ part 'sync_status.g.dart';
 enum SyncStatus {
   @HiveField(0)
   synced, // Synchronisé avec succès
-  
+
   @HiveField(1)
   error, // Erreur lors de la synchronisation
-  
+
   @HiveField(2)
   manual, // Prix saisi manuellement (pas de synchro auto)
-  
+
   @HiveField(3)
   never, // Jamais synchronisé (nouveau)
 }
@@ -34,7 +34,7 @@ extension SyncStatusExtension on SyncStatus {
         return 'Non synchronisé';
     }
   }
-  
+
   /// Icône représentant le statut
   String get icon {
     switch (this) {
@@ -48,7 +48,7 @@ extension SyncStatusExtension on SyncStatus {
         return '⏸️';
     }
   }
-  
+
   /// Couleur associée (pour les badges)
   String get colorName {
     switch (this) {

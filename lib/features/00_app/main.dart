@@ -65,7 +65,8 @@ void main() async {
   await Hive.openBox<AssetMetadata>(AppConstants.kAssetMetadataBoxName);
   // --- NOUVELLES BOXES ---
   await Hive.openBox<PriceHistoryPoint>(AppConstants.kPriceHistoryBoxName);
-  await Hive.openBox<ExchangeRateHistory>(AppConstants.kExchangeRateHistoryBoxName);
+  await Hive.openBox<ExchangeRateHistory>(
+      AppConstants.kExchangeRateHistoryBoxName);
   await Hive.openBox<SyncLog>(AppConstants.kSyncLogsBoxName);
   // --- FIN NOUVELLES BOXES ---
 
