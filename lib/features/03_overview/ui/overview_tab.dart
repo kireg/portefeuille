@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../00_app/providers/portfolio_provider.dart';
 import 'widgets/portfolio_header.dart';
 import 'widgets/allocation_chart.dart';
-import 'widgets/ai_analysis_card.dart';
 import 'widgets/asset_type_allocation_chart.dart';
 import 'widgets/sync_alerts_card.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_institution_screen.dart';
@@ -96,20 +95,6 @@ class OverviewTab extends StatelessWidget {
                         ],
                       );
                     },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Alertes de synchronisation
-                  AppTheme.buildStyledCard(
-                    context: context,
-                    child: const SyncAlertsCard(),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Analyse IA
-                  AppTheme.buildStyledCard(
-                    context: context,
-                    child: AiAnalysisCard(portfolio: portfolio),
                   ),
                   const SizedBox(height: 12),
 
@@ -236,6 +221,13 @@ class OverviewTab extends StatelessWidget {
                           }),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Alertes de synchronisation (en bas)
+                  AppTheme.buildStyledCard(
+                    context: context,
+                    child: const SyncAlertsCard(),
                   ),
                   const SizedBox(height: 32),
                 ]),

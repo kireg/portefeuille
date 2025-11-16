@@ -9,7 +9,6 @@ import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/core/data/services/sync_log_export_service.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/initial_setup_wizard.dart';
 import 'package:portefeuille/features/01_launch/ui/launch_screen.dart';
-import 'package:intl/intl.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -592,10 +591,7 @@ class _OnlineModeCardState extends State<_OnlineModeCard> {
   @override
   Widget build(BuildContext context) {
     final settingsProvider = context.watch<SettingsProvider>();
-    final portfolioProvider = context.watch<PortfolioProvider>();
     final theme = Theme.of(context);
-    final allMetadata = portfolioProvider.allMetadata.values.toList()
-      ..sort((a, b) => a.ticker.compareTo(b.ticker));
 
     return AppTheme.buildStyledCard(
       context: context,
@@ -624,47 +620,6 @@ class _OnlineModeCardState extends State<_OnlineModeCard> {
           ),
           if (settingsProvider.isOnlineMode) ...[
             const SizedBox(height: 20),
-            if (allMetadata.isNotEmpty) ...[
-              Text('Statut des prix',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  )),
-              const SizedBox(height: 12),
-              AppTheme.buildInfoContainer(
-                context: context,
-                padding: EdgeInsets.zero,
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: allMetadata.length,
-                  separatorBuilder: (_, __) => Divider(height: 1, indent: 16),
-                  itemBuilder: (_, i) {
-                    final meta = allMetadata[i];
-                    return ListTile(
-                      dense: true,
-                      leading: CircleAvatar(
-                        radius: 16,
-                        backgroundColor: theme.colorScheme.primaryContainer,
-                        child: Text(
-                          meta.ticker[0],
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.colorScheme.onPrimaryContainer,
-                          ),
-                        ),
-                      ),
-                      title:
-                          Text(meta.ticker, style: theme.textTheme.bodyMedium),
-                      trailing: Text(
-                        DateFormat('dd/MM HH:mm').format(meta.lastUpdated),
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
             Text('Clé API FMP (optionnel)',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
