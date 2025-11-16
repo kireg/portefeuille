@@ -21,6 +21,8 @@ class SyncStatusAdapter extends TypeAdapter<SyncStatus> {
         return SyncStatus.manual;
       case 3:
         return SyncStatus.never;
+      case 4:
+        return SyncStatus.unsyncable;
       default:
         return SyncStatus.synced;
     }
@@ -40,6 +42,9 @@ class SyncStatusAdapter extends TypeAdapter<SyncStatus> {
         break;
       case SyncStatus.never:
         writer.writeByte(3);
+        break;
+      case SyncStatus.unsyncable:
+        writer.writeByte(4);
         break;
     }
   }

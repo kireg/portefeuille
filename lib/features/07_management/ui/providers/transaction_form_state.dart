@@ -276,7 +276,7 @@ class TransactionFormState extends ChangeNotifier {
       _selectedAccount = account;
       // Si on change de compte, on réinitialise le taux de change
       // et la devise du prix par défaut
-      priceCurrencyController.text = account.currency;
+      priceCurrencyController.text = account.activeCurrency;
       exchangeRateController.text = "1.0";
       notifyListeners();
     }

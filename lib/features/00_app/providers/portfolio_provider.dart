@@ -356,9 +356,9 @@ class PortfolioProvider extends ChangeNotifier {
     // 2. Sinon, utiliser la devise actuelle du metadata
     // 3. Si celle-ci est vide (données legacy), utiliser la devise de base
     final targetCurrency = currency ??
-        (metadata.priceCurrency.isEmpty
+        ((metadata.priceCurrency?.isEmpty ?? true)
             ? _settingsProvider!.baseCurrency
-            : metadata.priceCurrency);
+            : metadata.priceCurrency!);
 
     metadata.updatePrice(newPrice, targetCurrency);
     await _repository.saveAssetMetadata(metadata);

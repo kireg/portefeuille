@@ -7,6 +7,7 @@ import 'widgets/portfolio_header.dart';
 import 'widgets/allocation_chart.dart';
 import 'widgets/ai_analysis_card.dart';
 import 'widgets/asset_type_allocation_chart.dart';
+import 'widgets/sync_alerts_card.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_institution_screen.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/03_overview/ui/widgets/account_tile.dart';
@@ -98,6 +99,13 @@ class OverviewTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
+                  // Alertes de synchronisation
+                  AppTheme.buildStyledCard(
+                    context: context,
+                    child: const SyncAlertsCard(),
+                  ),
+                  const SizedBox(height: 12),
+
                   // Analyse IA
                   AppTheme.buildStyledCard(
                     context: context,
@@ -122,7 +130,8 @@ class OverviewTab extends StatelessWidget {
                               showModalBottomSheet(
                                 context: context,
                                 isScrollControlled: true,
-                                builder: (context) => const AddInstitutionScreen(),
+                                builder: (context) =>
+                                    const AddInstitutionScreen(),
                               );
                             },
                           ),
@@ -168,7 +177,8 @@ class OverviewTab extends StatelessWidget {
                                       childrenPadding: EdgeInsets.zero,
                                       title: Text(
                                         institution.name,
-                                        style: theme.textTheme.titleMedium?.copyWith(
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
                                           fontWeight: FontWeight.bold,
                                         ),
                                         overflow: TextOverflow.ellipsis,
@@ -177,8 +187,10 @@ class OverviewTab extends StatelessWidget {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
-                                            CurrencyFormatter.format(institution.totalValue),
-                                            style: theme.textTheme.titleMedium?.copyWith(
+                                            CurrencyFormatter.format(
+                                                institution.totalValue),
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -194,19 +206,22 @@ class OverviewTab extends StatelessWidget {
                                         ListTile(
                                           leading: Icon(
                                             Icons.add,
-                                            color: theme.colorScheme.primary.withOpacity(0.6),
+                                            color: theme.colorScheme.primary
+                                                .withOpacity(0.6),
                                           ),
                                           title: Text(
                                             'Ajouter un compte',
                                             style: TextStyle(
-                                              color: theme.colorScheme.primary.withOpacity(0.6),
+                                              color: theme.colorScheme.primary
+                                                  .withOpacity(0.6),
                                             ),
                                           ),
                                           onTap: () {
                                             showModalBottomSheet(
                                               context: context,
                                               isScrollControlled: true,
-                                              builder: (context) => AddAccountScreen(
+                                              builder: (context) =>
+                                                  AddAccountScreen(
                                                 institutionId: institution.id,
                                               ),
                                             );

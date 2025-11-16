@@ -19,12 +19,11 @@ class AssetMetadataAdapter extends TypeAdapter<AssetMetadata> {
     return AssetMetadata(
       ticker: fields[0] as String,
       currentPrice: fields[1] as double,
-      priceCurrency: fields[5] as String? ?? 'EUR', // Valeur par défaut
+      priceCurrency: fields[5] as String?,
       estimatedAnnualYield: fields[2] as double,
       lastUpdated: fields[3] as DateTime?,
       isManualYield: fields[4] as bool,
-      syncStatus:
-          fields[6] as SyncStatus? ?? SyncStatus.never, // Valeur par défaut
+      syncStatus: fields[6] as SyncStatus?,
       lastSyncAttempt: fields[7] as DateTime?,
       syncErrorMessage: fields[8] as String?,
       isin: fields[9] as String?,

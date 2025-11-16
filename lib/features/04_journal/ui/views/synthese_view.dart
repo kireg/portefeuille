@@ -177,13 +177,15 @@ class _SyntheseViewState extends State<SyntheseView> {
                                     provider.allMetadata[asset.ticker];
                                 final syncStatus =
                                     metadata?.syncStatus ?? SyncStatus.never;
+                                final tooltipMessage =
+                                    _buildTooltipMessage(syncStatus, metadata);
 
                                 return DataRow(
                                   cells: [
                                     // Nouvelle cellule : Statut de synchronisation
                                     DataCell(
                                       Tooltip(
-                                        message: syncStatus.displayName,
+                                        message: tooltipMessage,
                                         child: Text(
                                           syncStatus.icon,
                                           style: const TextStyle(fontSize: 18),
@@ -367,5 +369,39 @@ class _SyntheseViewState extends State<SyntheseView> {
         ],
       ),
     );
+  }
+
+  /// Construit un message de tooltip détaillé selon le statut
+  String _buildTooltipMessage(SyncStatus status, metadata) {
+    switch (status) {
+      case SyncStatus.synced:
+        final lastUpdate = metadata?.lastUpdated;
+        final source = metadata?.lastSyncSource ?? 'API';
+        if (lastUpdate != null) {
+          final date =
+              '${lastUpdate.day}/${lastUpdate.month}/${lastUpdate.year} ${lastUpdate.hour}:${lastUpdate.minute.toString().padLeft(2, '0')}';
+          return '✅ Synchronisé avec succès\nSource: $source\nDernière mise à jour: $date';
+        }
+        return '✅ Synchronisé avec succès\nSource: $source';
+
+      case SyncStatus.error:
+        final errorMsg = metadata?.syncErrorMessage ?? 'Erreur inconnue';
+        return '⚠️ Erreur de synchronisation\n${errorMsg.length > 100 ? '${errorMsg.substring(0, 100)}...' : errorMsg}\n\nConsultez la Vue d\'ensemble pour plus de détails';
+
+      case SyncStatus.manual:
+        final lastUpdate = metadata?.lastUpdated;
+        if (lastUpdate != null) {
+          final date =
+              '${lastUpdate.day}/${lastUpdate.month}/${lastUpdate.year}';
+          return '✏️ Prix saisi manuellement\nDernière modification: $date\n\nLe prix ne sera pas remplacé automatiquement';
+        }
+        return '✏️ Prix saisi manuellement\nLe prix ne sera pas remplacé automatiquement';
+
+      case SyncStatus.never:
+        return '⭕ Jamais synchronisé\nAucune tentative de récupération automatique du prix\n\nLancez une synchronisation depuis la Vue d\'ensemble';
+
+      case SyncStatus.unsyncable:
+        return '🚫 Non synchronisable\nCet actif ne peut pas être synchronisé automatiquement\n(fonds en euros, produit non coté)\n\nSaisissez le prix manuellement en cliquant sur "Prix actuel"';
+    }
   }
 }

@@ -18,6 +18,9 @@ enum SyncStatus {
 
   @HiveField(3)
   never, // Jamais synchronisé (nouveau)
+
+  @HiveField(4)
+  unsyncable, // Non synchronisable (ex: fonds en euros)
 }
 
 extension SyncStatusExtension on SyncStatus {
@@ -32,6 +35,8 @@ extension SyncStatusExtension on SyncStatus {
         return 'Manuel';
       case SyncStatus.never:
         return 'Non synchronisé';
+      case SyncStatus.unsyncable:
+        return 'Non synchronisable';
     }
   }
 
@@ -39,13 +44,15 @@ extension SyncStatusExtension on SyncStatus {
   String get icon {
     switch (this) {
       case SyncStatus.synced:
-        return '☁️'; // ou '✅'
+        return '✅';
       case SyncStatus.error:
         return '⚠️';
       case SyncStatus.manual:
-        return '📝';
+        return '✏️';
       case SyncStatus.never:
-        return '⏸️';
+        return '⭕';
+      case SyncStatus.unsyncable:
+        return '🚫';
     }
   }
 
@@ -59,6 +66,8 @@ extension SyncStatusExtension on SyncStatus {
       case SyncStatus.manual:
         return 'blue';
       case SyncStatus.never:
+        return 'grey';
+      case SyncStatus.unsyncable:
         return 'grey';
     }
   }

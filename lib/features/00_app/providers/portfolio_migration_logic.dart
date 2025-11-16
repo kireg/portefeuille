@@ -138,9 +138,9 @@ class PortfolioMigrationLogic {
 
         for (final acc in inst.accounts) {
           // Le constructeur Account a déjà 'EUR' par défaut, mais
-          // si le champ @HiveField(5) était absent, Hive retournera une chaîne vide
-          // lors de la désérialisation. On vérifie aussi null par sécurité.
-          if (acc.currency.isEmpty) {
+          // si le champ @HiveField(5) était absent, Hive retournera null
+          // lors de la désérialisation. On vérifie aussi isEmpty par sécurité.
+          if (acc.currency?.isEmpty ?? true) {
             debugPrint(
                 "Migration V2: Mise à jour devise pour le compte ${acc.name}");
             // Crée une NOUVELLE instance de compte avec la devise
@@ -187,7 +187,7 @@ class PortfolioMigrationLogic {
     // 2. Mettre à jour les AssetMetadata
     final allMetadata = repository.getAllAssetMetadata().values.toList();
     for (final meta in allMetadata) {
-      if (meta.priceCurrency.isEmpty) {
+      if (meta.priceCurrency?.isEmpty ?? true) {
         debugPrint(
             "Migration V2: Mise à jour devise pour metadata ${meta.ticker}");
         meta.priceCurrency = 'EUR';

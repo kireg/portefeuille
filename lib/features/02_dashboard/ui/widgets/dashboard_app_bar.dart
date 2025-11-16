@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
+import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/06_settings/ui/settings_screen.dart';
@@ -28,15 +29,66 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
   // Gère l'état de la SnackBar
   bool _isSnackBarVisible = false;
 
+  /// Calcule les statistiques de synchronisation
+  Map<String, int> _getSyncStats(PortfolioProvider portfolio) {
+    final metadata = portfolio.allMetadata;
+    int synced = 0;
+    int errors = 0;
+    int manual = 0;
+    int never = 0;
+    int unsyncable = 0;
+
+    for (final meta in metadata.values) {
+      final status = meta.syncStatus ?? SyncStatus.never;
+      switch (status) {
+        case SyncStatus.synced:
+          synced++;
+          break;
+        case SyncStatus.error:
+          errors++;
+          break;
+        case SyncStatus.manual:
+          manual++;
+          break;
+        case SyncStatus.never:
+          never++;
+          break;
+        case SyncStatus.unsyncable:
+          unsyncable++;
+          break;
+      }
+    }
+
+    // Total = seulement les actifs synchronisables (exclut unsyncable)
+    final total = metadata.length - unsyncable;
+    // Considérer synced + manual comme "OK" (car manual est volontaire)
+    final syncedOk = synced + manual;
+
+    return {
+      'synced': syncedOk,
+      'errors': errors,
+      'manual': manual,
+      'never': never,
+      'unsyncable': unsyncable,
+      'total': total,
+    };
+  }
+
   /// Construit l'indicateur d'état pour l'AppBar.
   Widget _buildStatusIndicator(
       SettingsProvider settings, PortfolioProvider portfolio) {
     final theme = Theme.of(context);
     final textStyle = theme.appBarTheme.titleTextStyle?.copyWith(
-      fontSize: 12,
-      fontWeight: FontWeight.normal,
-    ) ??
+          fontSize: 12,
+          fontWeight: FontWeight.normal,
+        ) ??
         const TextStyle(color: Colors.white, fontSize: 12);
+
+    // Calcul des stats de synchro
+    final stats = _getSyncStats(portfolio);
+    final syncedCount = stats['synced']!;
+    final totalCount = stats['total']!;
+    final errorsCount = stats['errors']!;
 
     Widget child;
 
@@ -58,10 +110,29 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     } else if (settings.isOnlineMode) {
       child = Row(
         children: [
-          Icon(Icons.cloud_queue_outlined,
-              size: 16, color: textStyle.color),
+          Icon(Icons.cloud_queue_outlined, size: 16, color: textStyle.color),
           const SizedBox(width: 8),
           Text("En ligne", style: textStyle),
+          if (totalCount > 0) ...[
+            const SizedBox(width: 8),
+            // Badge avec compteur
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: errorsCount > 0
+                    ? Colors.orange.shade700
+                    : Colors.green.shade700,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$syncedCount/$totalCount',
+                style: textStyle.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ],
       );
     } else {
@@ -169,8 +240,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
             child: const Text('Annuler'),
           ),
           FilledButton(
-            style:
-            FilledButton.styleFrom(backgroundColor: Colors.deepOrange),
+            style: FilledButton.styleFrom(backgroundColor: Colors.deepOrange),
             onPressed: () {
               // MODIFIÉ : Utilise context.read pour appeler la fonction
               context.read<PortfolioProvider>().forceSynchroniserLesPrix();
@@ -232,12 +302,12 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
       });
       ScaffoldMessenger.of(context)
           .showSnackBar(
-        SnackBar(
-          content: Text(message),
-          duration: const Duration(seconds: 4), // <-- DURÉE MODIFIÉE
-          showCloseIcon: true,
-        ),
-      )
+            SnackBar(
+              content: Text(message),
+              duration: const Duration(seconds: 4), // <-- DURÉE MODIFIÉE
+              showCloseIcon: true,
+            ),
+          )
           .closed
           .then((_) {
         // S'assurer que le drapeau est remis à false

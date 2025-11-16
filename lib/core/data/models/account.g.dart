@@ -20,7 +20,7 @@ class AccountAdapter extends TypeAdapter<Account> {
       id: fields[4] as String,
       name: fields[0] as String,
       type: fields[1] as AccountType,
-      currency: fields[5] as String? ?? 'EUR', // Valeur par défaut si null
+      currency: fields[5] as String?,
       stale_assets: (fields[2] as List?)?.cast<Asset>(),
       stale_cashBalance: fields[3] as double?,
     );

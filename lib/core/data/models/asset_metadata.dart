@@ -32,15 +32,15 @@ class AssetMetadata {
   bool isManualYield;
 
   // --- NOUVEAU CHAMP ---
-  /// Devise du prix (ex: "USD", "EUR")
+  /// Devise du prix (ex: "USD", "EUR") - Nullable pour compatibilité
   @HiveField(5)
-  String priceCurrency;
+  String? priceCurrency;
   // --- FIN NOUVEAU ---
 
   // --- NOUVEAUX CHAMPS POUR LA SYNCHRONISATION ---
   /// Statut de synchronisation de l'actif
   @HiveField(6)
-  SyncStatus syncStatus;
+  SyncStatus? syncStatus;
 
   /// Date de la dernière tentative de synchronisation
   @HiveField(7)
@@ -58,10 +58,14 @@ class AssetMetadata {
   @HiveField(10)
   String? assetTypeDetailed;
 
-  /// Source de la dernière synchronisation (ex: "FMP", "Yahoo", "CoinGecko")
+  /// Source de la dernière synchronisation (ex: "FMP", "Yahoo")
   @HiveField(11)
   String? lastSyncSource;
   // --- FIN NOUVEAUX CHAMPS ---
+
+  // Getters pour garantir des valeurs par défaut
+  String get activeCurrency => priceCurrency ?? 'EUR';
+  SyncStatus get activeStatus => syncStatus ?? SyncStatus.never;
 
   AssetMetadata({
     required this.ticker,
