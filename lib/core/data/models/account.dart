@@ -31,8 +31,11 @@ class Account {
 
   // --- NOUVEAU CHAMP ---
   @HiveField(5)
-  final String currency; // Ex: "EUR", "USD"
+  final String? currency; // Ex: "EUR", "USD" - Nullable pour compatibilité
   // --- FIN NOUVEAU ---
+
+  // Getter pour garantir une devise par défaut
+  String get activeCurrency => currency ?? 'EUR';
 
   // Doit être injecté par le Repository
   List<Transaction> transactions = [];
@@ -59,7 +62,7 @@ class Account {
     // Sinon, générer les assets (sans métadonnées)
     final assetTransactions = transactions
         .where((tr) =>
-    tr.type == TransactionType.Buy || tr.type == TransactionType.Sell)
+            tr.type == TransactionType.Buy || tr.type == TransactionType.Sell)
         .toList();
     if (assetTransactions.isEmpty) return [];
 
@@ -76,7 +79,7 @@ class Account {
     groupedByTicker.forEach((ticker, tickerTransactions) {
       // Trouver la transaction la plus récente pour obtenir le nom
       final lastTx =
-      tickerTransactions.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
+          tickerTransactions.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
 
       // Créer l'objet Asset.
       // Le 'currentPrice' et 'yield' seront à 0.0 par défaut.
@@ -123,7 +126,7 @@ class Account {
   // car 'asset.totalValue' dépendra des taux de change
   double get totalValue {
     final assetsValue =
-    assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
+        assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
     return assetsValue + cashBalance;
   }
 
@@ -137,12 +140,12 @@ class Account {
 
   double get estimatedAnnualYield {
     final assetsValue =
-    assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
+        assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
     if (assetsValue == 0) {
       return 0.0;
     }
     final weightedYield = assets.fold(0.0,
-            (sum, asset) => sum + (asset.totalValue * asset.estimatedAnnualYield));
+        (sum, asset) => sum + (asset.totalValue * asset.estimatedAnnualYield));
     // Éviter la division par zéro si assetsValue est nul
     if (assetsValue == 0) return 0.0;
     return weightedYield / assetsValue;

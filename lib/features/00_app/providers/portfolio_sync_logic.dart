@@ -4,9 +4,12 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
+import 'package:portefeuille/core/data/models/sync_status.dart';
+import 'package:portefeuille/core/data/models/sync_log.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+import 'package:uuid/uuid.dart';
 
 // --- MODIFIÉ : Classe de résultat plus détaillée ---
 class SyncResult {
@@ -23,6 +26,7 @@ class SyncResult {
   });
   int get updatedCount => fmpUpdates + yahooUpdates;
   int get failedCount => failedTickers.length;
+
   /// Construit un message de résumé détaillé pour l'utilisateur
   String getSummaryMessage() {
     if (updatedCount == 0 && failedCount == 0 && cacheUpdates == 0) {
@@ -39,7 +43,7 @@ class SyncResult {
     String summary = "Synchro : ${parts.join(', ')}.";
     if (failedCount > 0) {
       summary +=
-      "\nÉchecs : ${failedCount} (${failedTickers.take(3).join(', ')}${failedCount > 3 ? ', ...' : ''})";
+          "\nÉchecs : ${failedCount} (${failedTickers.take(3).join(', ')}${failedCount > 3 ? ', ...' : ''})";
     }
     return summary;
   }
@@ -50,6 +54,7 @@ class PortfolioSyncLogic {
   final PortfolioRepository repository;
   final ApiService apiService;
   SettingsProvider settingsProvider;
+  final _uuid = const Uuid();
 
   PortfolioSyncLogic({
     required this.repository,
@@ -87,7 +92,7 @@ class PortfolioSyncLogic {
 
       // 2. Appeler l'API pour tous les tickers en parallèle
       final List<Future<PriceResult>> futures =
-      tickers.map((ticker) => apiService.getPrice(ticker)).toList();
+          tickers.map((ticker) => apiService.getPrice(ticker)).toList();
       final results = await Future.wait(futures);
 
       // 3. Traiter les résultats
@@ -101,19 +106,27 @@ class PortfolioSyncLogic {
         final newPrice = result.price;
         final newCurrency = result.currency;
         final source = result.source;
+        final metadata = repository.getOrCreateAssetMetadata(result.ticker);
 
         if (newPrice != null) {
-          final metadata = repository.getOrCreateAssetMetadata(result.ticker);
-
-          // --- CORRECTION DE L'ERREUR ---
+          // Prix récupéré avec succès
           // On vérifie si le prix OU la devise a changé
           if (metadata.currentPrice != newPrice ||
               metadata.priceCurrency != newCurrency) {
-            // On utilise la nouvelle signature
-            metadata.updatePrice(newPrice, newCurrency);
-            // --- FIN CORRECTION ---
+            // Mise à jour avec la source
+            metadata.updatePrice(newPrice, newCurrency, source: source.name);
 
             saveFutures.add(repository.saveAssetMetadata(metadata));
+
+            // Enregistrer le log de succès
+            final syncLog = SyncLog.success(
+              id: _uuid.v4(),
+              ticker: result.ticker,
+              source: source.name,
+              price: newPrice,
+              currency: newCurrency,
+            );
+            saveFutures.add(repository.addSyncLog(syncLog));
 
             if (source == ApiSource.Fmp) fmpUpdates++;
             if (source == ApiSource.Yahoo) yahooUpdates++;
@@ -121,7 +134,54 @@ class PortfolioSyncLogic {
             cacheUpdates++;
           }
         } else {
-          // source == ApiSource.None
+          // Échec de récupération : source == ApiSource.None
+          // Déterminer si c'est un actif non synchronisable ou une vraie erreur
+          final ticker = result.ticker.toUpperCase();
+
+          // Liste de patterns pour actifs non synchronisables
+          final unsyncablePatterns = [
+            'FONDS',
+            'EURO',
+            'SCPI',
+            'PEL',
+            'CEL',
+            'LIVRET',
+          ];
+
+          final isUnsyncable =
+              unsyncablePatterns.any((pattern) => ticker.contains(pattern));
+
+          if (isUnsyncable) {
+            // Actif non synchronisable (fonds en euros, etc.)
+            metadata.syncStatus = SyncStatus.unsyncable;
+            metadata.lastSyncAttempt = DateTime.now();
+            metadata.syncErrorMessage =
+                'Actif non coté : synchronisation automatique impossible';
+
+            // Log d'erreur pour actif non synchronisable
+            final syncLog = SyncLog.error(
+              id: _uuid.v4(),
+              ticker: result.ticker,
+              errorMessage:
+                  'Actif non coté (${ticker}): synchronisation automatique impossible',
+            );
+            saveFutures.add(repository.addSyncLog(syncLog));
+          } else {
+            // Vraie erreur de synchronisation
+            metadata.markSyncError(
+                'Impossible de récupérer le prix depuis les APIs');
+
+            // Log d'erreur
+            final syncLog = SyncLog.error(
+              id: _uuid.v4(),
+              ticker: result.ticker,
+              errorMessage:
+                  'Échec de récupération du prix depuis toutes les APIs',
+            );
+            saveFutures.add(repository.addSyncLog(syncLog));
+          }
+
+          saveFutures.add(repository.saveAssetMetadata(metadata));
           failedTickers.add(result.ticker);
         }
       }

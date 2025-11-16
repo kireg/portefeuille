@@ -26,6 +26,8 @@ import 'package:portefeuille/core/data/models/asset_metadata.dart';
 // --- NOUVEAUX IMPORTS ---
 import 'package:portefeuille/core/data/models/price_history_point.dart';
 import 'package:portefeuille/core/data/models/exchange_rate_history.dart';
+import 'package:portefeuille/core/data/models/sync_status.dart';
+import 'package:portefeuille/core/data/models/sync_log.dart';
 // --- FIN NOUVEAUX IMPORTS ---
 
 // Features
@@ -52,6 +54,8 @@ void main() async {
   // --- NOUVEAUX ADAPTERS ---
   Hive.registerAdapter(PriceHistoryPointAdapter());
   Hive.registerAdapter(ExchangeRateHistoryAdapter());
+  Hive.registerAdapter(SyncStatusAdapter());
+  Hive.registerAdapter(SyncLogAdapter());
   // --- FIN NOUVEAUX ADAPTERS ---
 
   // 3. Ouvrir les boîtes
@@ -61,7 +65,9 @@ void main() async {
   await Hive.openBox<AssetMetadata>(AppConstants.kAssetMetadataBoxName);
   // --- NOUVELLES BOXES ---
   await Hive.openBox<PriceHistoryPoint>(AppConstants.kPriceHistoryBoxName);
-  await Hive.openBox<ExchangeRateHistory>(AppConstants.kExchangeRateHistoryBoxName);
+  await Hive.openBox<ExchangeRateHistory>(
+      AppConstants.kExchangeRateHistoryBoxName);
+  await Hive.openBox<SyncLog>(AppConstants.kSyncLogsBoxName);
   // --- FIN NOUVELLES BOXES ---
 
   // 4. Instancier le Repository

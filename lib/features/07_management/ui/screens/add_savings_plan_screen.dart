@@ -8,6 +8,7 @@ import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+
 class AddSavingsPlanScreen extends StatefulWidget {
   /// Plan existant à modifier (null = mode création)
   final SavingsPlan? existingPlan;
@@ -35,12 +36,14 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
     super.initState();
 
     // Récupérer tous les actifs du portefeuille
-    final portfolio = Provider.of<PortfolioProvider>(context, listen: false).activePortfolio;
+    final portfolio =
+        Provider.of<PortfolioProvider>(context, listen: false).activePortfolio;
     if (portfolio != null) {
       // MODIFIÉ : Accès via getter (sera vide pour l'instant)
       for (var institution in portfolio.institutions) {
         for (var account in institution.accounts) {
-          _availableAssets.addAll(account.assets); // 'assets' est maintenant un getter
+          _availableAssets
+              .addAll(account.assets); // 'assets' est maintenant un getter
         }
       }
     }
@@ -56,14 +59,16 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
     // Si en mode édition, trouver l'actif correspondant
     if (plan != null) {
       _selectedAsset = _availableAssets.firstWhere(
-            (asset) => asset.ticker == plan.targetTicker,
-        orElse: () => _availableAssets.isNotEmpty ? _availableAssets.first : Asset(
-          id: '',
-          name: 'Inconnu',
-          ticker: plan.targetTicker,
-          type: AssetType.Other, // <--- AJOUTEZ CETTE LIGNE
-          currentPrice: 0,
-        ),
+        (asset) => asset.ticker == plan.targetTicker,
+        orElse: () => _availableAssets.isNotEmpty
+            ? _availableAssets.first
+            : Asset(
+                id: '',
+                name: 'Inconnu',
+                ticker: plan.targetTicker,
+                type: AssetType.Other, // <--- AJOUTEZ CETTE LIGNE
+                currentPrice: 0,
+              ),
       );
     }
   }
@@ -119,7 +124,6 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
         ),
         child: Form(
           key: _formKey,
-
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,13 +132,13 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-
                   Text(
-                    isEditing ? 'Modifier le plan d\'épargne' : 'Nouveau plan d\'épargne',
+                    isEditing
+                        ? 'Modifier le plan d\'épargne'
+                        : 'Nouveau plan d\'épargne',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   IconButton(
-
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
@@ -148,13 +152,11 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Nom du plan *',
                   hintText: 'ex: Achat mensuel ETF World',
-
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.label_outline),
                 ),
                 validator: (value) {
-                  if (value == null ||
-                      value.trim().isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return 'Le nom est obligatoire';
                   }
                   return null;
@@ -166,21 +168,19 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
               TextFormField(
                 controller: _monthlyAmountController,
                 decoration: const InputDecoration(
-                  labelText:
-                  'Montant mensuel (€) *',
+                  labelText: 'Montant mensuel (€) *',
                   hintText: 'ex: 150',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.euro),
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                 ],
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Le montant est obligatoire';
-
                   }
                   final amount = double.tryParse(value);
                   if (amount == null || amount <= 0) {
@@ -196,33 +196,28 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
               if (_availableAssets.isEmpty)
                 Card(
                   color: Colors.orange.shade50,
-
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        Icon(Icons.warning_amber, color: Colors.orange.shade700, size: 32),
-
+                        Icon(Icons.warning_amber,
+                            color: Colors.orange.shade700, size: 32),
                         const SizedBox(height: 8),
                         Text(
                           'Aucun actif disponible',
                           style: theme.textTheme.titleMedium?.copyWith(
-
                             color: Colors.orange.shade900,
                           ),
                         ),
                         const SizedBox(height: 4),
-
                         Text(
                           'Vous devez d\'abord ajouter des actifs à votre portefeuille',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.orange.shade800,
-
                           ),
                           textAlign: TextAlign.center,
                         ),
                       ],
-
                     ),
                   ),
                 )
@@ -236,11 +231,18 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                     helperText: 'Sélectionnez l\'actif dans lequel investir',
                   ),
                   items: _availableAssets.map((asset) {
+                    // Récupérer l'ISIN depuis les métadonnées
+                    final provider =
+                        Provider.of<PortfolioProvider>(context, listen: false);
+                    final metadata = provider.allMetadata[asset.ticker];
+                    final isin = metadata?.isin;
+
                     return DropdownMenuItem(
                       value: asset,
                       child: Text(
                         // --- CORRECTION DE LA LIGNE ---
-                        '${asset.name} (${asset.ticker}) - ${(asset.estimatedAnnualYield * 100).toStringAsFixed(1)}%',
+                        '${asset.name} (${asset.ticker}) - ${(asset.estimatedAnnualYield * 100).toStringAsFixed(1)}%'
+                        '${isin != null && isin.isNotEmpty ? ' • ISIN: $isin' : ''}',
                         overflow: TextOverflow.ellipsis,
                       ),
                     );
@@ -262,52 +264,43 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
               if (_selectedAsset != null) ...[
                 const SizedBox(height: 16),
                 Card(
-
                   color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-
                       children: [
                         Text(
                           'Informations de l\'actif sélectionné',
                           style: theme.textTheme.labelLarge,
-
                         ),
                         const SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-
                             Text('Ticker:', style: theme.textTheme.bodyMedium),
                             Text(
                               _selectedAsset!.ticker,
-
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-
                           ],
                         ),
                         const SizedBox(height: 4),
                         Row(
-
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Rendement estimé:', style: theme.textTheme.bodyMedium),
+                            Text('Rendement estimé:',
+                                style: theme.textTheme.bodyMedium),
                             Text(
-
                               '${(_selectedAsset!.estimatedAnnualYield * 100).toStringAsFixed(1)}% /an',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-
                                 color: Colors.green,
                               ),
                             ),
                           ],
-
                         ),
                       ],
                     ),
@@ -322,14 +315,12 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                 title: const Text('Plan actif'),
                 subtitle: Text(
                   _isActive
-                      ?
-                  'Le plan est actif et sera pris en compte dans les projections'
+                      ? 'Le plan est actif et sera pris en compte dans les projections'
                       : 'Le plan est désactivé (non pris en compte)',
                 ),
                 value: _isActive,
                 onChanged: (value) {
                   setState(() {
-
                     _isActive = value;
                   });
                 },
@@ -340,14 +331,12 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
               ),
               const SizedBox(height: 24),
 
-
               // Bouton de soumission
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _submitForm,
                   icon: Icon(isEditing ? Icons.save : Icons.add),
-
                   label: Text(isEditing ? 'Enregistrer' : 'Créer le plan'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(16),

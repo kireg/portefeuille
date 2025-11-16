@@ -78,7 +78,8 @@ class SettingsProvider extends ChangeNotifier {
     _appColor = Color(appColorValue);
 
     _migrationV1Done = _settingsBox.get(_kMigrationV1Done, defaultValue: false);
-    _migrationV2Done = _settingsBox.get(_kMigrationV2Done, defaultValue: false); // <-- NOUVEAU
+    _migrationV2Done =
+        _settingsBox.get(_kMigrationV2Done, defaultValue: false); // <-- NOUVEAU
     _baseCurrency =
         _settingsBox.get(_kBaseCurrency, defaultValue: _defaultBaseCurrency);
   }

@@ -14,21 +14,26 @@ import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
+import 'package:portefeuille/core/data/models/sync_log.dart';
 // --- FIN NOUVEAUX IMPORTS ---
 
 /// Classe responsable de la gestion des données du portefeuille.
 /// Elle abstrait la source de données (Hive) du reste de l'application.
 class PortfolioRepository {
   late final Box<Portfolio> _portfolioBox =
-  Hive.box(AppConstants.kPortfolioBoxName);
+      Hive.box(AppConstants.kPortfolioBoxName);
 
   // NOUVEAU : Box pour les transactions
   late final Box<Transaction> _transactionBox =
-  Hive.box(AppConstants.kTransactionBoxName);
-  
+      Hive.box(AppConstants.kTransactionBoxName);
+
   // NOUVEAU : Box pour les métadonnées des actifs
   late final Box<AssetMetadata> _assetMetadataBox =
-  Hive.box(AppConstants.kAssetMetadataBoxName);
+      Hive.box(AppConstants.kAssetMetadataBoxName);
+
+  // NOUVEAU : Box pour les logs de synchronisation
+  late final Box<SyncLog> _syncLogsBox =
+      Hive.box(AppConstants.kSyncLogsBoxName);
 
   final _uuid = const Uuid();
 
@@ -50,14 +55,14 @@ class PortfolioRepository {
       for (final institution in portfolio.institutions) {
         for (final account in institution.accounts) {
           account.transactions = transactionsByAccount[account.id] ?? [];
-          
+
           // Vider le cache pour forcer la régénération des assets
           account.clearAssetsCache();
-          
+
           // IMPORTANT: Récupérer les assets APRÈS avoir injecté les transactions
           // car le getter assets dépend des transactions
           final assets = account.assets;
-          
+
           // Injecter les métadonnées dans les assets
           for (final asset in assets) {
             final metadata = allMetadata[asset.ticker];
@@ -66,7 +71,7 @@ class PortfolioRepository {
               asset.estimatedAnnualYield = metadata.estimatedAnnualYield;
             }
           }
-          
+
           // Mettre en cache les assets avec métadonnées injectées
           account.refreshAssetsCache(assets);
         }
@@ -199,7 +204,7 @@ class PortfolioRepository {
     // --- TRANSACTIONS DE DÉMO (2020-2025) ---
     final List<Transaction> demoTransactions = [
       // ===== 2020 : OUVERTURE DES COMPTES =====
-      
+
       // PEA - Dépôt initial
       Transaction(
         id: _uuid.v4(),
@@ -222,7 +227,7 @@ class PortfolioRepository {
         fees: 7.50,
         amount: -4500.0,
       ),
-      
+
       // CTO - Dépôt initial
       Transaction(
         id: _uuid.v4(),
@@ -247,7 +252,7 @@ class PortfolioRepository {
       ),
 
       // ===== 2021 : RENFORCEMENT RÉGULIER =====
-      
+
       // PEA - Dépôt mensuel
       Transaction(
         id: _uuid.v4(),
@@ -270,7 +275,7 @@ class PortfolioRepository {
         fees: 5.0,
         amount: -480.0,
       ),
-      
+
       // CTO - Dépôt
       Transaction(
         id: _uuid.v4(),
@@ -293,7 +298,7 @@ class PortfolioRepository {
         fees: 9.90,
         amount: -1400.0,
       ),
-      
+
       // Crypto - Premier investissement
       Transaction(
         id: _uuid.v4(),
@@ -317,7 +322,7 @@ class PortfolioRepository {
       ),
 
       // ===== 2022 : DIVERSIFICATION =====
-      
+
       // PEA - Renforcement CW8 (PRU)
       Transaction(
         id: _uuid.v4(),
@@ -339,7 +344,7 @@ class PortfolioRepository {
         fees: 5.0,
         amount: -1900.0,
       ),
-      
+
       // PEA - Achat TotalEnergies
       Transaction(
         id: _uuid.v4(),
@@ -354,7 +359,7 @@ class PortfolioRepository {
         fees: 5.0,
         amount: -720.0,
       ),
-      
+
       // Assurance Vie - Ouverture
       Transaction(
         id: _uuid.v4(),
@@ -378,7 +383,7 @@ class PortfolioRepository {
       ),
 
       // ===== 2023 : PREMIERS DIVIDENDES =====
-      
+
       // Dividende LVMH
       Transaction(
         id: _uuid.v4(),
@@ -390,7 +395,7 @@ class PortfolioRepository {
         amount: 12.0,
         fees: 0.0,
       ),
-      
+
       // Dividende TotalEnergies
       Transaction(
         id: _uuid.v4(),
@@ -402,7 +407,7 @@ class PortfolioRepository {
         amount: 9.75,
         fees: 0.0,
       ),
-      
+
       // Intérêts Fonds Euros
       Transaction(
         id: _uuid.v4(),
@@ -416,7 +421,7 @@ class PortfolioRepository {
       ),
 
       // ===== 2024 : PRISE DE PROFIT =====
-      
+
       // CTO - Vente partielle AAPL (plus-value)
       Transaction(
         id: _uuid.v4(),
@@ -431,7 +436,7 @@ class PortfolioRepository {
         fees: 9.90,
         amount: 1850.0,
       ),
-      
+
       // Crypto - Achat ETH
       Transaction(
         id: _uuid.v4(),
@@ -453,7 +458,7 @@ class PortfolioRepository {
         fees: 5.0,
         amount: -1000.0,
       ),
-      
+
       // PEA - Dividendes 2024
       Transaction(
         id: _uuid.v4(),
@@ -477,7 +482,7 @@ class PortfolioRepository {
       ),
 
       // ===== 2025 : RENFORCEMENT RÉCENT =====
-      
+
       // PEA - Dernier renforcement CW8
       Transaction(
         id: _uuid.v4(),
@@ -499,7 +504,7 @@ class PortfolioRepository {
         fees: 5.0,
         amount: -2880.0,
       ),
-      
+
       // CTO - Renforcement MSFT
       Transaction(
         id: _uuid.v4(),
@@ -521,7 +526,7 @@ class PortfolioRepository {
         fees: 9.90,
         amount: -1260.0,
       ),
-      
+
       // Frais de gestion annuels
       Transaction(
         id: _uuid.v4(),
@@ -605,7 +610,7 @@ class PortfolioRepository {
         lastUpdated: DateTime(2025, 11, 12),
         isManualYield: false,
       ),
-      
+
       // Actions françaises
       AssetMetadata(
         ticker: 'MC.PA',
@@ -621,7 +626,7 @@ class PortfolioRepository {
         lastUpdated: DateTime(2025, 11, 12),
         isManualYield: false,
       ),
-      
+
       // Actions US
       AssetMetadata(
         ticker: 'AAPL',
@@ -637,7 +642,7 @@ class PortfolioRepository {
         lastUpdated: DateTime(2025, 11, 12),
         isManualYield: false,
       ),
-      
+
       // Crypto
       AssetMetadata(
         ticker: 'BTC-EUR',
@@ -653,7 +658,7 @@ class PortfolioRepository {
         lastUpdated: DateTime(2025, 11, 12),
         isManualYield: false,
       ),
-      
+
       // Fonds euros
       AssetMetadata(
         ticker: 'FONDS-EUROS',
@@ -669,5 +674,52 @@ class PortfolioRepository {
       transactions: demoTransactions,
       metadata: demoMetadata,
     );
+  }
+
+  // ============================================================================
+  // GESTION DES LOGS DE SYNCHRONISATION
+  // ============================================================================
+
+  /// Ajoute un log de synchronisation
+  Future<void> addSyncLog(SyncLog log) async {
+    await _syncLogsBox.add(log);
+    await _rotateSyncLogs();
+  }
+
+  /// Récupère tous les logs de synchronisation (triés par date décroissante)
+  List<SyncLog> getAllSyncLogs() {
+    final logs = _syncLogsBox.values.toList();
+    logs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return logs;
+  }
+
+  /// Récupère les N derniers logs
+  List<SyncLog> getRecentSyncLogs({int limit = 100}) {
+    final allLogs = getAllSyncLogs();
+    return allLogs.take(limit).toList();
+  }
+
+  /// Supprime tous les logs de synchronisation
+  Future<void> clearAllSyncLogs() async {
+    await _syncLogsBox.clear();
+  }
+
+  /// Rotation automatique : garde seulement les 1000 derniers logs
+  Future<void> _rotateSyncLogs() async {
+    const maxLogs = 1000;
+    if (_syncLogsBox.length > maxLogs) {
+      final logs = getAllSyncLogs();
+      // Supprimer les plus anciens
+      final toDelete = logs.skip(maxLogs).toList();
+      for (final log in toDelete) {
+        final key = _syncLogsBox.keys.firstWhere(
+          (k) => _syncLogsBox.get(k) == log,
+          orElse: () => null,
+        );
+        if (key != null) {
+          await _syncLogsBox.delete(key);
+        }
+      }
+    }
   }
 }

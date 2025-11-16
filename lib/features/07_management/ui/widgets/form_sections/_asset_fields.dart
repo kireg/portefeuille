@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
+import 'package:portefeuille/core/utils/isin_validator.dart';
 import 'package:portefeuille/features/07_management/ui/providers/transaction_form_state.dart';
 import 'package:provider/provider.dart';
 
@@ -34,7 +35,10 @@ class AssetFields extends StatelessWidget {
         TextFormField(
           controller: state.tickerController,
           decoration: InputDecoration(
-            labelText: 'Ticker (ex: AAPL) *',
+            labelText: 'Ticker ou ISIN *',
+            hintText: 'Ex: AAPL ou US0378331005',
+            helperText:
+                'Saisissez un ticker (AAPL) ou un code ISIN (12 caractères)',
             border: const OutlineInputBorder(),
             suffixIcon:
                 state.isLoadingSearch && state.settingsProvider.isOnlineMode
@@ -48,9 +52,21 @@ class AssetFields extends StatelessWidget {
                     : null,
           ),
           textCapitalization: TextCapitalization.characters,
-          validator: (value) =>
-              (value == null || value.isEmpty) ? 'Ticker requis' : null,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Ticker ou ISIN requis';
+            }
+            // Si la valeur ressemble à un ISIN, valider le format
+            final cleaned = IsinValidator.cleanIsin(value);
+            if (IsinValidator.looksLikeIsin(cleaned)) {
+              if (!IsinValidator.isValidIsinFormat(cleaned)) {
+                return 'Format ISIN invalide (attendu: 2 lettres + 10 alphanumériques)';
+              }
+            }
+            return null;
+          },
         ),
+        // Affichage des suggestions ou message "Aucun résultat"
         if (state.suggestions.isNotEmpty)
           SizedBox(
             height: 150,
@@ -69,12 +85,40 @@ class AssetFields extends StatelessWidget {
                     title: Text(suggestion.name),
                     subtitle: Text(
                         "${suggestion.ticker} (${suggestion.exchange})"
-                        "${suggestion.currency.isNotEmpty && suggestion.currency != '???' ? ' - Devise: ${suggestion.currency}' : ' - Devise: non disponible'}"),
+                        "${suggestion.currency.isNotEmpty && suggestion.currency != '???' ? ' - Devise: ${suggestion.currency}' : ' - Devise: non disponible'}"
+                        "${suggestion.isin != null && suggestion.isin!.isNotEmpty ? ' • ISIN: ${suggestion.isin}' : ''}"),
                     onTap: () =>
                         readState.onSuggestionSelected(suggestion, context),
                   );
                 },
               ),
+            ),
+          )
+        else if (!state.isLoadingSearch &&
+            state.tickerController.text.trim().length >= 2 &&
+            state.settingsProvider.isOnlineMode)
+          // Message "Aucun résultat" si recherche effectuée sans résultats
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              border: Border.all(color: theme.dividerColor),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.search_off,
+                    color: theme.colorScheme.onSurfaceVariant),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Aucun résultat trouvé pour "${state.tickerController.text.trim()}". Vérifiez l\'orthographe ou saisissez manuellement.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         const SizedBox(height: 12),

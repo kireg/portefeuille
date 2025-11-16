@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
-import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
+import 'package:portefeuille/core/data/models/sync_status.dart';
+import 'package:portefeuille/core/data/services/sync_log_export_service.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/initial_setup_wizard.dart';
 import 'package:portefeuille/features/01_launch/ui/launch_screen.dart';
-import 'package:intl/intl.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -36,6 +36,8 @@ class SettingsScreen extends StatelessWidget {
                   _PortfolioCard(),
                   const SizedBox(height: 12),
                   _OnlineModeCard(),
+                  const SizedBox(height: 12),
+                  _SyncLogsCard(),
                   const SizedBox(height: 12),
                   _UserLevelCard(),
                   const SizedBox(height: 12),
@@ -98,12 +100,12 @@ class _AppearanceCard extends StatelessWidget {
                     ),
                     boxShadow: isSelected
                         ? [
-                      BoxShadow(
-                        color: color.withOpacity(0.4),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      )
-                    ]
+                            BoxShadow(
+                              color: color.withOpacity(0.4),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            )
+                          ]
                         : [],
                   ),
                   child: isSelected
@@ -163,9 +165,9 @@ class _PortfolioCard extends StatelessWidget {
                         portfolioProvider.setActivePortfolio(portfolio.id),
                     itemBuilder: (context) => portfolioProvider.portfolios
                         .map((p) => PopupMenuItem(
-                      value: p,
-                      child: Text(p.name),
-                    ))
+                              value: p,
+                              child: Text(p.name),
+                            ))
                         .toList(),
                   ),
               ],
@@ -179,7 +181,8 @@ class _PortfolioCard extends StatelessWidget {
               OutlinedButton.icon(
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Nouveau'),
-                onPressed: () => _showNewPortfolioDialog(context, portfolioProvider),
+                onPressed: () =>
+                    _showNewPortfolioDialog(context, portfolioProvider),
               ),
               OutlinedButton.icon(
                 icon: const Icon(Icons.edit, size: 18),
@@ -196,8 +199,8 @@ class _PortfolioCard extends StatelessWidget {
                 ),
                 onPressed: portfolioProvider.activePortfolio == null
                     ? null
-                    : () => portfolioProvider.deletePortfolio(
-                    portfolioProvider.activePortfolio!.id),
+                    : () => portfolioProvider
+                        .deletePortfolio(portfolioProvider.activePortfolio!.id),
               ),
             ],
           ),
@@ -208,7 +211,7 @@ class _PortfolioCard extends StatelessWidget {
 
   void _showRenameDialog(BuildContext context, PortfolioProvider provider) {
     final nameController =
-    TextEditingController(text: provider.activePortfolio?.name ?? '');
+        TextEditingController(text: provider.activePortfolio?.name ?? '');
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -238,7 +241,8 @@ class _PortfolioCard extends StatelessWidget {
     );
   }
 
-  void _showNewPortfolioDialog(BuildContext context, PortfolioProvider provider) {
+  void _showNewPortfolioDialog(
+      BuildContext context, PortfolioProvider provider) {
     final nameController = TextEditingController(text: "Nouveau Portefeuille");
     showDialog(
       context: context,
@@ -294,6 +298,247 @@ class _PortfolioCard extends StatelessWidget {
   }
 }
 
+// ============================================================================
+// CARD: LOGS DE SYNCHRONISATION
+// ============================================================================
+
+class _SyncLogsCard extends StatelessWidget {
+  const _SyncLogsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final portfolioProvider = context.watch<PortfolioProvider>();
+
+    return AppTheme.buildStyledCard(
+      context: context,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppTheme.buildSectionHeader(
+            context: context,
+            icon: Icons.history,
+            title: 'Historique de synchronisation',
+          ),
+          const SizedBox(height: 16),
+          AppTheme.buildInfoContainer(
+            context: context,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Les logs de synchronisation enregistrent chaque tentative de mise à jour des prix.',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '• Téléchargez l\'historique complet en CSV\n'
+                  '• Analysez les erreurs récurrentes\n'
+                  '• Maximum 1000 entrées conservées',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Statistiques des logs
+          FutureBuilder<Map<String, int>>(
+            future: _getLogStats(portfolioProvider),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                final stats = snapshot.data!;
+                return AppTheme.buildInfoContainer(
+                  context: context,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatColumn(
+                        context,
+                        'Total',
+                        stats['total']!,
+                        Icons.list_alt,
+                        theme.colorScheme.primary,
+                      ),
+                      _buildStatColumn(
+                        context,
+                        'Succès',
+                        stats['success']!,
+                        Icons.check_circle_outline,
+                        Colors.green,
+                      ),
+                      _buildStatColumn(
+                        context,
+                        'Erreurs',
+                        stats['errors']!,
+                        Icons.error_outline,
+                        Colors.orange,
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Boutons d'action
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () => _downloadLogs(context, portfolioProvider),
+                  icon: const Icon(Icons.download),
+                  label: const Text('Télécharger CSV'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _clearLogs(context, portfolioProvider),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Effacer'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatColumn(
+    BuildContext context,
+    String label,
+    int value,
+    IconData icon,
+    Color color,
+  ) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 32),
+        const SizedBox(height: 4),
+        Text(
+          value.toString(),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<Map<String, int>> _getLogStats(PortfolioProvider provider) async {
+    final logs = provider.getAllSyncLogs();
+    final successes =
+        logs.where((log) => log.status == SyncStatus.synced).length;
+    return {
+      'total': logs.length,
+      'success': successes,
+      'errors': logs.length - successes,
+    };
+  }
+
+  Future<void> _downloadLogs(
+    BuildContext context,
+    PortfolioProvider provider,
+  ) async {
+    try {
+      final logs = provider.getAllSyncLogs();
+
+      if (logs.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Aucun log à exporter'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+
+      final filePath = await SyncLogExportService.saveLogsToFile(logs);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Logs exportés : ${filePath.split('\\').last}'),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'OK',
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de l\'export : $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _clearLogs(
+    BuildContext context,
+    PortfolioProvider provider,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Effacer les logs ?'),
+        content: const Text(
+          'Tous les logs de synchronisation seront définitivement supprimés. '
+          'Cette action est irréversible.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Effacer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await provider.clearAllSyncLogs();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Logs effacés avec succès'),
+          ),
+        );
+      }
+    }
+  }
+}
+
 // === MODE EN LIGNE ===
 class _OnlineModeCard extends StatefulWidget {
   @override
@@ -326,7 +571,8 @@ class _OnlineModeCardState extends State<_OnlineModeCard> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(key.isEmpty ? "Clé supprimée" : "Clé sauvegardée"),
-            backgroundColor: key.isEmpty ? Colors.orange[800] : Colors.green[600],
+            backgroundColor:
+                key.isEmpty ? Colors.orange[800] : Colors.green[600],
           ),
         );
       }
@@ -345,10 +591,7 @@ class _OnlineModeCardState extends State<_OnlineModeCard> {
   @override
   Widget build(BuildContext context) {
     final settingsProvider = context.watch<SettingsProvider>();
-    final portfolioProvider = context.watch<PortfolioProvider>();
     final theme = Theme.of(context);
-    final allMetadata = portfolioProvider.allMetadata.values.toList()
-      ..sort((a, b) => a.ticker.compareTo(b.ticker));
 
     return AppTheme.buildStyledCard(
       context: context,
@@ -377,46 +620,6 @@ class _OnlineModeCardState extends State<_OnlineModeCard> {
           ),
           if (settingsProvider.isOnlineMode) ...[
             const SizedBox(height: 20),
-            if (allMetadata.isNotEmpty) ...[
-              Text('Statut des prix',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  )),
-              const SizedBox(height: 12),
-              AppTheme.buildInfoContainer(
-                context: context,
-                padding: EdgeInsets.zero,
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: allMetadata.length,
-                  separatorBuilder: (_, __) => Divider(height: 1, indent: 16),
-                  itemBuilder: (_, i) {
-                    final meta = allMetadata[i];
-                    return ListTile(
-                      dense: true,
-                      leading: CircleAvatar(
-                        radius: 16,
-                        backgroundColor: theme.colorScheme.primaryContainer,
-                        child: Text(
-                          meta.ticker[0],
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.colorScheme.onPrimaryContainer,
-                          ),
-                        ),
-                      ),
-                      title: Text(meta.ticker, style: theme.textTheme.bodyMedium),
-                      trailing: Text(
-                        DateFormat('dd/MM HH:mm').format(meta.lastUpdated),
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
             Text('Clé API FMP (optionnel)',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
@@ -443,7 +646,8 @@ class _OnlineModeCardState extends State<_OnlineModeCard> {
                         icon: Icon(_obscureKey
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined),
-                        onPressed: () => setState(() => _obscureKey = !_obscureKey),
+                        onPressed: () =>
+                            setState(() => _obscureKey = !_obscureKey),
                       ),
                     ),
                   ),
@@ -461,7 +665,8 @@ class _OnlineModeCardState extends State<_OnlineModeCard> {
                 padding: const EdgeInsets.only(top: 12.0),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle, size: 16, color: Colors.green[400]),
+                    Icon(Icons.check_circle,
+                        size: 16, color: Colors.green[400]),
                     const SizedBox(width: 8),
                     Text(
                       'Clé enregistrée',
@@ -489,7 +694,8 @@ class _UserLevelCard extends StatelessWidget {
       context: context,
       child: Row(
         children: [
-          Icon(Icons.person_outline, color: Theme.of(context).colorScheme.primary),
+          Icon(Icons.person_outline,
+              color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Text('Niveau d\'utilisateur',
@@ -534,7 +740,8 @@ class _DangerZoneCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
+                Icon(Icons.warning_amber_rounded,
+                    color: theme.colorScheme.error),
                 const SizedBox(width: 12),
                 Text('Zone de danger',
                     style: theme.textTheme.titleLarge?.copyWith(
@@ -579,10 +786,11 @@ class _DangerZoneCard extends StatelessWidget {
             ),
             child: const Text('Réinitialiser'),
             onPressed: () {
-              Provider.of<PortfolioProvider>(context, listen: false).resetAllData();
+              Provider.of<PortfolioProvider>(context, listen: false)
+                  .resetAllData();
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const LaunchScreen()),
-                    (_) => false,
+                (_) => false,
               );
             },
           ),

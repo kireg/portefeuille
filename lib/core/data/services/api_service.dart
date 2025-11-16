@@ -27,12 +27,15 @@ class TickerSuggestion {
   final String exchange;
   // NOUVEAU : Ajouter la devise à la suggestion de recherche
   final String currency;
+  // NOUVEAU : Code ISIN de l'actif (si disponible)
+  final String? isin;
 
   TickerSuggestion({
     required this.ticker,
     required this.name,
     required this.exchange,
     required this.currency,
+    this.isin,
   });
 }
 
@@ -71,6 +74,10 @@ class ApiService {
   // Cache pour la recherche (24h)
   final Map<String, List<TickerSuggestion>> _searchCache = {};
   final Map<String, DateTime> _searchCacheTimestamps = {};
+
+  // Cache pour les taux de change (24h)
+  final Map<String, double> _exchangeRateCache = {};
+  final Map<String, DateTime> _exchangeRateCacheTimestamps = {};
 
   ApiService({
     required SettingsProvider settingsProvider,
@@ -164,80 +171,216 @@ class ApiService {
   }
 
   /// Tente de récupérer un prix via Yahoo Finance (API 'spark')
+  /// Avec retry automatique (3 tentatives) et timeout adaptatif
   Future<PriceResult?> _fetchFromYahoo(String ticker) async {
-    final yahooUrl = Uri.parse(
-        'https://query1.finance.yahoo.com/v7/finance/spark?symbols=$ticker&range=1d&interval=1d');
+    const maxRetries = 3;
+    final timeouts = [
+      Duration(seconds: 5), // 1ère tentative: 5s
+      Duration(seconds: 8), // 2ème tentative: 8s
+      Duration(seconds: 12), // 3ème tentative: 12s
+    ];
+
+    for (int attempt = 0; attempt < maxRetries; attempt++) {
+      final isLastAttempt = attempt == maxRetries - 1;
+      final timeout = timeouts[attempt];
+
+      try {
+        debugPrint(
+            "🔄 Yahoo Finance: Tentative ${attempt + 1}/$maxRetries pour $ticker (timeout: ${timeout.inSeconds}s)");
+
+        final yahooUrl = Uri.parse(
+            'https://query1.finance.yahoo.com/v7/finance/spark?symbols=$ticker&range=1d&interval=1d');
+
+        final response = await _httpClient.get(yahooUrl,
+            headers: {'User-Agent': 'Mozilla/5.0'}).timeout(timeout);
+
+        if (response.statusCode != 200) {
+          debugPrint(
+              '❌ Yahoo Finance HTTP ${response.statusCode} pour $ticker');
+          debugPrint('📄 Body: ${response.body}');
+
+          // Retry sauf si 404 (ticker introuvable)
+          if (response.statusCode == 404 || isLastAttempt) {
+            return null;
+          }
+
+          // Attendre avant retry (délai exponentiel)
+          await Future.delayed(Duration(seconds: attempt + 1));
+          continue;
+        }
+
+        final jsonData = jsonDecode(response.body);
+        final List<dynamic>? results = jsonData['spark']?['result'];
+
+        if (results != null && results.isNotEmpty) {
+          final result = results[0];
+          final String? resultSymbol = result['symbol'];
+          final num? newPriceNum =
+              result['response']?[0]?['meta']?['regularMarketPrice'];
+          final String currency =
+              result['response']?[0]?['meta']?['currency'] ?? 'EUR';
+
+          if (resultSymbol == ticker && newPriceNum != null) {
+            debugPrint(
+                "✅ Yahoo Finance: Prix $ticker = $newPriceNum $currency (tentative ${attempt + 1})");
+            return PriceResult(
+              price: newPriceNum.toDouble(),
+              currency: currency,
+              source: ApiSource.Yahoo,
+              ticker: ticker,
+            );
+          }
+        }
+
+        debugPrint(
+            "⚠️ Yahoo Finance: Pas de prix pour $ticker (tentative ${attempt + 1})");
+        return null;
+      } on TimeoutException {
+        debugPrint(
+            "⏱️ Timeout Yahoo Finance pour $ticker (tentative ${attempt + 1}/${maxRetries}, ${timeout.inSeconds}s)");
+
+        if (isLastAttempt) {
+          debugPrint("❌ Échec final après $maxRetries tentatives (timeout)");
+          return null;
+        }
+
+        // Attendre avant retry
+        await Future.delayed(Duration(seconds: attempt + 1));
+      } on SocketException catch (e) {
+        debugPrint(
+            "🌐 Erreur réseau Yahoo Finance pour $ticker (tentative ${attempt + 1}/${maxRetries})");
+        debugPrint("📋 Détails: ${e.message}");
+
+        if (isLastAttempt) {
+          debugPrint("❌ Échec final après $maxRetries tentatives (réseau)");
+          return null;
+        }
+
+        // Attendre avant retry
+        await Future.delayed(Duration(seconds: attempt + 1));
+      } catch (e) {
+        debugPrint(
+            "❌ Erreur Yahoo Finance pour $ticker (tentative ${attempt + 1}/${maxRetries})");
+        debugPrint("📋 Détails: $e");
+
+        if (isLastAttempt) {
+          debugPrint("❌ Échec final après $maxRetries tentatives");
+          return null;
+        }
+
+        // Attendre avant retry
+        await Future.delayed(Duration(seconds: attempt + 1));
+      }
+    }
+
+    return null;
+  }
+
+  /// Récupère le taux de change réel depuis l'API Frankfurter (BCE)
+  ///
+  /// Frankfurter fournit des taux de change officiels de la Banque Centrale Européenne
+  /// 100% gratuit, pas de clé API requise, données fiables
+  ///
+  /// Exemple : _fetchExchangeRateFromFrankfurter('USD', 'EUR') → 0.92
+  Future<double?> _fetchExchangeRateFromFrankfurter(
+      String from, String to) async {
+    final url =
+        Uri.parse('https://api.frankfurter.app/latest?from=$from&to=$to');
+
     try {
-      final response = await _httpClient.get(yahooUrl, headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }).timeout(const Duration(seconds: 8));
+      debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      debugPrint("💱 FRANKFURTER: Récupération taux $from → $to");
+      debugPrint("🌐 URL: $url");
+      debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+      final response =
+          await _httpClient.get(url).timeout(const Duration(seconds: 5));
+
+      debugPrint("📡 Réponse HTTP: ${response.statusCode}");
 
       if (response.statusCode != 200) {
-        debugPrint(
-            'Erreur de l\'API Yahoo Finance (spark) pour $ticker: ${response.body}');
+        debugPrint("❌ Erreur Frankfurter (${response.statusCode})");
+        debugPrint("📄 Body: ${response.body}");
         return null;
       }
 
       final jsonData = jsonDecode(response.body);
-      final List<dynamic>? results = jsonData['spark']?['result'];
+      debugPrint("📦 JSON reçu: $jsonData");
 
-      if (results != null && results.isNotEmpty) {
-        final result = results[0];
-        final String? resultSymbol = result['symbol'];
-        final num? newPriceNum =
-            result['response']?[0]?['meta']?['regularMarketPrice'];
-        // NOUVEAU : Récupérer la devise
-        final String currency =
-            result['response']?[0]?['meta']?['currency'] ?? 'EUR';
+      final rates = jsonData['rates'];
 
-        if (resultSymbol == ticker && newPriceNum != null) {
-          return PriceResult(
-            price: newPriceNum.toDouble(),
-            currency: currency,
-            source: ApiSource.Yahoo,
-            ticker: ticker,
-          );
-        }
+      if (rates != null && rates[to] != null) {
+        final rate = (rates[to] as num).toDouble();
+        debugPrint("✅ SUCCÈS: 1 $from = $rate $to (source: BCE)");
+        debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        return rate;
       }
-      debugPrint("Yahoo (spark) n'a pas retourné de prix pour $ticker");
+
+      debugPrint("⚠️ Frankfurter n'a pas retourné de taux pour $from→$to");
+      debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      return null;
+    } on SocketException catch (e) {
+      debugPrint("❌ ERREUR RÉSEAU Frankfurter pour $from→$to");
+      debugPrint("📋 Détails: $e");
+      debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      return null;
+    } on TimeoutException catch (e) {
+      debugPrint("⏱️ TIMEOUT Frankfurter pour $from→$to (>5s)");
+      debugPrint("📋 Détails: $e");
+      debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       return null;
     } catch (e) {
-      debugPrint("Erreur http Yahoo (spark) pour $ticker: $e");
+      debugPrint("❌ ERREUR INCONNUE Frankfurter pour $from→$to");
+      debugPrint("📋 Détails: $e");
+      debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       return null;
     }
   }
 
-  // --- NOUVELLE MÉTHODE ---
   /// Récupère le taux de change entre deux devises.
-  /// (Pour l'instant, simule un taux fixe pour les tests)
+  /// Utilise l'API Frankfurter (données BCE) avec mise en cache de 24h
   Future<double> getExchangeRate(String from, String to) async {
+    debugPrint("\n🔄 getExchangeRate appelé: $from → $to");
+
     // Si les devises sont identiques, le taux est 1
-    if (from == to) return 1.0;
-
-    // ⚠️ ATTENTION : Cette implémentation utilise des taux de change SIMULÉS
-    // Ces taux sont fixes et ne reflètent PAS les taux de change réels du marché.
-    // TODO CRITIQUE : Remplacer par un appel API réel (ex: FMP, Yahoo Finance, ou ECB)
-    // avant toute utilisation en production !
-    debugPrint(
-        "⚠️ WARNING: Utilisation de taux de change SIMULÉS (non-production)");
-
-    if (from == 'USD' && to == 'EUR') {
-      debugPrint("API: Taux de change SIMULÉ USD->EUR: 0.92");
-      return 0.92;
+    if (from == to) {
+      debugPrint("✅ Devises identiques ($from = $to), taux = 1.0");
+      return 1.0;
     }
-    if (from == 'EUR' && to == 'USD') {
-      // Calcul mathématiquement cohérent : 1 / 0.92 ≈ 1.087
-      final rate = 1.0 / 0.92;
-      debugPrint(
-          "API: Taux de change SIMULÉ EUR->USD: ${rate.toStringAsFixed(4)}");
+
+    // Vérifier le cache (24h)
+    final cacheKey = '$from->$to';
+    final cachedTimestamp = _exchangeRateCacheTimestamps[cacheKey];
+    if (cachedTimestamp != null &&
+        DateTime.now().difference(cachedTimestamp) <
+            const Duration(hours: 24)) {
+      final cachedRate = _exchangeRateCache[cacheKey];
+      if (cachedRate != null) {
+        final age = DateTime.now().difference(cachedTimestamp);
+        debugPrint(
+            "💾 CACHE HIT: Taux $from→$to = $cachedRate (âge: ${age.inMinutes}min)");
+        return cachedRate;
+      }
+    }
+
+    debugPrint("🌐 CACHE MISS: Appel API Frankfurter...");
+
+    // Appeler Frankfurter
+    final rate = await _fetchExchangeRateFromFrankfurter(from, to);
+
+    if (rate != null) {
+      // Mettre en cache
+      _exchangeRateCache[cacheKey] = rate;
+      _exchangeRateCacheTimestamps[cacheKey] = DateTime.now();
+      debugPrint("💾 Taux $from→$to mis en cache: $rate (valide 24h)");
       return rate;
     }
 
-    debugPrint("API: Taux de change SIMULÉ pour $from->$to: 1.0 (non géré)");
-    // Retourne 1.0 si la paire n'est pas gérée par la simulation
+    // Fallback : retourner 1.0 si échec (évite les crashs)
+    debugPrint("⚠️ FALLBACK: Taux $from→$to = 1.0 (Frankfurter indisponible)");
+    debugPrint("💡 Les conversions ne seront pas exactes!");
     return 1.0;
   }
-  // --- FIN NOUVELLE MÉTHODE ---
 
   /// Recherche un ticker ou un ISIN
   Future<List<TickerSuggestion>> searchTicker(String query) async {
@@ -268,33 +411,47 @@ class ApiService {
 
       debugPrint("📊 ${quotes.length} résultats trouvés");
 
+      // OPTION C : Récupérer la devise réelle pour chaque résultat via getPrice()
       for (final quote in quotes) {
         final String? ticker = quote['symbol'];
         final String? name = quote['longname'] ?? quote['shortname'];
         final String? exchange = quote['exchDisp'];
-        // NOUVEAU : Récupérer la devise de l'actif
-        // Note : L'API 'search' ne fournit pas la devise. Nous devons la déduire
-        // ou la laisser vide. Pour ce projet, nous allons la laisser vide
-        // et le formulaire de transaction la demandera si besoin.
-        // ---
-        // MISE A JOUR : Tentons de la récupérer depuis 'currency' si elle existe
-        final String currency = quote['currency'] ?? '???';
+
+        // NOUVEAU : Récupérer l'ISIN si disponible dans la réponse API
+        // NOTE IMPORTANTE : L'API Yahoo Finance Search ne fournit PAS l'ISIN dans sa réponse.
+        // Ce champ restera null jusqu'à ce qu'une autre source (FMP, API dédiée) soit utilisée.
+        // La structure est néanmoins prête pour une future implémentation.
+        final String? isin = quote['isin'];
 
         if (ticker != null && name != null && exchange != null) {
           if (quote['quoteType'] == 'EQUITY' ||
               quote['quoteType'] == 'ETF' ||
               quote['quoteType'] == 'CRYPTOCURRENCY') {
+            // OPTION C : Appel getPrice() pour obtenir la vraie devise
+            String currency = '???';
+            try {
+              final priceResult = await getPrice(ticker);
+              if (priceResult.price != null) {
+                currency = priceResult.currency;
+                debugPrint("💱 Devise récupérée pour $ticker: $currency");
+              }
+            } catch (e) {
+              debugPrint(
+                  "⚠️ Impossible de récupérer la devise pour $ticker: $e");
+            }
+
             suggestions.add(TickerSuggestion(
               ticker: ticker,
               name: name,
               exchange: exchange,
-              currency: currency, // <-- MODIFIÉ
+              currency: currency,
+              isin: isin,
             ));
           }
         }
       }
 
-      debugPrint("✅ ${suggestions.length} suggestions valides");
+      debugPrint("✅ ${suggestions.length} suggestions valides avec devises");
       _searchCache[query] = suggestions;
       _searchCacheTimestamps[query] = DateTime.now();
 
@@ -312,11 +469,13 @@ class ApiService {
     }
   }
 
-  /// Vide les caches de prix et de recherche.
+  /// Vide les caches de prix, recherche et taux de change.
   void clearCache() {
     _priceCache.clear();
     _searchCache.clear();
     _searchCacheTimestamps.clear();
-    debugPrint("ℹ️ Caches de l'ApiService vidés.");
+    _exchangeRateCache.clear();
+    _exchangeRateCacheTimestamps.clear();
+    debugPrint("ℹ️ Caches de l'ApiService vidés (prix, recherche, taux).");
   }
 }

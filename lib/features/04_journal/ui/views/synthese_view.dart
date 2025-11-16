@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
+import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:provider/provider.dart';
@@ -38,9 +39,9 @@ class SyntheseView extends StatefulWidget {
 class _SyntheseViewState extends State<SyntheseView> {
   List<AggregatedAsset> _aggregateAssets(PortfolioProvider provider) {
     final allAssets = provider.activePortfolio?.institutions
-        .expand((inst) => inst.accounts)
-        .expand((acc) => acc.assets)
-        .toList() ??
+            .expand((inst) => inst.accounts)
+            .expand((acc) => acc.assets)
+            .toList() ??
         [];
 
     if (allAssets.isEmpty) return [];
@@ -65,7 +66,7 @@ class _SyntheseViewState extends State<SyntheseView> {
       }
 
       final double aggregatedAveragePrice =
-      (totalQuantity > 0) ? totalCost / totalQuantity : 0.0;
+          (totalQuantity > 0) ? totalCost / totalQuantity : 0.0;
 
       if (totalQuantity > 0) {
         aggregatedList.add(
@@ -109,7 +110,8 @@ class _SyntheseViewState extends State<SyntheseView> {
               context: context,
               icon: Icons.pie_chart_outline,
               title: 'Aucun actif à agréger',
-              subtitle: 'Les actifs apparaîtront ici une fois que vous aurez ajouté des transactions.',
+              subtitle:
+                  'Les actifs apparaîtront ici une fois que vous aurez ajouté des transactions.',
               buttonLabel: 'Ajouter une transaction',
               onPressed: () {
                 // Navigation vers l'ajout de transaction
@@ -151,13 +153,15 @@ class _SyntheseViewState extends State<SyntheseView> {
                                     .withOpacity(0.3),
                               ),
                               columns: const [
+                                DataColumn(label: Text('Statut')),
                                 DataColumn(label: Text('Actif')),
                                 DataColumn(
                                     label: Text('Quantité'), numeric: true),
                                 DataColumn(label: Text('PRU'), numeric: true),
                                 DataColumn(
                                     label: Text('Prix actuel'), numeric: true),
-                                DataColumn(label: Text('Valeur'), numeric: true),
+                                DataColumn(
+                                    label: Text('Valeur'), numeric: true),
                                 DataColumn(label: Text('P/L'), numeric: true),
                                 DataColumn(
                                     label: Text('Rendement %'), numeric: true),
@@ -168,14 +172,32 @@ class _SyntheseViewState extends State<SyntheseView> {
                                     ? Colors.green.shade400
                                     : Colors.red.shade400;
 
+                                // Récupérer les métadonnées pour obtenir le statut de synchro
+                                final metadata =
+                                    provider.allMetadata[asset.ticker];
+                                final syncStatus =
+                                    metadata?.syncStatus ?? SyncStatus.never;
+                                final tooltipMessage =
+                                    _buildTooltipMessage(syncStatus, metadata);
+
                                 return DataRow(
                                   cells: [
+                                    // Nouvelle cellule : Statut de synchronisation
+                                    DataCell(
+                                      Tooltip(
+                                        message: tooltipMessage,
+                                        child: Text(
+                                          syncStatus.icon,
+                                          style: const TextStyle(fontSize: 18),
+                                        ),
+                                      ),
+                                    ),
                                     DataCell(
                                       Column(
                                         crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                            CrossAxisAlignment.start,
                                         mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(asset.name,
                                               style: theme.textTheme.bodyMedium
@@ -205,7 +227,8 @@ class _SyntheseViewState extends State<SyntheseView> {
                                               CurrencyFormatter.format(
                                                   asset.currentPrice),
                                               style: TextStyle(
-                                                color: theme.colorScheme.primary,
+                                                color:
+                                                    theme.colorScheme.primary,
                                               ),
                                             ),
                                             const SizedBox(width: 4),
@@ -248,7 +271,7 @@ class _SyntheseViewState extends State<SyntheseView> {
                                             Icon(Icons.edit,
                                                 size: 16,
                                                 color:
-                                                theme.colorScheme.primary),
+                                                    theme.colorScheme.primary),
                                           ],
                                         ),
                                       ),
@@ -313,7 +336,7 @@ class _SyntheseViewState extends State<SyntheseView> {
   void _showEditPriceDialog(
       BuildContext context, AggregatedAsset asset, PortfolioProvider provider) {
     final controller =
-    TextEditingController(text: asset.currentPrice.toStringAsFixed(2));
+        TextEditingController(text: asset.currentPrice.toStringAsFixed(2));
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -346,5 +369,39 @@ class _SyntheseViewState extends State<SyntheseView> {
         ],
       ),
     );
+  }
+
+  /// Construit un message de tooltip détaillé selon le statut
+  String _buildTooltipMessage(SyncStatus status, metadata) {
+    switch (status) {
+      case SyncStatus.synced:
+        final lastUpdate = metadata?.lastUpdated;
+        final source = metadata?.lastSyncSource ?? 'API';
+        if (lastUpdate != null) {
+          final date =
+              '${lastUpdate.day}/${lastUpdate.month}/${lastUpdate.year} ${lastUpdate.hour}:${lastUpdate.minute.toString().padLeft(2, '0')}';
+          return '✅ Synchronisé avec succès\nSource: $source\nDernière mise à jour: $date';
+        }
+        return '✅ Synchronisé avec succès\nSource: $source';
+
+      case SyncStatus.error:
+        final errorMsg = metadata?.syncErrorMessage ?? 'Erreur inconnue';
+        return '⚠️ Erreur de synchronisation\n${errorMsg.length > 100 ? '${errorMsg.substring(0, 100)}...' : errorMsg}\n\nConsultez la Vue d\'ensemble pour plus de détails';
+
+      case SyncStatus.manual:
+        final lastUpdate = metadata?.lastUpdated;
+        if (lastUpdate != null) {
+          final date =
+              '${lastUpdate.day}/${lastUpdate.month}/${lastUpdate.year}';
+          return '✏️ Prix saisi manuellement\nDernière modification: $date\n\nLe prix ne sera pas remplacé automatiquement';
+        }
+        return '✏️ Prix saisi manuellement\nLe prix ne sera pas remplacé automatiquement';
+
+      case SyncStatus.never:
+        return '⭕ Jamais synchronisé\nAucune tentative de récupération automatique du prix\n\nLancez une synchronisation depuis la Vue d\'ensemble';
+
+      case SyncStatus.unsyncable:
+        return '🚫 Non synchronisable\nCet actif ne peut pas être synchronisé automatiquement\n(fonds en euros, produit non coté)\n\nSaisissez le prix manuellement en cliquant sur "Prix actuel"';
+    }
   }
 }
