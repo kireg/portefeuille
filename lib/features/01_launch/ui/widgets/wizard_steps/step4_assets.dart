@@ -38,10 +38,25 @@ class _Step4AssetsState extends State<Step4Assets> {
   WizardAccount? _selectedAccount;
   AssetType? _selectedAssetType;
   DateTime _firstPurchaseDate = DateTime.now();
+  String _selectedCurrency = 'EUR'; // Devise par défaut
 
   // Pour la recherche de tickers
   List<TickerSuggestion> _suggestions = [];
   bool _isLoadingSearch = false;
+
+  // Liste des devises courantes
+  static const List<String> _currencies = [
+    'EUR',
+    'USD',
+    'GBP',
+    'CHF',
+    'JPY',
+    'CAD',
+    'AUD',
+    'CNY',
+    'HKD',
+    'SGD',
+  ];
 
   @override
   void initState() {
@@ -104,6 +119,18 @@ class _Step4AssetsState extends State<Step4Assets> {
   void _onSuggestionSelected(TickerSuggestion suggestion) {
     _tickerController.text = suggestion.ticker;
     _nameController.text = suggestion.name;
+
+    // Mettre à jour la devise si disponible
+    if (suggestion.currency.isNotEmpty && suggestion.currency != '???') {
+      setState(() {
+        _selectedCurrency = suggestion.currency.toUpperCase();
+        // Si la devise n'est pas dans la liste, garder EUR par défaut
+        if (!_currencies.contains(_selectedCurrency)) {
+          _selectedCurrency = 'EUR';
+        }
+      });
+    }
+
     setState(() {
       _suggestions = [];
     });
@@ -114,8 +141,18 @@ class _Step4AssetsState extends State<Step4Assets> {
       apiService.getPrice(suggestion.ticker).then((priceResult) {
         if (priceResult.price != null && mounted) {
           _currentPriceController.text = priceResult.price!.toStringAsFixed(2);
+
+          // Mettre à jour la devise avec celle du prix
+          if (priceResult.currency.isNotEmpty &&
+              priceResult.currency != '???' &&
+              _currencies.contains(priceResult.currency)) {
+            setState(() {
+              _selectedCurrency = priceResult.currency;
+            });
+          }
+
           debugPrint(
-              '💰 Prix actuel récupéré pour ${suggestion.ticker}: ${priceResult.price}€');
+              '💰 Prix actuel récupéré pour ${suggestion.ticker}: ${priceResult.price} ${priceResult.currency}');
         } else {
           debugPrint('⚠️ Prix non disponible pour ${suggestion.ticker}');
         }
@@ -293,8 +330,10 @@ class _Step4AssetsState extends State<Step4Assets> {
                       TextField(
                         controller: _tickerController,
                         decoration: InputDecoration(
-                          labelText: 'Ticker / Symbol *',
-                          hintText: 'Ex: AAPL, BTC-USD...',
+                          labelText: 'Ticker ou ISIN *',
+                          hintText: 'Ex: AAPL ou US0378331005',
+                          helperText:
+                              'Saisissez un ticker (AAPL) ou un code ISIN',
                           prefixIcon: const Icon(Icons.label),
                           suffixIcon: _isLoadingSearch
                               ? const SizedBox(
@@ -330,9 +369,10 @@ class _Step4AssetsState extends State<Step4Assets> {
                                 dense: true,
                                 title: Text(suggestion.ticker),
                                 subtitle: Text(
-                                  '${suggestion.name} • ${suggestion.exchange}'
+                                  '${suggestion.name} (${suggestion.exchange})'
+                                  '${suggestion.currency.isNotEmpty && suggestion.currency != '???' ? ' - Devise: ${suggestion.currency}' : ' - Devise: non disponible'}'
                                   '${suggestion.isin != null && suggestion.isin!.isNotEmpty ? ' • ISIN: ${suggestion.isin}' : ''}',
-                                  maxLines: 1,
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 onTap: () => _onSuggestionSelected(suggestion),
@@ -402,9 +442,9 @@ class _Step4AssetsState extends State<Step4Assets> {
                         child: TextField(
                           controller: _pruController,
                           decoration: const InputDecoration(
-                            labelText: 'PRU (€) *',
+                            labelText: 'PRU (prix moyen) *',
                             hintText: '150.00',
-                            prefixIcon: Icon(Icons.euro),
+                            prefixIcon: Icon(Icons.payments_outlined),
                             border: OutlineInputBorder(),
                           ),
                           keyboardType: const TextInputType.numberWithOptions(
@@ -419,22 +459,50 @@ class _Step4AssetsState extends State<Step4Assets> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Prix actuel
-                  TextField(
-                    controller: _currentPriceController,
-                    decoration: const InputDecoration(
-                      labelText: 'Prix actuel (€) *',
-                      hintText: '165.50',
-                      helperText:
-                          'Prix actuel de l\'actif (pour calcul de la valeur)',
-                      prefixIcon: Icon(Icons.attach_money),
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d+\.?\d{0,2}')),
+                  // Prix actuel et devise
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: TextField(
+                          controller: _currentPriceController,
+                          decoration: const InputDecoration(
+                            labelText: 'Prix actuel *',
+                            hintText: '165.50',
+                            prefixIcon: Icon(Icons.payments_outlined),
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'^\d+\.?\d{0,2}')),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedCurrency,
+                          decoration: const InputDecoration(
+                            labelText: 'Devise *',
+                            prefixIcon: Icon(Icons.currency_exchange),
+                            border: OutlineInputBorder(),
+                          ),
+                          items: _currencies.map((currency) {
+                            return DropdownMenuItem(
+                              value: currency,
+                              child: Text(currency),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _selectedCurrency = value);
+                            }
+                          },
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),

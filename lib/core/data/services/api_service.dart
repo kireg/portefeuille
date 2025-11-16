@@ -271,17 +271,11 @@ class ApiService {
 
       debugPrint("📊 ${quotes.length} résultats trouvés");
 
+      // OPTION C : Récupérer la devise réelle pour chaque résultat via getPrice()
       for (final quote in quotes) {
         final String? ticker = quote['symbol'];
         final String? name = quote['longname'] ?? quote['shortname'];
         final String? exchange = quote['exchDisp'];
-        // NOUVEAU : Récupérer la devise de l'actif
-        // Note : L'API 'search' ne fournit pas la devise. Nous devons la déduire
-        // ou la laisser vide. Pour ce projet, nous allons la laisser vide
-        // et le formulaire de transaction la demandera si besoin.
-        // ---
-        // MISE A JOUR : Tentons de la récupérer depuis 'currency' si elle existe
-        final String currency = quote['currency'] ?? '???';
 
         // NOUVEAU : Récupérer l'ISIN si disponible dans la réponse API
         // NOTE IMPORTANTE : L'API Yahoo Finance Search ne fournit PAS l'ISIN dans sa réponse.
@@ -293,6 +287,19 @@ class ApiService {
           if (quote['quoteType'] == 'EQUITY' ||
               quote['quoteType'] == 'ETF' ||
               quote['quoteType'] == 'CRYPTOCURRENCY') {
+            // OPTION C : Appel getPrice() pour obtenir la vraie devise
+            String currency = '???';
+            try {
+              final priceResult = await getPrice(ticker);
+              if (priceResult.price != null) {
+                currency = priceResult.currency;
+                debugPrint("💱 Devise récupérée pour $ticker: $currency");
+              }
+            } catch (e) {
+              debugPrint(
+                  "⚠️ Impossible de récupérer la devise pour $ticker: $e");
+            }
+
             suggestions.add(TickerSuggestion(
               ticker: ticker,
               name: name,
@@ -304,7 +311,7 @@ class ApiService {
         }
       }
 
-      debugPrint("✅ ${suggestions.length} suggestions valides");
+      debugPrint("✅ ${suggestions.length} suggestions valides avec devises");
       _searchCache[query] = suggestions;
       _searchCacheTimestamps[query] = DateTime.now();
 
