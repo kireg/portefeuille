@@ -28,37 +28,17 @@ class AssetListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // ▼▼▼ MODIFIÉ : Lecture depuis le Provider ▼▼▼
-    // Nous n'avons pas l'ID de l'asset, mais nous avons l'ID du compte
-    // et le provider a les taux.
-    // Nous devons recalculer la conversion ici.
+    // ▼▼▼ MODIFIÉ : Lecture simple depuis le Provider (plus de calcul ici) ▼▼▼
     final provider = context.watch<PortfolioProvider>();
 
-    // Les valeurs du modèle 'asset' sont en devise de COMPTE (accountCurrency)
-    final totalValueInAccountCurrency = asset.totalValue;
-    final pnlInAccountCurrency = asset.profitAndLoss;
+    // Récupère les valeurs CONVERTIES pour cet asset spécifique
+    final totalValueConverted = provider.getConvertedAssetTotalValue(asset.id);
+    final pnlConverted = provider.getConvertedAssetPL(asset.id);
+    // ▲▲▲ FIN MODIFICATION ▲▲▲
 
-    // Récupère la valeur totale CONVERTIE de ce compte
-    final accountValueConverted = provider.getConvertedAccountValue(asset.transactions.first.accountId);
-    // Récupère la valeur native de ce compte
-    final accountValueNative = provider.activePortfolio?.institutions
-        .expand((i) => i.accounts)
-        .firstWhere((acc) => acc.id == asset.transactions.first.accountId)
-        .totalValue ?? 0.0;
-
-    // Calcule le taux de conversion global pour ce compte
-    final double conversionRate = (accountValueNative == 0)
-        ? 1.0
-        : accountValueConverted / accountValueNative;
-
-    // Applique le taux aux valeurs de l'asset
-    final totalValueConverted = totalValueInAccountCurrency * conversionRate;
-    final pnlConverted = pnlInAccountCurrency * conversionRate;
     // Le % de P/L est indépendant de la devise
     final pnlPercentage = asset.profitAndLossPercentage;
-
     final pnlColor = pnlConverted >= 0 ? Colors.green.shade400 : Colors.red.shade400;
-    // ▲▲▲ FIN MODIFICATION ▲▲▲
 
     return ListTile(
       dense: true,
@@ -70,10 +50,10 @@ class AssetListItem extends StatelessWidget {
         text: TextSpan(
           style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
           children: <TextSpan>[
-            // Le PRU est affiché dans la devise du COMPTE (plus simple)
+            // Le PRU est affiché dans la devise de l'ACTIF (ex: 150.00 USD)
             TextSpan(
                 text:
-                '${asset.quantity} x ${CurrencyFormatter.format(asset.averagePrice, accountCurrency)}'),
+                '${asset.quantity} x ${CurrencyFormatter.format(asset.averagePrice, asset.priceCurrency)}'),
             if (asset.estimatedAnnualYield > 0)
               TextSpan(
                 text:

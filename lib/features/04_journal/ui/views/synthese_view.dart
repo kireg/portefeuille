@@ -2,41 +2,18 @@
 // REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/data/models/asset.dart';
+// NOUVEL IMPORT
+import 'package:portefeuille/core/data/models/aggregated_asset.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
+// FIN NOUVEL IMPORT
 import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
-// NOUVEL IMPORT
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
-// FIN NOUVEL IMPORT
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
 
-class AggregatedAsset {
-  final String ticker;
-  final String name;
-  final double quantity;
-  final double averagePrice; // ATTENTION: Peut être dans différentes devises
-  final double currentPrice; // ATTENTION: Peut être dans différentes devises
-  final double estimatedAnnualYield;
-  // NOUVEAU : Devise de l'actif (pour le formatage)
-  final String currency;
-
-  AggregatedAsset({
-    required this.ticker,
-    required this.name,
-    required this.quantity,
-    required this.averagePrice,
-    required this.currentPrice,
-    required this.estimatedAnnualYield,
-    required this.currency, // NOUVEAU
-  });
-
-  // ATTENTION: Ces getters peuvent mélanger des devises
-  double get totalValue => quantity * currentPrice;
-  double get profitAndLoss => (currentPrice - averagePrice) * quantity;
-}
+// --- (Le modèle AggregatedAsset a été déplacé dans core/data/models) ---
 
 class SyntheseView extends StatefulWidget {
   const SyntheseView({super.key});
@@ -46,71 +23,7 @@ class SyntheseView extends StatefulWidget {
 }
 
 class _SyntheseViewState extends State<SyntheseView> {
-  // TODO: Logique d'agrégation à revoir pour le multi-devises
-  // Cette fonction additionne des valeurs de devises différentes si
-  // les comptes ont des devises différentes.
-  // Pour l'instant, nous corrigeons l'affichage.
-  List<AggregatedAsset> _aggregateAssets(PortfolioProvider provider) {
-    final allAssets = provider.activePortfolio?.institutions
-        .expand((inst) => inst.accounts)
-        .expand((acc) => acc.assets)
-        .toList() ??
-        [];
-
-    if (allAssets.isEmpty) return [];
-
-    final Map<String, List<Asset>> groupedByTicker = {};
-    for (final asset in allAssets) {
-      (groupedByTicker[asset.ticker] ??= []).add(asset);
-    }
-
-    final List<AggregatedAsset> aggregatedList = [];
-
-    groupedByTicker.forEach((ticker, assets) {
-      if (assets.isEmpty) return;
-
-      final firstAsset = assets.first;
-      double totalQuantity = 0;
-      double totalCost = 0;
-      // NOUVEAU : Garder la devise (en supposant que tous les actifs agrégés ont la même)
-      // C'est une simplification qui fonctionne SI un ticker n'est que dans
-      // des comptes de même devise (ex: AAPL toujours en USD)
-      final String currency = firstAsset.priceCurrency;
-
-      for (final asset in assets) {
-        totalQuantity += asset.quantity;
-        // ATTENTION: Problème multi-devises ici si les actifs sont
-        // dans des comptes de devises différentes
-        totalCost += (asset.quantity * asset.averagePrice);
-      }
-
-      final double aggregatedAveragePrice =
-      (totalQuantity > 0) ? totalCost / totalQuantity : 0.0;
-
-      if (totalQuantity > 0) {
-        aggregatedList.add(
-          AggregatedAsset(
-            ticker: ticker,
-            name: firstAsset.name,
-            quantity: totalQuantity,
-            averagePrice: aggregatedAveragePrice,
-            currentPrice: firstAsset.currentPrice,
-            estimatedAnnualYield: firstAsset.estimatedAnnualYield,
-            currency: currency, // NOUVEAU
-          ),
-        );
-      }
-    });
-
-    aggregatedList.sort((a, b) {
-      // ATTENTION: Problème multi-devises ici
-      final bValue = b.quantity * b.currentPrice;
-      final aValue = a.quantity * a.currentPrice;
-      return bValue.compareTo(aValue);
-    });
-
-    return aggregatedList;
-  }
+  // --- (La logique _aggregateAssets est maintenant dans le PortfolioProvider) ---
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +33,9 @@ class _SyntheseViewState extends State<SyntheseView> {
 
     return Consumer<PortfolioProvider>(
       builder: (context, provider, child) {
-        final aggregatedAssets = _aggregateAssets(provider);
+        // ▼▼▼ MODIFIÉ : Lit l'agrégat pré-calculé et converti ▼▼▼
+        final aggregatedAssets = provider.aggregatedAssets;
+        // ▲▲▲ FIN MODIFICATION ▲▲▲
 
         if (provider.activePortfolio == null) {
           return const Center(child: CircularProgressIndicator());
@@ -189,23 +104,18 @@ class _SyntheseViewState extends State<SyntheseView> {
                                     label: Text('Rendement %'), numeric: true),
                               ],
                               rows: aggregatedAssets.map((asset) {
+                                // ▼▼▼ MODIFIÉ : Toutes les valeurs sont déjà en devise de base ▼▼▼
                                 final pnl = asset.profitAndLoss;
                                 final pnlColor = pnl >= 0
                                     ? Colors.green.shade400
                                     : Colors.red.shade400;
-
-                                // NOTE : La devise affichée ici est la devise de l'ACTIF
-                                // et non la devise de base, car l'agrégation
-                                // n'est pas encore multi-devises.
-                                // C'est une solution temporaire pour afficher la bonne devise.
+                                // La devise d'affichage principale est la devise de BASE
                                 final String displayCurrency = baseCurrency;
 
-                                final metadata =
-                                provider.allMetadata[asset.ticker];
-                                final syncStatus =
-                                    metadata?.syncStatus ?? SyncStatus.never;
+                                final syncStatus = asset.syncStatus;
                                 final tooltipMessage = _buildTooltipMessage(
-                                    syncStatus, metadata, displayCurrency);
+                                    syncStatus, asset.metadata, asset.assetCurrency);
+                                // ▲▲▲ FIN MODIFICATION ▲▲▲
 
                                 return DataRow(
                                   cells: [
@@ -242,7 +152,7 @@ class _SyntheseViewState extends State<SyntheseView> {
                                       // TODO: Formatter avec 'formatWithoutSymbol'
                                         asset.quantity.toStringAsFixed(2))),
                                     DataCell(Text(
-                                      // MODIFIÉ : Devise de base
+                                      // Affiche le PRU en devise de BASE
                                         CurrencyFormatter.format(
                                             asset.averagePrice,
                                             displayCurrency))),
@@ -252,12 +162,13 @@ class _SyntheseViewState extends State<SyntheseView> {
                                             context,
                                             asset,
                                             provider,
-                                            displayCurrency),
+                                            // Le prix est édité dans sa devise NATIVE
+                                            asset.assetCurrency),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
-                                              // MODIFIÉ : Devise de base
+                                              // Affiche le prix en devise de BASE
                                               CurrencyFormatter.format(
                                                   asset.currentPrice,
                                                   displayCurrency),
@@ -277,7 +188,7 @@ class _SyntheseViewState extends State<SyntheseView> {
                                       ),
                                     ),
                                     DataCell(Text(
-                                      // MODIFIÉ : Devise de base
+                                      // Affiche la valeur en devise de BASE
                                         CurrencyFormatter.format(
                                             asset.totalValue, displayCurrency),
                                         style: theme.textTheme.bodyMedium
@@ -286,7 +197,7 @@ class _SyntheseViewState extends State<SyntheseView> {
                                         ))),
                                     DataCell(
                                       Text(
-                                        // MODIFIÉ : Devise de base
+                                        // Affiche la P/L en devise de BASE
                                         CurrencyFormatter.format(
                                             pnl, displayCurrency),
                                         style: TextStyle(color: pnlColor),
@@ -371,11 +282,15 @@ class _SyntheseViewState extends State<SyntheseView> {
     );
   }
 
-  // MODIFIÉ : Accepte la devise
+  // MODIFIÉ : Accepte la devise NATIVE de l'actif pour l'édition
   void _showEditPriceDialog(BuildContext context, AggregatedAsset asset,
-      PortfolioProvider provider, String currency) {
+      PortfolioProvider provider, String nativeCurrency) {
+
+    // Doit trouver le prix natif actuel dans les métadonnées
+    final nativePrice = asset.metadata?.currentPrice ?? asset.currentPrice;
+
     final controller =
-    TextEditingController(text: asset.currentPrice.toStringAsFixed(2));
+    TextEditingController(text: nativePrice.toStringAsFixed(2));
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -384,10 +299,9 @@ class _SyntheseViewState extends State<SyntheseView> {
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            // MODIFIÉ : Devise dynamique
-            labelText: 'Prix actuel ($currency)',
+            labelText: 'Prix actuel ($nativeCurrency)',
             hintText: 'Ex: 451.98',
-            suffixText: currency,
+            suffixText: nativeCurrency,
           ),
           autofocus: true,
         ),
@@ -400,10 +314,10 @@ class _SyntheseViewState extends State<SyntheseView> {
             onPressed: () {
               final newPrice =
                   double.tryParse(controller.text.replaceAll(',', '.')) ??
-                      asset.currentPrice;
-              // MODIFIÉ : Passe la devise à la méthode de mise à jour
+                      nativePrice;
+              // MODIFIÉ : Passe la devise NATIVE à la méthode de mise à jour
               provider.updateAssetPrice(asset.ticker, newPrice,
-                  currency: currency);
+                  currency: nativeCurrency);
               Navigator.of(ctx).pop();
             },
             child: const Text('Sauvegarder'),
@@ -413,9 +327,9 @@ class _SyntheseViewState extends State<SyntheseView> {
     );
   }
 
-  // MODIFIÉ : Accepte la devise
+  // MODIFIÉ : Accepte la devise native
   String _buildTooltipMessage(
-      SyncStatus status, AssetMetadata? metadata, String currency) {
+      SyncStatus status, AssetMetadata? metadata, String nativeCurrency) {
     switch (status) {
       case SyncStatus.synced:
         final lastUpdate = metadata?.lastUpdated;
@@ -423,28 +337,24 @@ class _SyntheseViewState extends State<SyntheseView> {
         if (lastUpdate != null) {
           final date =
               '${lastUpdate.day}/${lastUpdate.month}/${lastUpdate.year} ${lastUpdate.hour}:${lastUpdate.minute.toString().padLeft(2, '0')}';
-          return '✅ Synchronisé avec succès\nSource: $source\nDernière mise à jour: $date';
+          return '✅ Synchronisé avec succès ($nativeCurrency)\nSource: $source\nDernière mise à jour: $date';
         }
-        return '✅ Synchronisé avec succès\nSource: $source';
-
+        return '✅ Synchronisé avec succès ($nativeCurrency)\nSource: $source';
       case SyncStatus.error:
         final errorMsg = metadata?.syncErrorMessage ?? 'Erreur inconnue';
         return '⚠️ Erreur de synchronisation\n${errorMsg.length > 100 ? '${errorMsg.substring(0, 100)}...' : errorMsg}\n\nConsultez la Vue d\'ensemble pour plus de détails';
-
       case SyncStatus.manual:
         final lastUpdate = metadata?.lastUpdated;
         if (lastUpdate != null) {
           final date =
               '${lastUpdate.day}/${lastUpdate.month}/${lastUpdate.year}';
-          return '✏️ Prix saisi manuellement\nDernière modification: $date\n\nLe prix ne sera pas remplacé automatiquement';
+          return '✏️ Prix manuel ($nativeCurrency)\nDernière modification: $date\n\nLe prix ne sera pas remplacé automatiquement';
         }
-        return '✏️ Prix saisi manuellement\nLe prix ne sera pas remplacé automatiquement';
-
+        return '✏️ Prix manuel ($nativeCurrency)\nLe prix ne sera pas remplacé automatiquement';
       case SyncStatus.never:
         return '⭕ Jamais synchronisé\nAucune tentative de récupération automatique du prix\n\nLancez une synchronisation depuis la Vue d\'ensemble';
-
       case SyncStatus.unsyncable:
-        return '🚫 Non synchronisable\nCet actif ne peut pas être synchronisé automatiquement\n(fonds en euros, produit non coté)\n\nSaisissez le prix manuellement en cliquant sur "Prix actuel"';
+        return '🚫 Non synchronisable ($nativeCurrency)\nCet actif ne peut pas être synchronisé automatiquement\n(fonds en euros, produit non coté)\n\nSaisissez le prix manuellement en cliquant sur "Prix actuel"';
     }
   }
 }

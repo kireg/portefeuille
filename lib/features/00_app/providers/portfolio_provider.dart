@@ -1,15 +1,18 @@
 // lib/features/00_app/providers/portfolio_provider.dart
-// REMPLACEZ L'INTÉGRALITÉ DU FICHIER (version finale)
+// REMPLACEZ L'INTÉGRALITÉ DU FICHIER (version corrigée multi-devises)
 
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
+// NOUVEL IMPORT
+import 'package:portefeuille/core/data/models/aggregated_asset.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
+// FIN NOUVEL IMPORT
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/models/projection_data.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/core/data/models/sync_log.dart';
-// ... (autres imports)
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
@@ -44,7 +47,7 @@ class PortfolioProvider extends ChangeNotifier {
   String? _syncMessage;
 
   // -----------------------------------------------------------------
-  // ▼▼▼ NOUVEL ÉTAT POUR LES VALEURS CONVERTIES ▼▼▼
+  // ▼▼▼ ÉTAT DES VALEURS CONVERTIES (MODIFIÉ) ▼▼▼
   // -----------------------------------------------------------------
 
   /// La devise de base actuellement utilisée pour les calculs ci-dessous.
@@ -52,26 +55,34 @@ class PortfolioProvider extends ChangeNotifier {
 
   /// La valeur totale du portefeuille, convertie dans la _currentBaseCurrency.
   double _convertedTotalValue = 0.0;
-
   /// La P/L totale du portefeuille, convertie dans la _currentBaseCurrency.
   double _convertedTotalPL = 0.0;
-
   /// Le capital investi total, converti dans la _currentBaseCurrency.
   double _convertedTotalInvested = 0.0;
 
-  /// Map [accountId] -> Valeur totale convertie (pour les widgets enfants)
+  /// Map [accountId] -> Valeur totale convertie
   Map<String, double> _convertedAccountValues = {};
-
-  /// Map [accountId] -> P/L convertie (pour les widgets enfants)
+  /// Map [accountId] -> P/L convertie
   Map<String, double> _convertedAccountPLs = {};
-
   /// Map [accountId] -> Capital investi converti
   Map<String, double> _convertedAccountInvested = {};
 
-  // -----------------------------------------------------------------
-  // ▲▲▲ FIN NOUVEL ÉTAT ▲▲▲
-  // -----------------------------------------------------------------
+  // --- NOUVEAUX ÉTATS POUR LES ACTIFS INDIVIDUELS ET AGRÉGATS ---
 
+  /// Map [asset.id] -> Valeur totale convertie (pour AssetListItem)
+  Map<String, double> _convertedAssetTotalValues = {};
+  /// Map [asset.id] -> P/L convertie (pour AssetListItem)
+  Map<String, double> _convertedAssetPLs = {};
+
+  /// Liste des actifs agrégés par ticker (pour SyntheseView)
+  List<AggregatedAsset> _aggregatedAssets = [];
+
+  /// Map des valeurs agrégées par type (pour AllocationChart)
+  Map<AssetType, double> _aggregatedValueByAssetType = {};
+
+  // -----------------------------------------------------------------
+  // ▲▲▲ FIN ÉTAT CONVERTI ▲▲▲
+  // -----------------------------------------------------------------
 
   // Getters
   List<Portfolio> get portfolios => _portfolios;
@@ -83,39 +94,42 @@ class PortfolioProvider extends ChangeNotifier {
       _repository.getAllAssetMetadata();
 
   // -----------------------------------------------------------------
-  // ▼▼▼ NOUVEAUX GETTERS POUR L'INTERFACE ▼▼▼
+  // ▼▼▼ NOUVEAUX GETTERS POUR L'INTERFACE (MODIFIÉ) ▼▼▼
   // -----------------------------------------------------------------
 
   /// La devise de base active (ex: "USD")
   String get currentBaseCurrency => _currentBaseCurrency;
-
   /// La valeur totale convertie (ex: 10800.0)
   double get activePortfolioTotalValue => _convertedTotalValue;
-
   /// La P/L totale convertie
   double get activePortfolioTotalPL => _convertedTotalPL;
-
   /// Le % de P/L (calculé à partir des valeurs converties)
   double get activePortfolioTotalPLPercentage {
     if (_convertedTotalInvested == 0.0) return 0.0;
     return _convertedTotalPL / _convertedTotalInvested;
   }
-
   /// Le rendement annuel (on garde celui du portfolio, c'est un %)
   double get activePortfolioEstimatedAnnualYield =>
       _activePortfolio?.estimatedAnnualYield ?? 0.0;
 
-  /// Récupère la valeur convertie pour un compte spécifique
+  // --- Getters par Compte ---
   double getConvertedAccountValue(String accountId) =>
       _convertedAccountValues[accountId] ?? 0.0;
-
-  /// Récupère la P/L convertie pour un compte spécifique
   double getConvertedAccountPL(String accountId) =>
       _convertedAccountPLs[accountId] ?? 0.0;
-
-  /// Récupère le capital investi converti pour un compte spécifique
   double getConvertedAccountInvested(String accountId) =>
       _convertedAccountInvested[accountId] ?? 0.0;
+
+  // --- NOUVEAU : Getters par Actif (pour AssetListItem) ---
+  double getConvertedAssetTotalValue(String assetId) =>
+      _convertedAssetTotalValues[assetId] ?? 0.0;
+  double getConvertedAssetPL(String assetId) =>
+      _convertedAssetPLs[assetId] ?? 0.0;
+
+  // --- NOUVEAU : Getters pour les Agrégats ---
+  List<AggregatedAsset> get aggregatedAssets => _aggregatedAssets;
+  Map<AssetType, double> get aggregatedValueByAssetType =>
+      _aggregatedValueByAssetType;
 
   // -----------------------------------------------------------------
   // ▲▲▲ FIN NOUVEAUX GETTERS ▲▲▲
@@ -126,7 +140,6 @@ class PortfolioProvider extends ChangeNotifier {
     required ApiService apiService,
   })  : _repository = repository,
         _apiService = apiService {
-    // Initialiser les classes de logique
     _migrationLogic = PortfolioMigrationLogic(
       repository: _repository,
       settingsProvider: _settingsProvider ?? SettingsProvider(),
@@ -140,41 +153,41 @@ class PortfolioProvider extends ChangeNotifier {
     _transactionLogic = PortfolioTransactionLogic(
       repository: _repository,
     );
-    // ▼▼▼ CORRECTION CI-DESSOUS ▼▼▼
     _hydrationService = PortfolioHydrationService(
       repository: _repository,
       apiService: _apiService,
-      // AJOUTEZ CETTE LIGNE :
       settingsProvider: _settingsProvider ?? SettingsProvider(),
     );
-    // ▲▲▲ FIN CORRECTION ▲▲▲
     _demoDataService = DemoDataService(
       repository: _repository,
     );
-
     loadAllPortfolios();
   }
 
   // -----------------------------------------------------------------
-  // ▼▼▼ NOUVELLE MÉTHODE DE CALCUL ▼▼▼
+  // ▼▼▼ MÉTHODE DE CALCUL PRINCIPALE (MODIFIÉE) ▼▼▼
   // -----------------------------------------------------------------
 
-  /// Recalcule toutes les valeurs totales en les convertissant
-  /// vers la devise de base de l'utilisateur.
+  /// Recalcule TOUTES les valeurs converties (globales, par compte, par actif, et agrégats)
   Future<void> _recalculateConvertedTotals() async {
-    if (_activePortfolio == null || _settingsProvider == null) {
-      _convertedTotalValue = 0.0;
-      _convertedTotalPL = 0.0;
-      _convertedTotalInvested = 0.0;
-      _convertedAccountValues = {};
-      _convertedAccountPLs = {};
-      _convertedAccountInvested = {};
-      _currentBaseCurrency = _settingsProvider?.baseCurrency ?? 'EUR';
-      // Pas de notifyListeners() ici, sera fait par la méthode appelante
-      return;
-    }
+    final targetCurrency = _settingsProvider?.baseCurrency ?? 'EUR';
+    _currentBaseCurrency = targetCurrency;
 
-    final targetCurrency = _settingsProvider!.baseCurrency;
+    // Réinitialisation de tous les états calculés
+    _convertedTotalValue = 0.0;
+    _convertedTotalPL = 0.0;
+    _convertedTotalInvested = 0.0;
+    _convertedAccountValues = {};
+    _convertedAccountPLs = {};
+    _convertedAccountInvested = {};
+    _convertedAssetTotalValues = {};
+    _convertedAssetPLs = {};
+    _aggregatedAssets = [];
+    _aggregatedValueByAssetType = {};
+
+    if (_activePortfolio == null || _settingsProvider == null) {
+      return; // Pas de calcul si aucun portefeuille n'est actif
+    }
 
     // 1. Collecter toutes les devises de compte uniques
     final Set<String> accountCurrencies = _activePortfolio!.institutions
@@ -183,7 +196,7 @@ class PortfolioProvider extends ChangeNotifier {
         .toSet();
 
     // 2. Récupérer tous les taux de change nécessaires en parallèle
-    final Map<String, double> rates = {};
+    final Map<String, double> rates = {}; // Map: "EUR" -> 1.0, "USD" -> 0.92
     final futures = accountCurrencies.map((accountCurrency) async {
       if (accountCurrency == targetCurrency) {
         rates[accountCurrency] = 1.0;
@@ -192,77 +205,169 @@ class PortfolioProvider extends ChangeNotifier {
       rates[accountCurrency] =
       await _apiService.getExchangeRate(accountCurrency, targetCurrency);
     });
-
-    // Attendre que tous les appels API soient terminés
     await Future.wait(futures);
 
-    // 3. Calculer les totaux (rapide, sans await)
+    // 3. (MODIFIÉ) Itérer, calculer et stocker les valeurs converties
+    //    pour les comptes ET pour chaque actif individuel.
     double newTotalValue = 0.0;
     double newTotalPL = 0.0;
     double newTotalInvested = 0.0;
     Map<String, double> newAccountValues = {};
     Map<String, double> newAccountPLs = {};
     Map<String, double> newAccountInvested = {};
+    Map<String, double> newAssetValues = {};
+    Map<String, double> newAssetPLs = {};
+
+    // Map pour l'agrégation par type
+    final Map<AssetType, double> newAggregatedValueByType = {};
+    // Map pour l'agrégation par ticker
+    final Map<String, List<Asset>> assetsByTicker = {};
+    final Map<String, List<double>> ratesByTicker = {};
 
     for (final inst in _activePortfolio!.institutions) {
       for (final acc in inst.accounts) {
-        // Récupérer le taux pour la devise de ce compte
         final rate = rates[acc.activeCurrency] ?? 1.0;
 
-        // Les getters du modèle (acc.totalValue) sont en devise de COMPTE
+        // --- Calculs par Compte ---
         final accValue = acc.totalValue * rate;
         final accPL = acc.profitAndLoss * rate;
         final accInvested = acc.totalInvestedCapital * rate;
+        final accCash = acc.cashBalance * rate;
 
-        // Mettre à jour les totaux globaux
         newTotalValue += accValue;
         newTotalPL += accPL;
         newTotalInvested += accInvested;
 
-        // Stocker les valeurs par compte pour les widgets enfants
         newAccountValues[acc.id] = accValue;
         newAccountPLs[acc.id] = accPL;
         newAccountInvested[acc.id] = accInvested;
+
+        // --- NOUVEAU : Agrégation par Type (Cash) ---
+        if (accCash > 0) {
+          newAggregatedValueByType.update(
+            AssetType.Cash,
+                (value) => value + accCash,
+            ifAbsent: () => accCash,
+          );
+        }
+
+        // --- NOUVEAU : Calculs par Actif Individuel ---
+        for (final asset in acc.assets) {
+          final assetValueConverted = asset.totalValue * rate;
+          final assetPLConverted = asset.profitAndLoss * rate;
+
+          newAssetValues[asset.id] = assetValueConverted;
+          newAssetPLs[asset.id] = assetPLConverted;
+
+          // --- NOUVEAU : Agrégation par Type (Actifs) ---
+          newAggregatedValueByType.update(
+            asset.type,
+                (value) => value + assetValueConverted,
+            ifAbsent: () => assetValueConverted,
+          );
+
+          // --- NOUVEAU : Préparation pour agrégation par Ticker ---
+          (assetsByTicker[asset.ticker] ??= []).add(asset);
+          // Stocke le taux de change du compte de cet actif
+          (ratesByTicker[asset.ticker] ??= []).add(rate);
+        }
       }
     }
 
-    // 4. Mettre à jour l'état du provider
+    // --- NOUVEAU : 4. Construire l'agrégation par Ticker (pour SyntheseView) ---
+    final List<AggregatedAsset> newAggregatedAssets = [];
+    final allMetadata = _repository.getAllAssetMetadata();
+
+    assetsByTicker.forEach((ticker, assets) {
+      if (assets.isEmpty) return;
+      final ratesForTicker = ratesByTicker[ticker]!;
+
+      double aggQuantity = 0;
+      double aggTotalValue = 0;
+      double aggTotalPL = 0;
+      double aggTotalInvested = 0;
+      double aggWeightedPRU = 0;
+      double aggWeightedCurrentPrice = 0;
+
+      for (int i = 0; i < assets.length; i++) {
+        final asset = assets[i];
+        final rate = ratesForTicker[i]; // Taux (AssetCurrency -> BaseCurrency)
+
+        // Convertir toutes les valeurs dans la devise de BASE
+        final convertedValue = asset.totalValue * rate;
+        final convertedPL = asset.profitAndLoss * rate;
+        final convertedInvested = asset.totalInvestedCapital * rate;
+        final convertedCurrentPrice = asset.currentPrice * asset.currentExchangeRate * rate;
+        final convertedAvgPrice = asset.averagePrice * asset.currentExchangeRate * rate; // Approximation
+
+        aggQuantity += asset.quantity;
+        aggTotalValue += convertedValue;
+        aggTotalPL += convertedPL;
+        aggTotalInvested += convertedInvested;
+
+        // Pondération par quantité pour les prix
+        aggWeightedPRU += convertedAvgPrice * asset.quantity;
+        aggWeightedCurrentPrice += convertedCurrentPrice * asset.quantity;
+      }
+
+      final finalPRU = (aggQuantity > 0) ? aggWeightedPRU / aggQuantity : 0.0;
+      final finalCurrentPrice = (aggQuantity > 0) ? aggWeightedCurrentPrice / aggQuantity : 0.0;
+      final finalPLPercentage = (aggTotalInvested > 0) ? aggTotalPL / aggTotalInvested : 0.0;
+
+      if (aggQuantity > 0) {
+        final firstAsset = assets.first;
+        newAggregatedAssets.add(AggregatedAsset(
+          ticker: ticker,
+          name: firstAsset.name,
+          quantity: aggQuantity,
+          averagePrice: finalPRU,
+          currentPrice: finalCurrentPrice,
+          totalValue: aggTotalValue,
+          profitAndLoss: aggTotalPL,
+          profitAndLossPercentage: finalPLPercentage,
+          estimatedAnnualYield: firstAsset.estimatedAnnualYield, // On prend le premier
+          metadata: allMetadata[ticker],
+          assetCurrency: firstAsset.priceCurrency,
+          baseCurrency: targetCurrency,
+        ));
+      }
+    });
+
+    // Trier la liste agrégée
+    newAggregatedAssets.sort((a, b) => b.totalValue.compareTo(a.totalValue));
+
+    // 5. Mettre à jour l'état final du provider
     _convertedTotalValue = newTotalValue;
     _convertedTotalPL = newTotalPL;
     _convertedTotalInvested = newTotalInvested;
     _convertedAccountValues = newAccountValues;
     _convertedAccountPLs = newAccountPLs;
     _convertedAccountInvested = newAccountInvested;
-    _currentBaseCurrency = targetCurrency;
-
-    // notifyListeners() sera appelé par _refreshData ou loadAllPortfolios
+    _convertedAssetTotalValues = newAssetValues;
+    _convertedAssetPLs = newAssetPLs;
+    _aggregatedAssets = newAggregatedAssets;
+    _aggregatedValueByAssetType = newAggregatedValueByType;
   }
   // -----------------------------------------------------------------
-  // ▲▲▲ FIN NOUVELLE MÉTHODE ▲▲▲
+  // ▲▲▲ FIN MÉTHODE DE CALCUL ▲▲▲
   // -----------------------------------------------------------------
 
+  // ... (updateSettings reste inchangé, il appelle _refreshData) ...
   void updateSettings(SettingsProvider settingsProvider) {
     final bool wasOffline = _settingsProvider?.isOnlineMode ?? false;
     final bool wasNull = _settingsProvider == null;
-
-    // ▼▼▼ MODIFIÉ : Détecter le changement de devise ▼▼▼
     final bool currencyChanged = (_settingsProvider != null &&
         _settingsProvider!.baseCurrency != settingsProvider.baseCurrency);
-    // ▲▲▲ FIN MODIFICATION ▲▲▲
 
     _settingsProvider = settingsProvider;
-
     _migrationLogic.settingsProvider = settingsProvider;
     _syncLogic.settingsProvider = settingsProvider;
-    // Passez le provider mis à jour à l'hydration service
     _hydrationService.settingsProvider = settingsProvider;
 
-    // ▼▼▼ MODIFIÉ : Recalculer si la devise change ▼▼▼
     if (currencyChanged && !_isLoading) {
       debugPrint("Devise de base modifiée. Recalcul des totaux...");
       _refreshData(); // _refreshData appelle _recalculateConvertedTotals
     }
-    // ▲▲▲ FIN MODIFICATION ▲▲▲
 
     if (_isFirstSettingsUpdate) {
       _isFirstSettingsUpdate = false;
@@ -271,23 +376,19 @@ class PortfolioProvider extends ChangeNotifier {
           while (_isLoading) {
             await Future.delayed(const Duration(milliseconds: 100));
           }
-
           bool needsReload = false;
           if (!settingsProvider.migrationV1Done) {
             await _migrationLogic.runDataMigrationV1(_portfolios);
             needsReload = true;
           }
-
           if (settingsProvider.migrationV1Done &&
               !settingsProvider.migrationV2Done) {
             await _migrationLogic.runDataMigrationV2();
             needsReload = true;
           }
-
           if (needsReload) {
             await _refreshData();
           }
-
           if (_settingsProvider!.isOnlineMode && _activePortfolio != null) {
             await synchroniserLesPrix();
           }
@@ -308,13 +409,12 @@ class PortfolioProvider extends ChangeNotifier {
     }
   }
 
-  // ▼▼▼ MODIFIÉ : _refreshData appelle maintenant _recalculateConvertedTotals ▼▼▼
+  // ▼▼▼ MODIFIÉ : _refreshData et loadAllPortfolios appellent _recalculateConvertedTotals ▼▼▼
   Future<void> _refreshData() async {
-    // 1. Recharge les données (Transactions -> Assets "stupides")
-    // 2. Hydrate les assets (Assets "stupides" -> Assets hydratés en devise de COMPTE)
+    // 1. Recharge et hydrate les assets (en devise de COMPTE)
     _portfolios = await _hydrationService.getHydratedPortfolios();
 
-    // ... (logique de sélection de _activePortfolio inchangée)
+    // 2. Sélectionne le portefeuille actif
     if (_portfolios.isNotEmpty) {
       if (_activePortfolio == null) {
         _activePortfolio = _portfolios.first;
@@ -330,18 +430,18 @@ class PortfolioProvider extends ChangeNotifier {
       _activePortfolio = null;
     }
 
-    // 3. Calcule les totaux convertis en devise de BASE
+    // 3. (MODIFIÉ) Calcule TOUS les totaux convertis en devise de BASE
     await _recalculateConvertedTotals();
 
     // 4. Notifie l'interface
     notifyListeners();
   }
 
-  // ▼▼▼ MODIFIÉ : loadAllPortfolios appelle _recalculateConvertedTotals ▼▼▼
   Future<void> loadAllPortfolios() async {
     _isLoading = true;
     notifyListeners();
 
+    // Gère les migrations si nécessaire
     if (_settingsProvider != null) {
       if (!_settingsProvider!.migrationV1Done) {
         await _migrationLogic.runDataMigrationV1(_portfolios);
@@ -352,10 +452,10 @@ class PortfolioProvider extends ChangeNotifier {
       }
     }
 
-    // 1. Charge et hydrate les données en devise de COMPTE
+    // 1. Charge et hydrate les données (en devise de COMPTE)
     _portfolios = await _hydrationService.getHydratedPortfolios();
 
-    // ... (logique de sélection de _activePortfolio inchangée)
+    // 2. Sélectionne le portefeuille actif
     if (_portfolios.isNotEmpty) {
       if (_activePortfolio == null) {
         _activePortfolio = _portfolios.first;
@@ -371,14 +471,17 @@ class PortfolioProvider extends ChangeNotifier {
       _activePortfolio = null;
     }
 
-    // 2. Calcule les totaux convertis en devise de BASE
+    // 3. (MODIFIÉ) Calcule TOUS les totaux convertis en devise de BASE
     await _recalculateConvertedTotals();
 
     _isLoading = false;
-    notifyListeners(); // Notifie l'UI que le chargement est terminé
+    notifyListeners();
   }
 
-  // ... (forceSynchroniserLesPrix et synchroniserLesPrix appellent déjà _refreshData) ...
+  // ... (Le reste du fichier : synchroniser, logs, CRUD, etc. est inchangé) ...
+  // Ils appellent tous _refreshData(), qui appelle maintenant _recalculateConvertedTotals(),
+  // donc ils sont automatiquement à jour.
+
   Future<void> forceSynchroniserLesPrix() async {
     if (_activePortfolio == null || _isSyncing) return;
     _isSyncing = true;
@@ -387,7 +490,7 @@ class PortfolioProvider extends ChangeNotifier {
 
     final result = await _syncLogic.forceSynchroniserLesPrix(_activePortfolio!);
     if (result.updatedCount > 0) {
-      await _refreshData(); // _refreshData va recalculer les totaux
+      await _refreshData();
     }
 
     _isSyncing = false;
@@ -405,7 +508,7 @@ class PortfolioProvider extends ChangeNotifier {
 
     final result = await _syncLogic.synchroniserLesPrix(_activePortfolio!);
     if (result.updatedCount > 0) {
-      await _refreshData(); // _refreshData va recalculer les totaux
+      await _refreshData();
     }
 
     _isSyncing = false;
@@ -417,7 +520,6 @@ class PortfolioProvider extends ChangeNotifier {
     _syncMessage = null;
   }
 
-  // ... (Logs et méthodes CRUD inchangés, ils appellent _refreshData) ...
   List<SyncLog> getAllSyncLogs() {
     return _repository.getAllSyncLogs();
   }
@@ -468,7 +570,7 @@ class PortfolioProvider extends ChangeNotifier {
     final newPortfolio = _repository.createEmptyPortfolio(name);
     _portfolios.add(newPortfolio);
     _activePortfolio = newPortfolio;
-    _refreshData(); // Recalcule (totaux seront à 0)
+    _refreshData();
   }
 
   void savePortfolio(Portfolio portfolio) {
@@ -482,13 +584,13 @@ class PortfolioProvider extends ChangeNotifier {
       _activePortfolio = portfolio;
     }
     _repository.savePortfolio(portfolio);
-    _refreshData(); // Recalcule
+    _refreshData();
   }
 
   void updateActivePortfolio() {
     if (_activePortfolio == null) return;
     _repository.savePortfolio(_activePortfolio!);
-    _refreshData(); // Recalcule
+    _refreshData();
   }
 
   void renameActivePortfolio(String newName) {
@@ -524,7 +626,7 @@ class PortfolioProvider extends ChangeNotifier {
     if (_activePortfolio?.id == portfolioId) {
       _activePortfolio = _portfolios.isNotEmpty ? _portfolios.first : null;
     }
-    _refreshData(); // Recalcule
+    _refreshData();
   }
 
   Future<void> resetAllData() async {
@@ -533,7 +635,7 @@ class PortfolioProvider extends ChangeNotifier {
     _activePortfolio = null;
     await _settingsProvider?.setMigrationV1Done();
     await _settingsProvider?.setMigrationV2Done();
-    _refreshData(); // Recalcule (totaux à 0)
+    _refreshData();
   }
 
   void addInstitution(Institution newInstitution) {
@@ -598,7 +700,6 @@ class PortfolioProvider extends ChangeNotifier {
 
   List<ProjectionData> getProjectionData(int duration) {
     if (_activePortfolio == null) return [];
-
     // NOTE : Cette projection utilise les valeurs converties
     final totalValue = _convertedTotalValue;
     final totalInvested = _convertedTotalInvested;
@@ -616,7 +717,6 @@ class PortfolioProvider extends ChangeNotifier {
     final double averagePlansYield = (totalMonthlyInvestment > 0)
         ? weightedPlansYield / totalMonthlyInvestment
         : 0.0;
-
     // TODO: Convertir totalMonthlyInvestment dans la devise de base
     // Pour l'instant, on suppose que les plans sont en devise de base
 

@@ -12,10 +12,12 @@ import 'widgets/asset_type_allocation_chart.dart';
 import 'widgets/sync_alerts_card.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_institution_screen.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
-import 'package:portefeuille/features/03_overview/ui/widgets/institution_tile.dart'; // <-- NOUVEL IMPORT
+import 'package:portefeuille/features/03_overview/ui/widgets/institution_tile.dart';
+// <-- NOUVEL IMPORT
 
 class OverviewTab extends StatelessWidget {
   const OverviewTab({super.key});
+
   @override
   Widget build(BuildContext context) {
     // Note : On n'utilise plus baseCurrency d'ici, on le lit du provider
@@ -75,9 +77,13 @@ class OverviewTab extends StatelessWidget {
                               child: AppTheme.buildStyledCard(
                                 context: context,
                                 child: AssetTypeAllocationChart(
-                                  // TODO: valueByAssetType doit être converti
-                                  allocationData: portfolio.valueByAssetType,
-                                  totalValue: portfolioProvider.activePortfolioTotalValue,
+                                  // ▼▼▼ MODIFIÉ ▼▼▼
+                                  // Utilise le getter du provider (données converties)
+                                  allocationData: portfolioProvider
+                                      .aggregatedValueByAssetType,
+                                  totalValue: portfolioProvider
+                                      .activePortfolioTotalValue,
+                                  // ▲▲▲ FIN MODIFICATION ▲▲▲
                                 ),
                               ),
                             ),
@@ -94,8 +100,12 @@ class OverviewTab extends StatelessWidget {
                           AppTheme.buildStyledCard(
                             context: context,
                             child: AssetTypeAllocationChart(
-                              allocationData: portfolio.valueByAssetType,
-                              totalValue: portfolioProvider.activePortfolioTotalValue,
+                              // ▼▼▼ MODIFIÉ ▼▼▼
+                              allocationData: portfolioProvider
+                                  .aggregatedValueByAssetType,
+                              totalValue: portfolioProvider
+                                  .activePortfolioTotalValue,
+                              // ▲▲▲ FIN MODIFICATION ▲▲▲
                             ),
                           ),
                         ],
