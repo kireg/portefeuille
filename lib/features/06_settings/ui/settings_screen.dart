@@ -3,6 +3,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:io'; // Pour File
+import 'dart:convert'; // Pour jsonDecode (utilisé dans la logique d'import)
+import 'package:file_picker/file_picker.dart'; // Pour l'import
+import 'package:share_plus/share_plus.dart'; // Pour l'export
+import 'package:path_provider/path_provider.dart'; // Pour l'export
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
@@ -43,7 +48,8 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _SyncLogsCard(),
                   const SizedBox(height: 12),
-                  // SUPPRIMÉ : _UserLevelCard (fusionné dans _GeneralSettingsCard)
+                  const _BackupCard(),
+                  const SizedBox(height: 12),
                   _DangerZoneCard(),
                   const SizedBox(height: 32),
                 ]),
@@ -825,6 +831,206 @@ class _DangerZoneCard extends StatelessWidget {
                     (_) => false,
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// NOUVELLE CARTE: SAUVEGARDE & RESTAURATION
+// ============================================================================
+class _BackupCard extends StatefulWidget {
+  const _BackupCard();
+
+  @override
+  State<_BackupCard> createState() => _BackupCardState();
+}
+
+class _BackupCardState extends State<_BackupCard> {
+  bool _isExporting = false;
+  bool _isImporting = false;
+
+  // --- Logique d'Export ---
+  Future<void> _handleExport(BuildContext context) async {
+    if (!context.mounted) return;
+    setState(() => _isExporting = true);
+    final provider = context.read<PortfolioProvider>();
+
+    try {
+      final jsonString = await provider.getExportJson();
+
+      // Créer un nom de fichier unique
+      final timestamp = DateTime.now().toIso8601String().substring(0, 19).replaceAll(':', '-');
+      final fileName = 'portefeuille_backup_$timestamp.json';
+
+      // Sauvegarder le fichier temporairement
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/$fileName');
+      await file.writeAsString(jsonString);
+
+      // Partager le fichier
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'application/json')],
+        subject: 'Sauvegarde Portefeuille ($timestamp)',
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Exportation prête pour le partage.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur d\'exportation: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (context.mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
+  }
+
+  // --- Logique d'Import ---
+  Future<void> _handleImport(BuildContext context) async {
+    // 1. Avertir l'utilisateur
+    final bool? confirmed = await _showImportWarning(context);
+    if (confirmed != true) return;
+
+    // 2. Choisir le fichier
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
+
+    if (result == null || result.files.single.path == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Importation annulée.')),
+        );
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+    setState(() => _isImporting = true);
+    final provider = context.read<PortfolioProvider>();
+
+    try {
+      final file = File(result.files.single.path!);
+      final jsonString = await file.readAsString();
+
+      // 3. Lancer l'import
+      await provider.importDataFromJson(jsonString);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Importation réussie ! Les données sont rechargées.'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur d\'importation: Fichier invalide ou corrompu.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (context.mounted) {
+        setState(() => _isImporting = false);
+      }
+    }
+  }
+
+  // --- Dialogue d'avertissement ---
+  Future<bool?> _showImportWarning(BuildContext context) {
+    final theme = Theme.of(context);
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error, size: 48),
+        title: const Text('Importer une sauvegarde ?'),
+        content: const Text(
+            'ATTENTION : L\'importation d\'une sauvegarde écrasera et remplacera TOUTES les données actuelles (portefeuilles, transactions, paramètres, etc.).\n\nCette action est irréversible.'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Écraser et Importer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AppTheme.buildStyledCard(
+      context: context,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppTheme.buildSectionHeader(
+            context: context,
+            icon: Icons.save_alt_outlined,
+            title: 'Sauvegarde & Restauration',
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Exportez vos données (portefeuilles, transactions, paramètres) dans un fichier JSON. Conservez-le précieusement.',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              // Bouton Exporter
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: _isExporting
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.upload_file_outlined, size: 18),
+                  label: const Text('Exporter'),
+                  onPressed: _isExporting || _isImporting ? null : () => _handleExport(context),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Bouton Importer
+              Expanded(
+                child: FilledButton.icon(
+                  icon: _isImporting
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.download_for_offline_outlined, size: 18),
+                  label: const Text('Importer'),
+                  onPressed: _isExporting || _isImporting ? null : () => _handleImport(context),
+                ),
+              ),
+            ],
           ),
         ],
       ),
