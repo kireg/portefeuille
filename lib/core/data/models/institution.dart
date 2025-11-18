@@ -1,3 +1,5 @@
+// lib/core/data/models/institution.dart
+
 import 'package:hive/hive.dart';
 import 'account.dart';
 
@@ -12,13 +14,15 @@ class Institution {
   List<Account> accounts;
 
   @HiveField(2)
-  final String id; // NOUVEAU
+  final String id;
 
   Institution({
-    required this.id, // MIS À JOUR
+    required this.id,
     required this.name,
     List<Account>? accounts,
   }) : accounts = accounts ?? [];
+
+  // ... (tous vos getters existants : totalValue, profitAndLoss, etc. restent inchangés) ...
 
   double get totalValue {
     return accounts.fold(0.0, (sum, account) => sum + account.totalValue);
@@ -28,21 +32,16 @@ class Institution {
     return accounts.fold(0.0, (sum, account) => sum + account.profitAndLoss);
   }
 
-  // NOUVEAU : Capital investi total
   double get totalInvestedCapital {
     return accounts.fold(
         0.0, (sum, account) => sum + account.totalInvestedCapital);
   }
 
-  // CORRIGÉ : Formule correcte basée sur le capital investi
   double get profitAndLossPercentage {
     final capitalInvested = totalInvestedCapital;
-
-    // Si aucun capital investi, pas de P/L
     if (capitalInvested == 0) {
       return 0.0;
     }
-
     final totalPnl = profitAndLoss;
     return totalPnl / capitalInvested;
   }
@@ -59,9 +58,29 @@ class Institution {
 
   Institution deepCopy() {
     return Institution(
-      id: id, // MIS À JOUR
+      id: id,
       name: name,
       accounts: accounts.map((account) => account.deepCopy()).toList(),
     );
   }
+
+  // --- NOUVELLES MÉTHODES JSON ---
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'accounts': accounts.map((acc) => acc.toJson()).toList(),
+    };
+  }
+
+  factory Institution.fromJson(Map<String, dynamic> json) {
+    return Institution(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      accounts: (json['accounts'] as List<dynamic>? ?? [])
+          .map((e) => Account.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+// --- FIN NOUVELLES MÉTHODES JSON ---
 }

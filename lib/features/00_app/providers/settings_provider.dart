@@ -119,4 +119,12 @@ class SettingsProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+  /// Recharge tous les paramètres depuis Hive et SecureStorage.
+  /// Utile après un import de données.
+  Future<void> reloadSettings() async {
+    debugPrint("🔄 [SettingsProvider] Rechargement des paramètres...");
+    _loadSyncSettings(); // Recharge les valeurs de la box
+    await _loadAsyncSettings(); // Recharge la clé API
+    notifyListeners(); // Informe l'UI des nouveaux settings (couleur, devise...)
+  }
 }

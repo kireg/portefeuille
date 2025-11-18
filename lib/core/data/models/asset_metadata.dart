@@ -1,76 +1,56 @@
 // lib/core/data/models/asset_metadata.dart
 
 import 'package:hive/hive.dart';
+import 'package:portefeuille/core/utils/enum_helpers.dart'; // NOUVEL IMPORT
 import 'sync_status.dart';
 
 part 'asset_metadata.g.dart';
 
-/// Métadonnées d'un actif, partagées entre tous les comptes.
-/// Stocke le prix actuel et le rendement annuel estimé.
-@HiveType(typeId: 9) // IMPORTANT: Utiliser un typeId non utilisé
+@HiveType(typeId: 9)
 class AssetMetadata {
-  /// Identifiant unique de l'actif (ticker)
   @HiveField(0)
   final String ticker;
 
-  /// Prix actuel de l'actif (mis à jour lors de la synchronisation)
   @HiveField(1)
   double currentPrice;
 
-  /// Rendement annuel estimé en pourcentage (ex: 3.5 pour 3.5%)
-  /// Peut être saisi manuellement ou récupéré via API
   @HiveField(2)
   double estimatedAnnualYield;
 
-  /// Date de la dernière mise à jour des métadonnées
   @HiveField(3)
   DateTime lastUpdated;
 
-  /// Indique si le rendement a été saisi manuellement par l'utilisateur
-  /// Si true, la synchronisation ne remplace pas cette valeur
   @HiveField(4)
   bool isManualYield;
 
-  // --- NOUVEAU CHAMP ---
-  /// Devise du prix (ex: "USD", "EUR") - Nullable pour compatibilité
   @HiveField(5)
   String? priceCurrency;
-  // --- FIN NOUVEAU ---
 
-  // --- NOUVEAUX CHAMPS POUR LA SYNCHRONISATION ---
-  /// Statut de synchronisation de l'actif
   @HiveField(6)
   SyncStatus? syncStatus;
 
-  /// Date de la dernière tentative de synchronisation
   @HiveField(7)
   DateTime? lastSyncAttempt;
 
-  /// Message d'erreur de la dernière synchronisation (si échec)
   @HiveField(8)
   String? syncErrorMessage;
 
-  /// Code ISIN de l'actif (si disponible)
   @HiveField(9)
   String? isin;
 
-  /// Type d'actif détaillé (ex: "Large Cap", "Government Bond", etc.)
   @HiveField(10)
   String? assetTypeDetailed;
 
-  /// Source de la dernière synchronisation (ex: "FMP", "Yahoo")
   @HiveField(11)
   String? lastSyncSource;
-  // --- FIN NOUVEAUX CHAMPS ---
 
-  // Getters pour garantir des valeurs par défaut
   String get activeCurrency => priceCurrency ?? 'EUR';
   SyncStatus get activeStatus => syncStatus ?? SyncStatus.never;
 
   AssetMetadata({
     required this.ticker,
     this.currentPrice = 0.0,
-    this.priceCurrency = 'EUR', // <-- MODIFIÉ (défaut)
+    this.priceCurrency = 'EUR',
     this.estimatedAnnualYield = 0.0,
     DateTime? lastUpdated,
     this.isManualYield = false,
@@ -82,7 +62,8 @@ class AssetMetadata {
     this.lastSyncSource,
   }) : lastUpdated = lastUpdated ?? DateTime.now();
 
-  /// Met à jour le prix actuel
+  // ... (toutes vos méthodes existantes : updatePrice, markSyncError, etc. restent inchangées) ...
+
   void updatePrice(double newPrice, String newCurrency, {String? source}) {
     currentPrice = newPrice;
     priceCurrency = newCurrency;
@@ -95,19 +76,16 @@ class AssetMetadata {
     }
   }
 
-  /// Marque la synchronisation comme échouée
   void markSyncError(String errorMessage) {
     lastSyncAttempt = DateTime.now();
     syncStatus = SyncStatus.error;
     syncErrorMessage = errorMessage;
   }
 
-  /// Marque l'actif comme manuel (pas de synchro auto)
   void markAsManual() {
     syncStatus = SyncStatus.manual;
   }
 
-  /// Met à jour le rendement annuel estimé
   void updateYield(double newYield, {bool isManual = true}) {
     estimatedAnnualYield = newYield;
     isManualYield = isManual;
@@ -143,4 +121,49 @@ class AssetMetadata {
       lastSyncSource: lastSyncSource ?? this.lastSyncSource,
     );
   }
+
+  // --- NOUVELLES MÉTHODES JSON ---
+  Map<String, dynamic> toJson() {
+    return {
+      'ticker': ticker,
+      'currentPrice': currentPrice,
+      'estimatedAnnualYield': estimatedAnnualYield,
+      'lastUpdated': lastUpdated.toIso8601String(),
+      'isManualYield': isManualYield,
+      'priceCurrency': priceCurrency,
+      'syncStatus': enumToString(syncStatus),
+      'lastSyncAttempt': lastSyncAttempt?.toIso8601String(),
+      'syncErrorMessage': syncErrorMessage,
+      'isin': isin,
+      'assetTypeDetailed': assetTypeDetailed,
+      'lastSyncSource': lastSyncSource,
+    };
+  }
+
+  factory AssetMetadata.fromJson(Map<String, dynamic> json) {
+    return AssetMetadata(
+      ticker: json['ticker'] as String,
+      currentPrice: (json['currentPrice'] as num?)?.toDouble() ?? 0.0,
+      estimatedAnnualYield:
+      (json['estimatedAnnualYield'] as num?)?.toDouble() ?? 0.0,
+      lastUpdated: json['lastUpdated'] != null
+          ? DateTime.parse(json['lastUpdated'] as String)
+          : DateTime.now(),
+      isManualYield: json['isManualYield'] as bool? ?? false,
+      priceCurrency: json['priceCurrency'] as String? ?? 'EUR',
+      syncStatus: enumFromString(
+        SyncStatus.values,
+        json['syncStatus'],
+        fallback: SyncStatus.never,
+      ),
+      lastSyncAttempt: json['lastSyncAttempt'] != null
+          ? DateTime.parse(json['lastSyncAttempt'] as String)
+          : null,
+      syncErrorMessage: json['syncErrorMessage'] as String?,
+      isin: json['isin'] as String?,
+      assetTypeDetailed: json['assetTypeDetailed'] as String?,
+      lastSyncSource: json['lastSyncSource'] as String?,
+    );
+  }
+// --- FIN NOUVELLES MÉTHODES JSON ---
 }

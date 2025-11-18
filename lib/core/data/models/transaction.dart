@@ -1,18 +1,19 @@
 // lib/core/data/models/transaction.dart
 
 import 'package:hive/hive.dart';
+import 'package:portefeuille/core/utils/enum_helpers.dart'; // NOUVEL IMPORT
 import 'transaction_type.dart';
 import 'asset_type.dart';
 
 part 'transaction.g.dart';
 
-@HiveType(typeId: 7) // IMPORTANT: Utilisez un ID non utilisé (ex: 7)
+@HiveType(typeId: 7)
 class Transaction {
   @HiveField(0)
   final String id;
 
   @HiveField(1)
-  final String accountId; // Compte parent
+  final String accountId;
 
   @HiveField(2)
   final TransactionType type;
@@ -21,38 +22,34 @@ class Transaction {
   final DateTime date;
 
   @HiveField(4)
-  final String? assetTicker; // Ticker de l'actif (pour Achat/Vente/Dividende)
+  final String? assetTicker;
 
   @HiveField(5)
-  final String? assetName; // Nom de l'actif
+  final String? assetName;
 
   @HiveField(6)
-  final double? quantity; // Quantité d'actifs (pour Achat/Vente)
+  final double? quantity;
 
   @HiveField(7)
-  final double?
-      price; // Prix unitaire DANS LA DEVISE DE L'ACTIF (ex: 150.00 USD)
+  final double? price;
 
   @HiveField(8)
-  final double amount; // Montant DANS LA DEVISE DU COMPTE (ex: -140.00 EUR)
+  final double amount;
 
   @HiveField(9)
-  final double fees; // Frais DANS LA DEVISE DU COMPTE (ex: 2.00 EUR)
+  final double fees;
 
   @HiveField(10)
   final String notes;
 
   @HiveField(11)
-  final AssetType? assetType; // Pour Achat/Vente
+  final AssetType? assetType;
 
-  // --- NOUVEAUX CHAMPS DEVISE ---
   @HiveField(12)
-  final String? priceCurrency; // Devise du 'price' (ex: "USD" pour AAPL)
+  final String? priceCurrency;
 
   @HiveField(13)
-  final double?
-      exchangeRate; // Taux de change (priceCurrency -> account.currency) ex: 1.08
-  // --- FIN NOUVEAUX CHAMPS ---
+  final double? exchangeRate;
 
   Transaction({
     required this.id,
@@ -64,21 +61,62 @@ class Transaction {
     this.assetName,
     this.quantity,
     this.price,
-    this.priceCurrency, // <-- MODIFIÉ
-    this.exchangeRate, // <-- MODIFIÉ
+    this.priceCurrency,
+    this.exchangeRate,
     this.fees = 0.0,
     this.notes = '',
     this.assetType,
   });
 
-  // Helper pour obtenir le montant total de la transaction (ex: Achat)
-  // 'amount' et 'fees' SONT TOUS LES DEUX dans la devise du compte.
-  // Cette logique reste donc inchangée.
   double get totalAmount {
-    // Pour un achat, amount = (quantity * price * exchangeRate) * -1
-    // Pour une vente, amount = (quantity * price * exchangeRate)
-    // Pour un dépôt, amount = montant
-    // 'amount' stocke déjà le résultat de ce calcul.
     return amount - fees;
   }
+
+  // --- NOUVELLES MÉTHODES JSON ---
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'accountId': accountId,
+      'type': enumToString(type),
+      'date': date.toIso8601String(),
+      'assetTicker': assetTicker,
+      'assetName': assetName,
+      'quantity': quantity,
+      'price': price,
+      'amount': amount,
+      'fees': fees,
+      'notes': notes,
+      'assetType': enumToString(assetType),
+      'priceCurrency': priceCurrency,
+      'exchangeRate': exchangeRate,
+    };
+  }
+
+  factory Transaction.fromJson(Map<String, dynamic> json) {
+    return Transaction(
+      id: json['id'] as String,
+      accountId: json['accountId'] as String,
+      type: enumFromString(
+        TransactionType.values,
+        json['type'],
+        fallback: TransactionType.Deposit,
+      ),
+      date: DateTime.parse(json['date'] as String),
+      amount: (json['amount'] as num).toDouble(),
+      assetTicker: json['assetTicker'] as String?,
+      assetName: json['assetName'] as String?,
+      quantity: (json['quantity'] as num?)?.toDouble(),
+      price: (json['price'] as num?)?.toDouble(),
+      fees: (json['fees'] as num?)?.toDouble() ?? 0.0,
+      notes: json['notes'] as String? ?? '',
+      assetType: enumFromString(
+        AssetType.values,
+        json['assetType'],
+        fallback: AssetType.Other,
+      ),
+      priceCurrency: json['priceCurrency'] as String?,
+      exchangeRate: (json['exchangeRate'] as num?)?.toDouble(),
+    );
+  }
+// --- FIN NOUVELLES MÉTHODES JSON ---
 }

@@ -5,19 +5,15 @@ part 'price_history_point.g.dart';
 
 @HiveType(typeId: 10)
 class PriceHistoryPoint {
-  /// Ticker de l'actif
   @HiveField(0)
   final String ticker;
 
-  /// Date (tronquée au jour)
   @HiveField(1)
   final DateTime date;
 
-  /// Prix de clôture ce jour-là
   @HiveField(2)
   final double price;
 
-  /// Devise du prix (ex: "USD", "EUR")
   @HiveField(3)
   final String currency;
 
@@ -27,4 +23,24 @@ class PriceHistoryPoint {
     required this.price,
     required this.currency,
   });
+
+  // --- NOUVELLES MÉTHODES JSON ---
+  Map<String, dynamic> toJson() {
+    return {
+      'ticker': ticker,
+      'date': date.toIso8601String(),
+      'price': price,
+      'currency': currency,
+    };
+  }
+
+  factory PriceHistoryPoint.fromJson(Map<String, dynamic> json) {
+    return PriceHistoryPoint(
+      ticker: json['ticker'] as String,
+      date: DateTime.parse(json['date'] as String),
+      price: (json['price'] as num).toDouble(),
+      currency: json['currency'] as String,
+    );
+  }
+// --- FIN NOUVELLES MÉTHODES JSON ---
 }

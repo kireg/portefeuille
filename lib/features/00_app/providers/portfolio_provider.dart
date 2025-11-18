@@ -1,6 +1,8 @@
 // lib/features/00_app/providers/portfolio_provider.dart
 
 import 'package:flutter/material.dart';
+import 'dart:convert'; // Pour jsonEncode
+import 'package:portefeuille/core/data/services/backup_service.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/aggregated_asset.dart';
 import 'package:portefeuille/core/data/models/aggregated_portfolio_data.dart';
@@ -37,6 +39,7 @@ class PortfolioProvider extends ChangeNotifier {
   late final HydrationService _hydrationService;
   late final DemoDataService _demoDataService;
   late final CalculationService _calculationService;
+  late final BackupService _backupService;
 
   // Settings
   SettingsProvider? _settingsProvider;
@@ -110,7 +113,7 @@ class PortfolioProvider extends ChangeNotifier {
     );
     _demoDataService = DemoDataService(repository: _repository, uuid: _uuid);
     _calculationService = CalculationService(apiService: _apiService);
-
+    _backupService = BackupService();
     loadAllPortfolios();
   }
 
@@ -679,4 +682,54 @@ class PortfolioProvider extends ChangeNotifier {
   void _setActivity(BackgroundActivity activity) {
     _activity = activity;
   }
+
+  // ============================================================
+  // EXPORT / IMPORT
+  // ============================================================
+
+  /// Récupère toutes les données de l'application sous forme de chaîne JSON.
+  Future<String> getExportJson() async {
+    debugPrint("🔄 [Provider] getExportJson");
+    try {
+      final jsonString = await _backupService.exportData();
+      return jsonString;
+    } catch (e) {
+      debugPrint("❌ [Provider] Erreur lors de l'exportation: $e");
+      // Retourne un JSON d'erreur
+      return jsonEncode({'error': 'Impossible d\'exporter les données: $e'});
+    }
+  }
+
+  /// Importe les données depuis une chaîne JSON et remplace tout.
+  Future<void> importDataFromJson(String json) async {
+    debugPrint("🔄 [Provider] importDataFromJson");
+    _isLoading = true;
+    _setActivity(const Recalculating()); // Utilise l'état de recalcul
+    notifyListeners();
+
+    try {
+      await _backupService.importData(json);
+      debugPrint("✅ [Provider] Importation réussie. Rechargement des données...");
+
+      // Forcer un rechargement complet des données du portefeuille
+      await loadAllPortfolios(); // Ceci appelle déjà notifyListeners() à la fin
+
+      // Forcer un rechargement des settings (couleur, devise, etc.)
+      // Le '?' est une sécurité si _settingsProvider est null
+      await _settingsProvider?.reloadSettings();
+
+    } catch (e) {
+      debugPrint("❌ [Provider] Erreur lors de l'importation: $e");
+      // En cas d'erreur, recharger les données (qui devraient être vides)
+      // pour éviter un état incohérent.
+      await loadAllPortfolios();
+      rethrow; // Propage l'erreur à l'UI
+    } finally {
+      _isLoading = false;
+      _setActivity(const Idle());
+      // notifyListeners() est déjà appelé par loadAllPortfolios
+    }
+  }
+
+
 }
