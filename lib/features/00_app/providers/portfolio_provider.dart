@@ -1,117 +1,150 @@
 // lib/features/00_app/providers/portfolio_provider.dart
-// REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/account.dart';
+import 'package:portefeuille/core/data/models/aggregated_asset.dart';
+import 'package:portefeuille/core/data/models/aggregated_portfolio_data.dart';
+import 'package:portefeuille/core/data/models/asset.dart';
+import 'package:portefeuille/core/data/models/asset_metadata.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
+import 'package:portefeuille/core/data/models/projection_data.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/core/data/models/sync_log.dart';
+import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
-import 'package:portefeuille/core/data/models/transaction.dart';
+import 'package:portefeuille/features/00_app/models/background_activity.dart';
+import 'package:portefeuille/features/00_app/services/calculation_service.dart';
+import 'package:portefeuille/features/00_app/services/demo_data_service.dart';
+import 'package:portefeuille/features/00_app/services/hydration_service.dart';
+import 'package:portefeuille/features/00_app/services/migration_service.dart';
+import 'package:portefeuille/features/00_app/services/sync_service.dart';
+import 'package:portefeuille/features/00_app/services/transaction_service.dart';
 import 'package:uuid/uuid.dart';
-import 'package:portefeuille/core/data/models/asset_metadata.dart';
-// NOUVEAUX IMPORTS POUR LA LOGIQUE EXTERNALISÉE
-import 'portfolio_migration_logic.dart';
-import 'portfolio_sync_logic.dart';
-import 'portfolio_transaction_logic.dart';
 
 class PortfolioProvider extends ChangeNotifier {
   final PortfolioRepository _repository;
   final ApiService _apiService;
+  final Uuid _uuid;
+
+  // Services
+  late final MigrationService _migrationService;
+  late final SyncService _syncService;
+  late final TransactionService _transactionService;
+  late final HydrationService _hydrationService;
+  late final DemoDataService _demoDataService;
+  late final CalculationService _calculationService;
+
+  // Settings
   SettingsProvider? _settingsProvider;
   bool _isFirstSettingsUpdate = true;
-  final _uuid = const Uuid();
-
-  // Classes de logique
-  late final PortfolioMigrationLogic _migrationLogic;
-  late final PortfolioSyncLogic _syncLogic;
-  late final PortfolioTransactionLogic _transactionLogic;
 
   // État
   List<Portfolio> _portfolios = [];
   Portfolio? _activePortfolio;
   bool _isLoading = true;
-  bool _isSyncing = false;
+  BackgroundActivity _activity = const Idle();
   String? _syncMessage;
+  AggregatedPortfolioData _aggregatedData = AggregatedPortfolioData.empty;
 
-  // Getters
+  // Getters - État brut
   List<Portfolio> get portfolios => _portfolios;
   Portfolio? get activePortfolio => _activePortfolio;
   bool get isLoading => _isLoading;
-  bool get isSyncing => _isSyncing;
+  BackgroundActivity get activity => _activity;
+  bool get isProcessingInBackground => _activity.isActive;
   String? get syncMessage => _syncMessage;
-
-  /// Expose toutes les métadonnées pour les écrans de statut (ex: Paramètres)
   Map<String, AssetMetadata> get allMetadata =>
       _repository.getAllAssetMetadata();
+
+  // Getters - Données calculées
+  String get currentBaseCurrency => _aggregatedData.baseCurrency;
+  double get activePortfolioTotalValue => _aggregatedData.totalValue;
+  double get activePortfolioTotalPL => _aggregatedData.totalPL;
+  double get activePortfolioTotalPLPercentage {
+    if (_aggregatedData.totalInvested == 0.0) return 0.0;
+    return _aggregatedData.totalPL / _aggregatedData.totalInvested;
+  }
+
+  double get activePortfolioEstimatedAnnualYield =>
+      _activePortfolio?.estimatedAnnualYield ?? 0.0;
+
+  double getConvertedAccountValue(String accountId) =>
+      _aggregatedData.accountValues[accountId] ?? 0.0;
+  double getConvertedAccountPL(String accountId) =>
+      _aggregatedData.accountPLs[accountId] ?? 0.0;
+  double getConvertedAccountInvested(String accountId) =>
+      _aggregatedData.accountInvested[accountId] ?? 0.0;
+
+  double getConvertedAssetTotalValue(String assetId) =>
+      _aggregatedData.assetTotalValues[assetId] ?? 0.0;
+  double getConvertedAssetPL(String assetId) =>
+      _aggregatedData.assetPLs[assetId] ?? 0.0;
+
+  List<AggregatedAsset> get aggregatedAssets =>
+      _aggregatedData.aggregatedAssets;
+  Map<AssetType, double> get aggregatedValueByAssetType =>
+      _aggregatedData.valueByAssetType;
 
   PortfolioProvider({
     required PortfolioRepository repository,
     required ApiService apiService,
+    Uuid? uuid,
   })  : _repository = repository,
-        _apiService = apiService {
-    // Initialiser les classes de logique
-    _migrationLogic = PortfolioMigrationLogic(
-      repository: _repository,
-      settingsProvider:
-          _settingsProvider ?? SettingsProvider(), // Fournit un fallback
-      uuid: _uuid,
-    );
-    _syncLogic = PortfolioSyncLogic(
+        _apiService = apiService,
+        _uuid = uuid ?? const Uuid() {
+    // Initialisation des services
+    _migrationService = MigrationService(repository: _repository, uuid: _uuid);
+    _syncService = SyncService(
       repository: _repository,
       apiService: _apiService,
-      settingsProvider: _settingsProvider ?? SettingsProvider(),
+      uuid: _uuid,
     );
-    _transactionLogic = PortfolioTransactionLogic(
+    _transactionService = TransactionService(repository: _repository);
+    _hydrationService = HydrationService(
       repository: _repository,
+      apiService: _apiService,
     );
+    _demoDataService = DemoDataService(repository: _repository, uuid: _uuid);
+    _calculationService = CalculationService(apiService: _apiService);
 
     loadAllPortfolios();
   }
 
+  // ============================================================
+  // INITIALISATION
+  // ============================================================
+
   void updateSettings(SettingsProvider settingsProvider) {
-    final bool wasOffline = _settingsProvider?.isOnlineMode ?? false;
-    final bool wasNull = _settingsProvider == null;
+    debugPrint(
+        "🔄 [Provider] updateSettings: Nouvelle devise = ${settingsProvider.baseCurrency}");
+
+    final oldCurrency = _settingsProvider?.baseCurrency;
+
+    // ✅ COMPARER AUSSI AVEC LA DEVISE ACTUELLEMENT AFFICHÉE
+    final currencyChanged = (oldCurrency != null &&
+        oldCurrency != settingsProvider.baseCurrency) ||
+        (_aggregatedData.baseCurrency != settingsProvider.baseCurrency);
+
+    final wasOffline = _settingsProvider?.isOnlineMode ?? false;
+    final wasNull = _settingsProvider == null;
+
     _settingsProvider = settingsProvider;
-    // Mettre à jour les helpers avec la bonne instance de SettingsProvider
-    _migrationLogic.settingsProvider = settingsProvider;
-    _syncLogic.settingsProvider = settingsProvider;
+
+    if (currencyChanged && !_isLoading) {
+      debugPrint("  -> 🚀 Changement de devise détecté: ${_aggregatedData.baseCurrency} → ${settingsProvider.baseCurrency}");
+      _setActivity(const Recalculating());
+      notifyListeners();
+      Future.microtask(() => _recalculateAggregatedData());
+      return;
+    }
 
     if (_isFirstSettingsUpdate) {
       _isFirstSettingsUpdate = false;
-      Future(() async {
-        try {
-          while (_isLoading) {
-            await Future.delayed(const Duration(milliseconds: 100));
-          }
-
-          // --- SÉQUENCE DE MIGRATION MISE À JOUR ---
-          if (!settingsProvider.migrationV1Done) {
-            // 1. Lancer la Migration V1
-            await _migrationLogic.runDataMigrationV1(_portfolios);
-            // Recharger est crucial après la migration V1
-            await loadAllPortfolios();
-          }
-
-          if (settingsProvider.migrationV1Done &&
-              !settingsProvider.migrationV2Done) {
-            // 2. Lancer la Migration V2 (Devises)
-            await _migrationLogic.runDataMigrationV2();
-            // Recharger est crucial après la migration V2
-            await loadAllPortfolios();
-          }
-          // --- FIN SÉQUENCE ---
-
-          if (_settingsProvider!.isOnlineMode && _activePortfolio != null) {
-            await synchroniserLesPrix();
-          }
-        } catch (e) {
-          debugPrint("⚠️ Erreur lors de l'initialisation : $e");
-        }
-      });
+      _handleFirstSettingsUpdate();
       return;
     }
 
@@ -119,14 +152,87 @@ class PortfolioProvider extends ChangeNotifier {
         !wasOffline &&
         !wasNull &&
         _activePortfolio != null) {
+      debugPrint("  -> Mode en ligne activé, synchronisation...");
       synchroniserLesPrix().catchError((e) {
         debugPrint("⚠️ Impossible de synchroniser les prix : $e");
       });
     }
   }
 
+  Future<void> _handleFirstSettingsUpdate() async {
+    debugPrint("  -> Premier updateSettings, attente chargement...");
+
+    Future.delayed(Duration.zero, () async {
+      while (_isLoading) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+
+      try {
+        bool needsReload = false;
+
+        if (!_settingsProvider!.migrationV1Done) {
+          debugPrint("  -> Lancement Migration V1...");
+          final hasChanges =
+          await _migrationService.runMigrationV1(_portfolios);
+          if (hasChanges) {
+            await _settingsProvider!.setMigrationV1Done();
+            needsReload = true;
+          }
+        }
+
+        if (_settingsProvider!.migrationV1Done &&
+            !_settingsProvider!.migrationV2Done) {
+          debugPrint("  -> Lancement Migration V2...");
+          final hasChanges = await _migrationService.runMigrationV2();
+          if (hasChanges) {
+            await _settingsProvider!.setMigrationV2Done();
+            needsReload = true;
+          }
+        }
+
+        if (needsReload) {
+          debugPrint("  -> 🚀 Rechargement après migration");
+          await _refreshDataFromSource();
+        }
+
+        if (_settingsProvider!.isOnlineMode && _activePortfolio != null) {
+          debugPrint("  -> Synchronisation des prix post-load...");
+          await synchroniserLesPrix();
+        }
+      } catch (e) {
+        debugPrint("⚠️ Erreur lors de l'initialisation : $e");
+      }
+    });
+  }
+
   Future<void> loadAllPortfolios() async {
-    _portfolios = _repository.getAllPortfolios();
+    debugPrint("--- 🔄 DÉBUT loadAllPortfolios ---");
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _refreshDataFromSource();
+    } catch (e) {
+      debugPrint("ERREUR FATALE loadAllPortfolios: $e");
+    } finally {
+      _isLoading = false;
+      debugPrint("--- ℹ️ FIN loadAllPortfolios ---");
+      notifyListeners();
+    }
+  }
+
+  // ============================================================
+  // REFRESH & RECALCUL
+  // ============================================================
+
+  /// Rechargement complet (lourd) : hydratation + calcul
+  Future<void> _refreshDataFromSource() async {
+    debugPrint("--- 🔄 DÉBUT _refreshDataFromSource (LOURD) ---");
+
+    // 1. Hydratation
+    _portfolios = await _hydrationService.hydrateAll();
+
+    // 2. Sélection du portfolio actif
     if (_portfolios.isNotEmpty) {
       if (_activePortfolio == null) {
         _activePortfolio = _portfolios.first;
@@ -135,96 +241,144 @@ class PortfolioProvider extends ChangeNotifier {
           _activePortfolio =
               _portfolios.firstWhere((p) => p.id == _activePortfolio!.id);
         } catch (e) {
-          _activePortfolio = _portfolios.isNotEmpty ? _portfolios.first : null;
+          _activePortfolio = _portfolios.first;
         }
       }
     } else {
       _activePortfolio = null;
     }
 
-    _isLoading = false;
+    // 3. Calcul
+    await _recalculateAggregatedData();
+
+    debugPrint("--- ℹ️ FIN _refreshDataFromSource ---");
+  }
+
+  /// Recalcul léger (uniquement les conversions)
+  Future<void> _recalculateAggregatedData() async {
+    debugPrint("--- 🔄 DÉBUT _recalculateAggregatedData ---");
+
+    final targetCurrency = _settingsProvider?.baseCurrency ?? 'EUR';
+    debugPrint("  -> targetCurrency: $targetCurrency");
+    debugPrint("  -> activePortfolio: ${_activePortfolio?.name}");
+
+    try {
+      _aggregatedData = await _calculationService.calculate(
+        portfolio: _activePortfolio,
+        targetCurrency: targetCurrency,
+        allMetadata: allMetadata,
+      );
+      debugPrint(
+          "  -> ✅ Calcul OK. Valeur totale: ${_aggregatedData.totalValue} $targetCurrency");
+    } catch (e) {
+      debugPrint("  -> ❌ ERREUR CALCUL: $e");
+      debugPrint("  -> StackTrace: ${StackTrace.current}"); // ✅ AJOUTER
+    } finally {
+      _setActivity(const Idle());
+      debugPrint("  -> 📢 notifyListeners() appelé"); // ✅ AJOUTER
+      notifyListeners();
+      debugPrint("--- ℹ️ FIN _recalculateAggregatedData ---");
+    }
+  }
+
+  // ============================================================
+  // SYNCHRONISATION
+  // ============================================================
+
+  Future<void> synchroniserLesPrix() async {
+    if (!_canSync()) return;
+
+    debugPrint("🔄 [Provider] synchroniserLesPrix");
+    _setActivity(const Syncing(0, 0));
+    _syncMessage = "Synchronisation en cours...";
+    notifyListeners();
+
+    final result = await _syncService.synchronize(_activePortfolio!);
+
+    if (result.hasUpdates) {
+      await _refreshDataFromSource();
+    }
+
+    _setActivity(const Idle());
+    _syncMessage = result.getSummaryMessage();
     notifyListeners();
   }
 
   Future<void> forceSynchroniserLesPrix() async {
-    if (_activePortfolio == null || _isSyncing) return;
-    _isSyncing = true;
+    if (!_canSync()) return;
+
+    debugPrint("🔄 [Provider] forceSynchroniserLesPrix");
+    _setActivity(const Syncing(0, 0));
     _syncMessage = "Synchronisation forcée en cours...";
     notifyListeners();
 
-    final result = await _syncLogic.forceSynchroniserLesPrix(_activePortfolio!);
-    if (result.updatedCount > 0) {
-      await loadAllPortfolios();
+    final result = await _syncService.forceSync(_activePortfolio!);
+
+    if (result.hasUpdates) {
+      await _refreshDataFromSource();
     }
 
-    _isSyncing = false;
+    _setActivity(const Idle());
     _syncMessage = result.getSummaryMessage();
     notifyListeners();
   }
 
-  Future<void> synchroniserLesPrix() async {
-    if (_activePortfolio == null ||
-        _isSyncing ||
-        _settingsProvider?.isOnlineMode != true) return;
-    _isSyncing = true;
-    _syncMessage = "Synchronisation en cours...";
-    notifyListeners();
-
-    final result = await _syncLogic.synchroniserLesPrix(_activePortfolio!);
-    if (result.updatedCount > 0) {
-      await loadAllPortfolios();
-    }
-
-    _isSyncing = false;
-    _syncMessage = result.getSummaryMessage();
-    notifyListeners();
+  bool _canSync() {
+    return _activePortfolio != null &&
+        _activity is Idle &&
+        _settingsProvider?.isOnlineMode == true;
   }
 
   void clearSyncMessage() {
     _syncMessage = null;
+    notifyListeners();
   }
 
-  // ========================================================================
-  // MÉTHODES POUR LA GESTION DES SYNC LOGS
-  // ========================================================================
+  // ============================================================
+  // SYNC LOGS
+  // ============================================================
 
-  /// Récupère tous les logs de synchronisation
-  List<SyncLog> getAllSyncLogs() {
-    return _repository.getAllSyncLogs();
-  }
+  List<SyncLog> getAllSyncLogs() => _repository.getAllSyncLogs();
 
-  /// Récupère les N logs les plus récents
-  List<SyncLog> getRecentSyncLogs(int limit) {
-    return _repository.getRecentSyncLogs(limit: limit);
-  }
+  List<SyncLog> getRecentSyncLogs(int limit) =>
+      _repository.getRecentSyncLogs(limit: limit);
 
-  /// Efface tous les logs de synchronisation
   Future<void> clearAllSyncLogs() async {
     await _repository.clearAllSyncLogs();
     notifyListeners();
   }
 
-  // ========================================================================
+  // ============================================================
+  // TRANSACTIONS
+  // ============================================================
 
   Future<void> addTransaction(Transaction transaction) async {
-    await _transactionLogic.addTransaction(transaction);
-    await loadAllPortfolios();
+    debugPrint("🔄 [Provider] addTransaction");
+    await _transactionService.add(transaction);
+    await _refreshDataFromSource();
   }
 
   Future<void> deleteTransaction(String transactionId) async {
-    await _transactionLogic.deleteTransaction(transactionId);
-    await loadAllPortfolios();
+    debugPrint("🔄 [Provider] deleteTransaction");
+    await _transactionService.delete(transactionId);
+    await _refreshDataFromSource();
   }
 
   Future<void> updateTransaction(Transaction transaction) async {
-    await _transactionLogic.updateTransaction(transaction);
-    await loadAllPortfolios();
+    debugPrint("🔄 [Provider] updateTransaction");
+    await _transactionService.update(transaction);
+    await _refreshDataFromSource();
   }
 
+  // ============================================================
+  // GESTION PORTFOLIOS
+  // ============================================================
+
   void setActivePortfolio(String portfolioId) {
+    debugPrint("🔄 [Provider] setActivePortfolio");
     try {
       _activePortfolio = _portfolios.firstWhere((p) => p.id == portfolioId);
-      notifyListeners();
+      _recalculateAggregatedData();
     } catch (e) {
       debugPrint("Portefeuille non trouvé : $portfolioId");
     }
@@ -232,24 +386,27 @@ class PortfolioProvider extends ChangeNotifier {
 
   void addDemoPortfolio() {
     if (_portfolios.any((p) => p.name == "Portefeuille de Démo (2020-2025)")) {
-      // MODIFIÉ : Nom du portefeuille de démo V2
       return;
     }
-    final demo = _repository.createDemoPortfolio();
-    _portfolios.add(demo);
-    _activePortfolio = demo;
-    loadAllPortfolios();
+    debugPrint("🔄 [Provider] addDemoPortfolio");
+    _demoDataService.createDemoPortfolio().then((demo) {
+      _portfolios.add(demo);
+      _activePortfolio = demo;
+      _refreshDataFromSource();
+    });
   }
 
   void addNewPortfolio(String name) {
+    debugPrint("🔄 [Provider] addNewPortfolio");
     final newPortfolio = _repository.createEmptyPortfolio(name);
     _portfolios.add(newPortfolio);
     _activePortfolio = newPortfolio;
-    notifyListeners();
+    _refreshDataFromSource();
   }
 
   void savePortfolio(Portfolio portfolio) {
-    int index = _portfolios.indexWhere((p) => p.id == portfolio.id);
+    debugPrint("🔄 [Provider] savePortfolio");
+    final index = _portfolios.indexWhere((p) => p.id == portfolio.id);
     if (index != -1) {
       _portfolios[index] = portfolio;
     } else {
@@ -259,64 +416,73 @@ class PortfolioProvider extends ChangeNotifier {
       _activePortfolio = portfolio;
     }
     _repository.savePortfolio(portfolio);
-    notifyListeners();
+    _refreshDataFromSource();
   }
 
   void updateActivePortfolio() {
     if (_activePortfolio == null) return;
+    debugPrint("🔄 [Provider] updateActivePortfolio");
     _repository.savePortfolio(_activePortfolio!);
-    notifyListeners();
+    _refreshDataFromSource();
   }
 
   void renameActivePortfolio(String newName) {
     if (_activePortfolio == null) return;
+    debugPrint("🔄 [Provider] renameActivePortfolio");
     _activePortfolio!.name = newName;
     updateActivePortfolio();
   }
 
   Future<void> deletePortfolio(String portfolioId) async {
+    debugPrint("🔄 [Provider] deletePortfolio");
     Portfolio? portfolioToDelete;
     try {
       portfolioToDelete = _portfolios.firstWhere((p) => p.id == portfolioId);
     } catch (e) {
-      debugPrint(
-          "Impossible de supprimer le portefeuille : ID $portfolioId non trouvé.");
+      debugPrint("Impossible de supprimer : ID $portfolioId non trouvé.");
       return;
     }
 
-    final List<Future<void>> deleteFutures = [];
+    final deleteFutures = <Future<void>>[];
     for (final inst in portfolioToDelete.institutions) {
       for (final acc in inst.accounts) {
-        // MODIFIÉ : Utilise acc.transactions (qui a été injecté)
         for (final tx in acc.transactions) {
-          deleteFutures.add(_repository.deleteTransaction(tx.id));
+          deleteFutures.add(_transactionService.delete(tx.id));
         }
       }
     }
+
     if (deleteFutures.isNotEmpty) {
       await Future.wait(deleteFutures);
     }
 
     await _repository.deletePortfolio(portfolioId);
     _portfolios.removeWhere((p) => p.id == portfolioId);
+
     if (_activePortfolio?.id == portfolioId) {
       _activePortfolio = _portfolios.isNotEmpty ? _portfolios.first : null;
     }
-    notifyListeners();
+
+    _refreshDataFromSource();
   }
 
   Future<void> resetAllData() async {
+    debugPrint("🔄 [Provider] resetAllData");
     await _repository.deleteAllData();
     _portfolios = [];
     _activePortfolio = null;
-    // MODIFIÉ : Réinitialise les deux drapeaux
     await _settingsProvider?.setMigrationV1Done();
     await _settingsProvider?.setMigrationV2Done();
-    notifyListeners();
+    _refreshDataFromSource();
   }
+
+  // ============================================================
+  // INSTITUTIONS & ACCOUNTS
+  // ============================================================
 
   void addInstitution(Institution newInstitution) {
     if (_activePortfolio == null) return;
+    debugPrint("🔄 [Provider] addInstitution");
     final updatedPortfolio = _activePortfolio!.deepCopy();
     updatedPortfolio.institutions.add(newInstitution);
     savePortfolio(updatedPortfolio);
@@ -324,6 +490,7 @@ class PortfolioProvider extends ChangeNotifier {
 
   void addAccount(String institutionId, Account newAccount) {
     if (_activePortfolio == null) return;
+    debugPrint("🔄 [Provider] addAccount");
     final updatedPortfolio = _activePortfolio!.deepCopy();
     try {
       updatedPortfolio.institutions
@@ -336,6 +503,10 @@ class PortfolioProvider extends ChangeNotifier {
     }
   }
 
+  // ============================================================
+  // SAVINGS PLANS
+  // ============================================================
+
   void addSavingsPlan(SavingsPlan newPlan) {
     if (_activePortfolio == null) return;
     final updatedPortfolio = _activePortfolio!.deepCopy();
@@ -347,7 +518,7 @@ class PortfolioProvider extends ChangeNotifier {
     if (_activePortfolio == null) return;
     final updatedPortfolio = _activePortfolio!.deepCopy();
     final index =
-        updatedPortfolio.savingsPlans.indexWhere((p) => p.id == planId);
+    updatedPortfolio.savingsPlans.indexWhere((p) => p.id == planId);
     if (index != -1) {
       updatedPortfolio.savingsPlans[index] = updatedPlan;
       savePortfolio(updatedPortfolio);
@@ -363,28 +534,83 @@ class PortfolioProvider extends ChangeNotifier {
     savePortfolio(updatedPortfolio);
   }
 
+  // ============================================================
+  // ASSETS
+  // ============================================================
+
+  Asset? findAssetByTicker(String ticker) {
+    if (_activePortfolio == null) return null;
+    for (var institution in _activePortfolio!.institutions) {
+      for (var account in institution.accounts) {
+        for (var asset in account.assets) {
+          if (asset.ticker == ticker) return asset;
+        }
+      }
+    }
+    return null;
+  }
+
   Future<void> updateAssetYield(String ticker, double newYield) async {
+    debugPrint("🔄 [Provider] updateAssetYield");
     final metadata = _repository.getOrCreateAssetMetadata(ticker);
     metadata.updateYield(newYield, isManual: true);
     await _repository.saveAssetMetadata(metadata);
-    await loadAllPortfolios();
+    await _refreshDataFromSource();
   }
 
   Future<void> updateAssetPrice(String ticker, double newPrice,
       {String? currency}) async {
+    debugPrint("🔄 [Provider] updateAssetPrice");
     final metadata = _repository.getOrCreateAssetMetadata(ticker);
-
-    // Déterminer la devise à utiliser :
-    // 1. Si une devise est fournie en paramètre, l'utiliser
-    // 2. Sinon, utiliser la devise actuelle du metadata
-    // 3. Si celle-ci est vide (données legacy), utiliser la devise de base
     final targetCurrency = currency ??
         ((metadata.priceCurrency?.isEmpty ?? true)
             ? _settingsProvider!.baseCurrency
             : metadata.priceCurrency!);
-
     metadata.updatePrice(newPrice, targetCurrency);
     await _repository.saveAssetMetadata(metadata);
-    await loadAllPortfolios();
+    await _refreshDataFromSource();
+  }
+
+  // ============================================================
+  // PROJECTIONS
+  // ============================================================
+
+  List<ProjectionData> getProjectionData(int duration) {
+    if (_activePortfolio == null) return [];
+
+    final totalValue = _aggregatedData.totalValue;
+    final totalInvested = _aggregatedData.totalInvested;
+    final portfolioAnnualYield = activePortfolioEstimatedAnnualYield;
+
+    double totalMonthlyInvestment = 0;
+    double weightedPlansYield = 0;
+
+    for (var plan in _activePortfolio!.savingsPlans.where((p) => p.isActive)) {
+      final targetAsset = findAssetByTicker(plan.targetTicker);
+      final assetYield = (targetAsset?.estimatedAnnualYield ?? 0.0);
+      totalMonthlyInvestment += plan.monthlyAmount;
+      weightedPlansYield += plan.monthlyAmount * assetYield;
+    }
+
+    final double averagePlansYield = (totalMonthlyInvestment > 0)
+        ? weightedPlansYield / totalMonthlyInvestment
+        : 0.0;
+
+    return ProjectionCalculator.generateProjectionData(
+      duration: duration,
+      initialPortfolioValue: totalValue,
+      initialInvestedCapital: totalInvested,
+      portfolioAnnualYield: portfolioAnnualYield,
+      totalMonthlyInvestment: totalMonthlyInvestment,
+      averagePlansYield: averagePlansYield,
+    );
+  }
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
+
+  void _setActivity(BackgroundActivity activity) {
+    _activity = activity;
   }
 }

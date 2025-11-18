@@ -10,7 +10,6 @@ import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/01_launch/ui/launch_screen.dart';
 import 'package:portefeuille/features/02_dashboard/ui/dashboard_screen.dart';
 
-// ... (State et initState/dispose/navigateToNextScreen inchangés [source 72-85]) ...
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
   @override
@@ -49,24 +48,15 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _fadeController.forward();
-    _navigateToNextScreen();
+
+    // --- SUPPRESSION DE LA NAVIGATION BASÉE SUR LE TEMPS ---
+    // _navigateToNextScreen(); // (SUPPRIMÉ)
+    // --- FIN SUPPRESSION ---
   }
 
-  Future<void> _navigateToNextScreen() async {
-    await Future.delayed(const Duration(milliseconds: 3500));
-    if (mounted) {
-      final portfolioProvider =
-      Provider.of<PortfolioProvider>(context, listen: false);
-      final bool hasPortfolios = portfolioProvider.portfolios.isNotEmpty;
-
-      final Widget nextScreen = hasPortfolios
-          ? const DashboardScreen()
-          : const LaunchScreen();
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => nextScreen),
-      );
-    }
-  }
+  // --- SUPPRESSION DE TOUTE LA MÉTHODE _navigateToNextScreen ---
+  // Future<void> _navigateToNextScreen() async { ... } (SUPPRIMÉ)
+  // --- FIN SUPPRESSION ---
 
   @override
   void dispose() {
@@ -82,13 +72,34 @@ class _SplashScreenState extends State<SplashScreen>
     final size = MediaQuery.of(context).size;
     final Color kColor = Provider.of<SettingsProvider>(context).appColor;
 
-    // --- MODIFICATION ---
-    // Les couleurs sont maintenant dynamiques et basées sur la couleur du provider
+    // --- DÉBUT DE LA NOUVELLE LOGIQUE DE NAVIGATION ---
+    // Nous écoutons le PortfolioProvider ici
+    final portfolioProvider = context.watch<PortfolioProvider>();
+
+    // Si le chargement EST TERMINÉ
+    if (!portfolioProvider.isLoading) {
+      // Nous planifions la navigation pour APRES la fin de ce build
+      // (On ne peut pas naviguer PENDANT un build)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) { // Vérifie que le widget est toujours affiché
+          final bool hasPortfolios = portfolioProvider.portfolios.isNotEmpty;
+
+          final Widget nextScreen = hasPortfolios
+              ? const DashboardScreen()
+              : const LaunchScreen();
+
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => nextScreen),
+          );
+        }
+      });
+    }
+    // --- FIN DE LA NOUVELLE LOGIQUE DE NAVIGATION ---
+
     final List<Color> gradientColors = [
-      Color.lerp(kColor, Colors.black, 0.75)!, // Teinte la plus foncée
-      Color.lerp(kColor, Colors.black, 0.6)! // Teinte un peu moins foncée
+      Color.lerp(kColor, Colors.black, 0.75)!,
+      Color.lerp(kColor, Colors.black, 0.6)!
     ];
-    // --- FIN MODIFICATION ---
 
     return Scaffold(
       body: Container(
@@ -98,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: gradientColors, // Utilise les couleurs dynamiques
+            colors: gradientColors,
           ),
         ),
         child: Stack(
@@ -128,7 +139,6 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildAnimatedBackground() {
-    // ... (inchangé [source 92-93]) ...
     return AnimatedBuilder(
       animation: _backgroundAnimationController,
       builder: (context, child) {
@@ -142,7 +152,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  // MODIFIÉ : Accepte kColor en paramètre
   Widget _buildAnimatedLogo(Color kColor) {
     return AnimatedBuilder(
       animation: _pulseAnimation,
@@ -150,7 +159,6 @@ class _SplashScreenState extends State<SplashScreen>
         return Stack(
           alignment: Alignment.center,
           children: [
-            // ... (Cercles extérieurs inchangés [source 94-98]) ...
             Container(
               width: 180 * _pulseAnimation.value,
               height: 180 * _pulseAnimation.value,
@@ -209,7 +217,6 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildShimmeredTitle() {
-    // ... (inchangé [source 105]) ...
     return Shimmer.fromColors(
       baseColor: Colors.white,
       highlightColor: Colors.white.withOpacity(0.6),
@@ -227,7 +234,6 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildAnimatedSlogan() {
-    // ... (inchangé [source 106-108]) ...
     return SizedBox(
       height: 40,
       child: DefaultTextStyle(
@@ -252,7 +258,6 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildLoadingIndicator() {
-    // ... (inchangé [source 109-112]) ...
     return Column(
       children: [
         SizedBox(
@@ -280,7 +285,6 @@ class _SplashScreenState extends State<SplashScreen>
 }
 
 class BackgroundLinesPainter extends CustomPainter {
-  // ... (Code du Painter inchangé [source 112-127]) ...
   final double animationValue;
   BackgroundLinesPainter({required this.animationValue});
 

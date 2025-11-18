@@ -4,6 +4,8 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
+// NOUVEL IMPORT
+import 'package:portefeuille/features/00_app/models/background_activity.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/06_settings/ui/settings_screen.dart';
@@ -12,7 +14,6 @@ import 'package:provider/provider.dart';
 class DashboardAppBar extends StatefulWidget implements PreferredSizeWidget {
   // NOUVEAU : Ajout du paramètre (Correction Erreurs 4, 5, 6)
   final VoidCallback onPressed;
-
   const DashboardAppBar({
     super.key,
     required this.onPressed,
@@ -20,7 +21,6 @@ class DashboardAppBar extends StatefulWidget implements PreferredSizeWidget {
 
   @override
   State<DashboardAppBar> createState() => _DashboardAppBarState();
-
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
@@ -28,7 +28,6 @@ class DashboardAppBar extends StatefulWidget implements PreferredSizeWidget {
 class _DashboardAppBarState extends State<DashboardAppBar> {
   // Gère l'état de la SnackBar
   bool _isSnackBarVisible = false;
-
   /// Calcule les statistiques de synchronisation
   Map<String, int> _getSyncStats(PortfolioProvider portfolio) {
     final metadata = portfolio.allMetadata;
@@ -37,7 +36,6 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     int manual = 0;
     int never = 0;
     int unsyncable = 0;
-
     for (final meta in metadata.values) {
       final status = meta.syncStatus ?? SyncStatus.never;
       switch (status) {
@@ -63,7 +61,6 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     final total = metadata.length - unsyncable;
     // Considérer synced + manual comme "OK" (car manual est volontaire)
     final syncedOk = synced + manual;
-
     return {
       'synced': syncedOk,
       'errors': errors,
@@ -79,9 +76,9 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
       SettingsProvider settings, PortfolioProvider portfolio) {
     final theme = Theme.of(context);
     final textStyle = theme.appBarTheme.titleTextStyle?.copyWith(
-          fontSize: 12,
-          fontWeight: FontWeight.normal,
-        ) ??
+      fontSize: 12,
+      fontWeight: FontWeight.normal,
+    ) ??
         const TextStyle(color: Colors.white, fontSize: 12);
 
     // Calcul des stats de synchro
@@ -91,8 +88,8 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     final errorsCount = stats['errors']!;
 
     Widget child;
-
-    if (portfolio.isSyncing) {
+    // --- MODIFIÉ : Utilise l'enum 'activity' ---
+    if (portfolio.activity is Syncing) {
       child = Row(
         children: [
           const SizedBox(
@@ -107,7 +104,9 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
           Text("Synchro...", style: textStyle),
         ],
       );
-    } else if (settings.isOnlineMode) {
+    }
+    // --- FIN MODIFICATION ---
+    else if (settings.isOnlineMode) {
       child = Row(
         children: [
           Icon(Icons.cloud_queue_outlined, size: 16, color: textStyle.color),
@@ -302,12 +301,12 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
       });
       ScaffoldMessenger.of(context)
           .showSnackBar(
-            SnackBar(
-              content: Text(message),
-              duration: const Duration(seconds: 4), // <-- DURÉE MODIFIÉE
-              showCloseIcon: true,
-            ),
-          )
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 4), // <-- DURÉE MODIFIÉE
+          showCloseIcon: true,
+        ),
+      )
           .closed
           .then((_) {
         // S'assurer que le drapeau est remis à false
@@ -333,7 +332,6 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleSyncMessage(context, portfolioProvider);
     });
-
     if (portfolio == null) {
       // AppBar pour l'état sans portefeuille
       return AppBar(

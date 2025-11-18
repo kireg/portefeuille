@@ -31,7 +31,8 @@ class Account {
 
   // --- NOUVEAU CHAMP ---
   @HiveField(5)
-  final String? currency; // Ex: "EUR", "USD" - Nullable pour compatibilité
+  final String? currency;
+  // Ex: "EUR", "USD" - Nullable pour compatibilité
   // --- FIN NOUVEAU ---
 
   // Getter pour garantir une devise par défaut
@@ -39,12 +40,26 @@ class Account {
 
   // Doit être injecté par le Repository
   List<Transaction> transactions = [];
-  // NOUVEAU : Cache des assets avec métadonnées injectées
-  List<Asset>? _cachedAssets;
+
+  // -----------------------------------------------------------------
+  // ▼▼▼ CORRECTION PRINCIPALE ▼▼▼
+  // -----------------------------------------------------------------
+
+  // 'assets' est maintenant un CHAMP (rempli par le Repository)
+  // et non plus un getter calculé.
+  List<Asset> assets = [];
+
+  // --- L'ANCIEN GETTER 'get assets' EST COMPLÈTEMENT SUPPRIMÉ ---
+
+  // -----------------------------------------------------------------
+  // ▲▲▲ FIN CORRECTION ▲▲▲
+  // -----------------------------------------------------------------
+
+
   // NOUVEAU : Outil pour générer des ID d'Assets
   static const _uuid = Uuid();
 
-  // NOUVEAU : Le solde est maintenant un getter
+  // NOUVEAU : Le solde est maintenant un getter (INCHANGÉ, C'ÉTAIT CORRECT)
   double get cashBalance {
     if (transactions.isEmpty) return 0.0;
     // 'totalAmount' inclut déjà le signe (négatif pour Achat, positif pour Vente/Dépôt)
@@ -52,17 +67,16 @@ class Account {
     return transactions.fold(0.0, (sum, tr) => sum + tr.totalAmount);
   }
 
-  // NOUVEAU : Les actifs sont maintenant calculés
-  List<Asset> get assets {
-    // Si le cache existe, le retourner directement
-    if (_cachedAssets != null) {
-      return _cachedAssets!;
-    }
+  // -----------------------------------------------------------------
+  // ▼▼▼ NOUVELLE MÉTHODE STATIQUE (LOGIQUE DE L'ANCIEN GETTER) ▼▼▼
+  // -----------------------------------------------------------------
 
-    // Sinon, générer les assets (sans métadonnées)
+  /// Méthode statique pour générer des actifs "stupides" (prix=0)
+  /// Appelée par le PortfolioRepository lors du chargement.
+  static List<Asset> generateAssetsFromTransactions(List<Transaction> transactions) {
     final assetTransactions = transactions
         .where((tr) =>
-            tr.type == TransactionType.Buy || tr.type == TransactionType.Sell)
+    tr.type == TransactionType.Buy || tr.type == TransactionType.Sell)
         .toList();
     if (assetTransactions.isEmpty) return [];
 
@@ -79,11 +93,11 @@ class Account {
     groupedByTicker.forEach((ticker, tickerTransactions) {
       // Trouver la transaction la plus récente pour obtenir le nom
       final lastTx =
-          tickerTransactions.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
+      tickerTransactions.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
 
       // Créer l'objet Asset.
       // Le 'currentPrice' et 'yield' seront à 0.0 par défaut.
-      // Le PortfolioProvider les mettra à jour lors de la synchro API.
+      // Le PortfolioHydrationService les mettra à jour.
       final asset = Asset(
         id: _uuid.v4(), // Génère un ID unique pour cet objet en mémoire
         name: lastTx.assetName ?? ticker,
@@ -101,15 +115,10 @@ class Account {
     return generatedAssets;
   }
 
-  // NOUVEAU : Méthode pour rafraîchir le cache avec les métadonnées
-  void refreshAssetsCache(List<Asset> assetsWithMetadata) {
-    _cachedAssets = assetsWithMetadata;
-  }
+  // -----------------------------------------------------------------
+  // ▲▲▲ FIN NOUVELLE MÉTHODE ▲▲▲
+  // -----------------------------------------------------------------
 
-  // NOUVEAU : Méthode pour vider le cache
-  void clearAssetsCache() {
-    _cachedAssets = null;
-  }
 
   Account({
     required this.id,
@@ -122,11 +131,12 @@ class Account {
     this.stale_cashBalance,
   });
 
-  // ATTENTION: Ces getters devront être refactorisés
-  // car 'asset.totalValue' dépendra des taux de change
+  // Les getters suivants sont MAINTENANT CORRECTS car ils liront
+  // le CHAMP 'assets' qui est hydraté, au lieu de l'ancien getter.
+
   double get totalValue {
     final assetsValue =
-        assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
+    assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
     return assetsValue + cashBalance;
   }
 
@@ -140,18 +150,22 @@ class Account {
 
   double get estimatedAnnualYield {
     final assetsValue =
-        assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
+    assets.fold(0.0, (sum, asset) => sum + asset.totalValue);
     if (assetsValue == 0) {
       return 0.0;
     }
-    final weightedYield = assets.fold(0.0,
-        (sum, asset) => sum + (asset.totalValue * asset.estimatedAnnualYield));
+    final weightedYield = assets.fold(
+        0.0,
+            (sum, asset) =>
+        sum + (asset.totalValue * asset.estimatedAnnualYield));
     // Éviter la division par zéro si assetsValue est nul
     if (assetsValue == 0) return 0.0;
     return weightedYield / assetsValue;
   }
 
   Account deepCopy() {
+    // Note: Le deepCopy doit aussi copier les assets maintenant
+    // S'ils ne sont pas copiés, l'hydratation pourrait modifier l'original
     return Account(
       id: id,
       name: name,
@@ -161,6 +175,8 @@ class Account {
       // Migration
       stale_assets: stale_assets?.map((e) => e.deepCopy()).toList(),
       stale_cashBalance: stale_cashBalance,
-    );
+    )
+    // Assigner les assets générés au champ
+      ..assets = assets.map((e) => e.deepCopy()).toList();
   }
 }

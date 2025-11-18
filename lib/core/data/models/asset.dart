@@ -3,7 +3,7 @@
 
 import 'package:hive/hive.dart';
 import 'transaction.dart';
-import 'transaction_type.dart'; // <--- NOUVEL IMPORT
+import 'transaction_type.dart';
 import 'asset_type.dart';
 
 part 'asset.g.dart';
@@ -16,7 +16,7 @@ class Asset {
   @HiveField(1)
   final String ticker;
 
-  // --- CHAMPS PERIMES (GARDÉS POUR LA MIGRATION) --- // <--- CORRIGÉ
+  // --- CHAMPS PERIMES (GARDÉS POUR LA MIGRATION) ---
   @HiveField(2)
   @deprecated
   double? stale_quantity;
@@ -24,17 +24,21 @@ class Asset {
   @HiveField(3)
   @deprecated
   double? stale_averagePrice;
-  // --- FIN CHAMPS PERIMES --- // <--- CORRIGÉ
+  // --- FIN CHAMPS PERIMES ---
 
   // --- REFRACTORING ---
-  // Ces champs ne sont plus stockés dans Hive (car Asset n'est plus dans Account)
-  // Ils sont calculés ou mis à jour en mémoire par le Provider.
-  // @HiveField(4) // <--- SUPPRIMÉ
-  double currentPrice; // <--- n'est plus 'final'
-
-  // @HiveField(5) // <--- SUPPRIMÉ
+  double currentPrice; // n'est plus 'final'
   double estimatedAnnualYield;
   // --- FIN REFRACTORING ---
+
+  // --- NOUVEAUX CHAMPS (POUR CALCULS DEVISES) ---
+  /// Devise du prix (ex: "USD"), injecté depuis AssetMetadata
+  String priceCurrency;
+
+  /// Taux de change ACTUEL (priceCurrency -> account.currency)
+  /// Injecté par le Repository lors de l'hydratation
+  double currentExchangeRate;
+  // --- FIN NOUVEAUX CHAMPS ---
 
   @HiveField(6)
   final String id;
@@ -59,53 +63,88 @@ class Asset {
     });
   }
 
-  // NOUVEAU : Getter pour le PRU
+  // MODIFIÉ : Getter pour le PRU (en devise d'ACTIF)
+  // Conforme à l'étape 1.3 de la feuille de route
   double get averagePrice {
     if (transactions.isEmpty) return 0.0;
     final buyTransactions =
-        transactions.where((tr) => tr.type == TransactionType.Buy).toList();
+    transactions.where((tr) => tr.type == TransactionType.Buy).toList();
     if (buyTransactions.isEmpty) return 0.0;
 
-    double totalCost = 0.0;
+    double totalCostInAssetCurrency = 0.0; // En devise d'actif (ex: USD)
     double totalQuantity = 0.0;
     for (final tr in buyTransactions) {
       final qty = tr.quantity ?? 0.0;
-      final price = tr.price ?? 0.0;
-      totalCost += (qty * price) + tr.fees;
+      final price = tr.price ?? 0.0; // En devise d'actif (USD)
+      final fees = tr.fees; // En devise de compte (EUR)
+      final rate = tr.exchangeRate ?? 1.0; // Taux (USD -> EUR)
+
+      // Convertir les frais de la devise du compte (EUR) vers la devise de l'actif (USD)
+      // fraisUSD = fraisEUR / taux(USD->EUR)
+      final feesInAssetCurrency = (rate == 0) ? 0.0 : (fees / rate);
+
+      totalCostInAssetCurrency += (qty * price) + feesInAssetCurrency;
       totalQuantity += qty;
     }
 
     if (totalQuantity == 0) return 0.0;
-    return totalCost / totalQuantity;
+    return totalCostInAssetCurrency / totalQuantity;
   }
 
   Asset({
     required this.id,
     required this.name,
     required this.ticker,
-    AssetType? type, // <--- MODIFICATION 1: Retrait de 'required'
+    AssetType? type,
     this.transactions = const [],
-    // --- REFRACTORING (champs optionnels) ---
+    // --- REFRACTORING ---
     this.currentPrice = 0.0,
     this.estimatedAnnualYield = 0.0,
-    // --- FIN REFRACTORING ---
+    // --- NOUVEAUX CHAMPS (avec valeurs par défaut) ---
+    this.priceCurrency = 'EUR',
+    this.currentExchangeRate = 1.0,
+    // --- FIN NOUVEAUX CHAMPS ---
 
     // Champs de migration
     this.stale_quantity,
     this.stale_averagePrice,
-  }) : type = type ??
-            AssetType.Other; // <--- MODIFICATION 2: Assignation par défaut
+  }) : type = type ?? AssetType.Other;
 
-  double get totalValue => quantity * currentPrice;
+  // MODIFIÉ : Valeur totale en devise de COMPTE
+  // Conforme à l'étape 1.3 de la feuille de route
+  double get totalValue {
+    // (Quantité) * (Prix en USD) * (Taux USD -> EUR Compte)
+    return quantity * currentPrice * currentExchangeRate;
+  }
 
-  double get profitAndLoss => (currentPrice - averagePrice) * quantity;
+  // MODIFIÉ : Plus/Moins-value en devise de COMPTE
+  // Conforme à l'étape 1.3 de la feuille de route
+  double get profitAndLoss {
+    // totalValue et totalInvestedCapital sont maintenant tous les deux
+    // dans la devise du COMPTE, le calcul est donc direct.
+    return totalValue - totalInvestedCapital;
+  }
 
-  // NOUVEAU : Capital investi (coût total d'acquisition)
-  double get totalInvestedCapital => averagePrice * quantity;
+  // MODIFIÉ : Capital investi (coût total d'acquisition en devise de COMPTE)
+  // Conforme à l'étape 1.3 de la feuille de route
+  double get totalInvestedCapital {
+    final buyTransactions =
+    transactions.where((tr) => tr.type == TransactionType.Buy).toList();
+    if (buyTransactions.isEmpty) return 0.0;
+
+    // Calcule le coût total d'acquisition dans la devise du COMPTE
+    double totalCostInAccountCurrency = 0.0;
+    for (final tr in buyTransactions) {
+      // tr.amount est négatif et représente (qty * price * rate) en devise de COMPTE
+      // tr.fees est déjà dans la devise du COMPTE
+      totalCostInAccountCurrency += (-tr.amount) + tr.fees;
+    }
+    return totalCostInAccountCurrency;
+  }
 
   double get profitAndLossPercentage {
-    if (averagePrice == 0) return 0.0;
-    return (currentPrice / averagePrice - 1);
+    if (totalInvestedCapital == 0) return 0.0;
+    return profitAndLoss / totalInvestedCapital;
   }
 
   Asset deepCopy() {
@@ -116,6 +155,8 @@ class Asset {
       type: type,
       currentPrice: currentPrice,
       estimatedAnnualYield: estimatedAnnualYield,
+      priceCurrency: priceCurrency, // <-- AJOUT
+      currentExchangeRate: currentExchangeRate, // <-- AJOUT
       transactions: List.from(transactions),
 
       // Champs de migration

@@ -21,6 +21,19 @@ class AddSavingsPlanScreen extends StatefulWidget {
   State<AddSavingsPlanScreen> createState() => _AddSavingsPlanScreenState();
 }
 
+// Classe pour grouper les actifs par institution et compte
+class _GroupedAsset {
+  final Asset asset;
+  final String institutionName;
+  final String accountName;
+
+  _GroupedAsset({
+    required this.asset,
+    required this.institutionName,
+    required this.accountName,
+  });
+}
+
 class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
   final _formKey = GlobalKey<FormState>();
   final _uuid = const Uuid();
@@ -30,20 +43,25 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
   late bool _isActive;
 
   Asset? _selectedAsset;
-  List<Asset> _availableAssets = [];
+  List<_GroupedAsset> _groupedAssets = [];
+
   @override
   void initState() {
     super.initState();
 
-    // Récupérer tous les actifs du portefeuille
+    // Récupérer tous les actifs du portefeuille avec leur contexte
     final portfolio =
         Provider.of<PortfolioProvider>(context, listen: false).activePortfolio;
     if (portfolio != null) {
-      // MODIFIÉ : Accès via getter (sera vide pour l'instant)
       for (var institution in portfolio.institutions) {
         for (var account in institution.accounts) {
-          _availableAssets
-              .addAll(account.assets); // 'assets' est maintenant un getter
+          for (var asset in account.assets) {
+            _groupedAssets.add(_GroupedAsset(
+              asset: asset,
+              institutionName: institution.name,
+              accountName: account.name,
+            ));
+          }
         }
       }
     }
@@ -57,19 +75,12 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
     _isActive = plan?.isActive ?? true;
 
     // Si en mode édition, trouver l'actif correspondant
-    if (plan != null) {
-      _selectedAsset = _availableAssets.firstWhere(
-        (asset) => asset.ticker == plan.targetTicker,
-        orElse: () => _availableAssets.isNotEmpty
-            ? _availableAssets.first
-            : Asset(
-                id: '',
-                name: 'Inconnu',
-                ticker: plan.targetTicker,
-                type: AssetType.Other, // <--- AJOUTEZ CETTE LIGNE
-                currentPrice: 0,
-              ),
+    if (plan != null && _groupedAssets.isNotEmpty) {
+      final grouped = _groupedAssets.firstWhere(
+            (g) => g.asset.ticker == plan.targetTicker,
+        orElse: () => _groupedAssets.first,
       );
+      _selectedAsset = grouped.asset;
     }
   }
 
@@ -174,7 +185,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                   prefixIcon: Icon(Icons.euro),
                 ),
                 keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                 ],
@@ -186,14 +197,13 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                   if (amount == null || amount <= 0) {
                     return 'Le montant doit être supérieur à 0';
                   }
-
                   return null;
                 },
               ),
               const SizedBox(height: 16),
 
               // Sélection de l'actif cible
-              if (_availableAssets.isEmpty)
+              if (_groupedAssets.isEmpty)
                 Card(
                   color: Colors.orange.shade50,
                   child: Padding(
@@ -230,23 +240,9 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                     prefixIcon: Icon(Icons.business_center_outlined),
                     helperText: 'Sélectionnez l\'actif dans lequel investir',
                   ),
-                  items: _availableAssets.map((asset) {
-                    // Récupérer l'ISIN depuis les métadonnées
-                    final provider =
-                        Provider.of<PortfolioProvider>(context, listen: false);
-                    final metadata = provider.allMetadata[asset.ticker];
-                    final isin = metadata?.isin;
-
-                    return DropdownMenuItem(
-                      value: asset,
-                      child: Text(
-                        // --- CORRECTION DE LA LIGNE ---
-                        '${asset.name} (${asset.ticker}) - ${(asset.estimatedAnnualYield * 100).toStringAsFixed(1)}%'
-                        '${isin != null && isin.isNotEmpty ? ' • ISIN: $isin' : ''}',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    );
-                  }).toList(), // <--- Assurez-vous que toList() est ici
+                  isExpanded: true,
+                  menuMaxHeight: 400,
+                  items: _buildDropdownItems(context),
                   onChanged: (asset) {
                     setState(() {
                       _selectedAsset = asset;
@@ -302,6 +298,24 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Localisation:',
+                                style: theme.textTheme.bodyMedium),
+                            Flexible(
+                              child: Text(
+                                _getAssetLocation(_selectedAsset!),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.right,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -350,5 +364,142 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
         ),
       ),
     );
+  }
+
+  // Construction des items du dropdown avec groupement par institution/compte
+  List<DropdownMenuItem<Asset>> _buildDropdownItems(BuildContext context) {
+    final provider = Provider.of<PortfolioProvider>(context, listen: false);
+    final theme = Theme.of(context);
+
+    // Grouper par institution puis par compte
+    final Map<String, Map<String, List<_GroupedAsset>>> grouped = {};
+
+    for (var groupedAsset in _groupedAssets) {
+      grouped.putIfAbsent(groupedAsset.institutionName, () => {});
+      grouped[groupedAsset.institutionName]!
+          .putIfAbsent(groupedAsset.accountName, () => []);
+      grouped[groupedAsset.institutionName]![groupedAsset.accountName]!
+          .add(groupedAsset);
+    }
+
+    final List<DropdownMenuItem<Asset>> items = [];
+
+    // Trier les institutions par nom
+    final sortedInstitutions = grouped.keys.toList()..sort();
+
+    for (var institutionName in sortedInstitutions) {
+      final accounts = grouped[institutionName]!;
+
+      // Header de l'institution (désactivé, non sélectionnable)
+      items.add(
+        DropdownMenuItem<Asset>(
+          enabled: false,
+          value: null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: Text(
+              institutionName,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Trier les comptes par nom
+      final sortedAccounts = accounts.keys.toList()..sort();
+
+      for (var accountName in sortedAccounts) {
+        final assetsInAccount = accounts[accountName]!;
+
+        // Sous-header du compte (désactivé, non sélectionnable)
+        items.add(
+          DropdownMenuItem<Asset>(
+            enabled: false,
+            value: null,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16.0, top: 4.0, bottom: 2.0),
+              child: Text(
+                '└ $accountName',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.secondary,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // Actifs du compte
+        for (var groupedAsset in assetsInAccount) {
+          final asset = groupedAsset.asset;
+          final metadata = provider.allMetadata[asset.ticker];
+          final isin = metadata?.isin;
+
+          items.add(
+            DropdownMenuItem<Asset>(
+              value: asset,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 32.0, right: 8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${asset.name} (${asset.ticker})',
+                            style: theme.textTheme.bodyMedium,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                          Text(
+                            '${(asset.estimatedAnnualYield * 100).toStringAsFixed(1)}%${isin != null && isin.isNotEmpty ? ' • ISIN: $isin' : ''}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+      }
+
+      // Séparateur entre institutions
+      if (institutionName != sortedInstitutions.last) {
+        items.add(
+          const DropdownMenuItem<Asset>(
+            enabled: false,
+            value: null,
+            child: Divider(height: 8),
+          ),
+        );
+      }
+    }
+
+    return items;
+  }
+
+  // Récupérer la localisation d'un actif
+  String _getAssetLocation(Asset asset) {
+    final grouped = _groupedAssets.firstWhere(
+          (g) => g.asset.ticker == asset.ticker,
+      orElse: () => _GroupedAsset(
+        asset: asset,
+        institutionName: 'Inconnu',
+        accountName: 'Inconnu',
+      ),
+    );
+    return '${grouped.institutionName} › ${grouped.accountName}';
   }
 }

@@ -2,7 +2,7 @@
 // REMPLACEZ LE FICHIER COMPLET
 
 import 'package:hive/hive.dart';
-import 'package:portefeuille/core/data/models/asset_type.dart';
+// SUPPRESSION DE L'IMPORT AssetType
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
 // N'oubliez pas l'import pour Uuid si vous l'utilisez ici,
@@ -52,7 +52,6 @@ class Portfolio {
   // CORRIGÉ : Formule correcte basée sur le capital investi
   double get profitAndLossPercentage {
     final capitalInvested = totalInvestedCapital;
-
     // Si aucun capital investi, pas de P/L
     if (capitalInvested == 0) {
       return 0.0;
@@ -68,7 +67,7 @@ class Portfolio {
       return 0.0;
     }
     final weightedYield = institutions.fold(0.0,
-        (sum, inst) => sum + (inst.totalValue * inst.estimatedAnnualYield));
+            (sum, inst) => sum + (inst.totalValue * inst.estimatedAnnualYield));
     return weightedYield / totalVal;
   }
 
@@ -81,37 +80,7 @@ class Portfolio {
     );
   }
 
-  // --- GETTER MODIFIÉ ---
-  Map<AssetType, double> get valueByAssetType {
-    final Map<AssetType, double> allocation = {};
-    double totalCash = 0.0; // <-- NOUVEAU
-
-    for (var inst in institutions) {
-      for (var acc in inst.accounts) {
-        // 1. Ajouter les liquidités du compte
-        totalCash += acc.cashBalance; // <-- NOUVEAU
-
-        // 2. Ajouter les actifs
-        for (var asset in acc.assets) {
-          allocation.update(
-            asset.type,
-            (value) => value + asset.totalValue,
-            ifAbsent: () => asset.totalValue,
-          );
-        }
-      }
-    }
-
-    // 3. Ajouter le total des liquidités à la map
-    if (totalCash > 0) {
-      allocation.update(
-        AssetType.Cash,
-        (value) => value + totalCash,
-        ifAbsent: () => totalCash,
-      );
-    }
-    // --- FIN MODIFICATION ---
-
-    return allocation;
-  }
+// --- GETTER 'valueByAssetType' SUPPRIMÉ ---
+// Cette logique est maintenant gérée dans le PortfolioProvider
+// pour permettre la conversion des devises.
 }

@@ -1,23 +1,27 @@
 // lib/features/03_overview/ui/overview_tab.dart
+// REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+// NOUVEAUX IMPORTS
 import '../../00_app/providers/portfolio_provider.dart';
+// FIN NOUVEAUX IMPORTS
 import 'widgets/portfolio_header.dart';
 import 'widgets/allocation_chart.dart';
 import 'widgets/asset_type_allocation_chart.dart';
 import 'widgets/sync_alerts_card.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_institution_screen.dart';
-import 'package:portefeuille/core/utils/currency_formatter.dart';
-import 'package:portefeuille/features/03_overview/ui/widgets/account_tile.dart';
-import 'package:portefeuille/features/07_management/ui/screens/add_account_screen.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
+import 'package:portefeuille/features/03_overview/ui/widgets/institution_tile.dart';
+// <-- NOUVEL IMPORT
 
 class OverviewTab extends StatelessWidget {
   const OverviewTab({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Note : On n'utilise plus baseCurrency d'ici, on le lit du provider
+
     return Consumer<PortfolioProvider>(
       builder: (context, portfolioProvider, child) {
         final portfolio = portfolioProvider.activePortfolio;
@@ -28,6 +32,8 @@ class OverviewTab extends StatelessWidget {
 
         final institutions = portfolio.institutions;
         final theme = Theme.of(context);
+
+        // La devise de base vient maintenant du provider (elle est synchronisée)
 
         return CustomScrollView(
           slivers: [
@@ -45,10 +51,10 @@ class OverviewTab extends StatelessWidget {
               padding: const EdgeInsets.all(16.0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  // Header du portfolio
+                  // Header du portfolio (ne prend plus de paramètre)
                   AppTheme.buildStyledCard(
                     context: context,
-                    child: PortfolioHeader(portfolio: portfolio),
+                    child: const PortfolioHeader(), // <-- MODIFIÉ
                   ),
                   const SizedBox(height: 12),
 
@@ -62,6 +68,7 @@ class OverviewTab extends StatelessWidget {
                             Expanded(
                               child: AppTheme.buildStyledCard(
                                 context: context,
+                                // TODO: AllocationChart doit aussi être mis à jour
                                 child: AllocationChart(portfolio: portfolio),
                               ),
                             ),
@@ -70,8 +77,13 @@ class OverviewTab extends StatelessWidget {
                               child: AppTheme.buildStyledCard(
                                 context: context,
                                 child: AssetTypeAllocationChart(
-                                  allocationData: portfolio.valueByAssetType,
-                                  totalValue: portfolio.totalValue,
+                                  // ▼▼▼ MODIFIÉ ▼▼▼
+                                  // Utilise le getter du provider (données converties)
+                                  allocationData: portfolioProvider
+                                      .aggregatedValueByAssetType,
+                                  totalValue: portfolioProvider
+                                      .activePortfolioTotalValue,
+                                  // ▲▲▲ FIN MODIFICATION ▲▲▲
                                 ),
                               ),
                             ),
@@ -88,8 +100,12 @@ class OverviewTab extends StatelessWidget {
                           AppTheme.buildStyledCard(
                             context: context,
                             child: AssetTypeAllocationChart(
-                              allocationData: portfolio.valueByAssetType,
-                              totalValue: portfolio.totalValue,
+                              // ▼▼▼ MODIFIÉ ▼▼▼
+                              allocationData: portfolioProvider
+                                  .aggregatedValueByAssetType,
+                              totalValue: portfolioProvider
+                                  .activePortfolioTotalValue,
+                              // ▲▲▲ FIN MODIFICATION ▲▲▲
                             ),
                           ),
                         ],
@@ -116,7 +132,7 @@ class OverviewTab extends StatelessWidget {
                                 context: context,
                                 isScrollControlled: true,
                                 builder: (context) =>
-                                    const AddInstitutionScreen(),
+                                const AddInstitutionScreen(),
                               );
                             },
                           ),
@@ -141,81 +157,15 @@ class OverviewTab extends StatelessWidget {
                             ),
                           )
                         else
+                        // ▼▼▼ MODIFIÉ : Utilisation du nouveau widget InstitutionTile ▼▼▼
                           ...institutions.asMap().entries.map((entry) {
                             final index = entry.key;
                             final institution = entry.value;
                             return Column(
                               children: [
                                 if (index > 0) const SizedBox(height: 12),
-                                AppTheme.buildInfoContainer(
-                                  context: context,
-                                  padding: EdgeInsets.zero,
-                                  child: Theme(
-                                    data: theme.copyWith(
-                                      dividerColor: Colors.transparent,
-                                    ),
-                                    child: ExpansionTile(
-                                      tilePadding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 4,
-                                      ),
-                                      childrenPadding: EdgeInsets.zero,
-                                      title: Text(
-                                        institution.name,
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            CurrencyFormatter.format(
-                                                institution.totalValue),
-                                            style: theme.textTheme.titleMedium
-                                                ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          const Icon(Icons.expand_more),
-                                        ],
-                                      ),
-                                      children: [
-                                        Divider(height: 1, indent: 16),
-                                        ...institution.accounts.map((account) {
-                                          return AccountTile(account: account);
-                                        }),
-                                        ListTile(
-                                          leading: Icon(
-                                            Icons.add,
-                                            color: theme.colorScheme.primary
-                                                .withOpacity(0.6),
-                                          ),
-                                          title: Text(
-                                            'Ajouter un compte',
-                                            style: TextStyle(
-                                              color: theme.colorScheme.primary
-                                                  .withOpacity(0.6),
-                                            ),
-                                          ),
-                                          onTap: () {
-                                            showModalBottomSheet(
-                                              context: context,
-                                              isScrollControlled: true,
-                                              builder: (context) =>
-                                                  AddAccountScreen(
-                                                institutionId: institution.id,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                                // On passe juste le modèle Institution
+                                InstitutionTile(institution: institution),
                               ],
                             );
                           }),
@@ -229,6 +179,7 @@ class OverviewTab extends StatelessWidget {
                     context: context,
                     child: const SyncAlertsCard(),
                   ),
+
                   const SizedBox(height: 32),
                 ]),
               ),

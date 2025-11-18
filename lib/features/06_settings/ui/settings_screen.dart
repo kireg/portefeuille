@@ -1,4 +1,5 @@
 // lib/features/06_settings/ui/settings_screen.dart
+// REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -33,14 +34,16 @@ class SettingsScreen extends StatelessWidget {
                 delegate: SliverChildListDelegate([
                   _AppearanceCard(),
                   const SizedBox(height: 12),
+                  // MODIFIÉ : Nouvelle carte pour les réglages généraux
+                  _GeneralSettingsCard(),
+                  const SizedBox(height: 12),
                   _PortfolioCard(),
                   const SizedBox(height: 12),
                   _OnlineModeCard(),
                   const SizedBox(height: 12),
                   _SyncLogsCard(),
                   const SizedBox(height: 12),
-                  _UserLevelCard(),
-                  const SizedBox(height: 12),
+                  // SUPPRIMÉ : _UserLevelCard (fusionné dans _GeneralSettingsCard)
                   _DangerZoneCard(),
                   const SizedBox(height: 32),
                 ]),
@@ -67,7 +70,6 @@ class _AppearanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settingsProvider = context.watch<SettingsProvider>();
-
     return AppTheme.buildStyledCard(
       context: context,
       child: Column(
@@ -100,12 +102,12 @@ class _AppearanceCard extends StatelessWidget {
                     ),
                     boxShadow: isSelected
                         ? [
-                            BoxShadow(
-                              color: color.withOpacity(0.4),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            )
-                          ]
+                      BoxShadow(
+                        color: color.withOpacity(0.4),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      )
+                    ]
                         : [],
                   ),
                   child: isSelected
@@ -114,6 +116,77 @@ class _AppearanceCard extends StatelessWidget {
                 ),
               );
             }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// === NOUVELLE CARTE : Préférences Générales ===
+class _GeneralSettingsCard extends StatelessWidget {
+  // Liste des devises de base supportées
+  final List<String> _baseCurrencies = const ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CAD'];
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsProvider = context.watch<SettingsProvider>();
+    final theme = Theme.of(context);
+
+    return AppTheme.buildStyledCard(
+      context: context,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppTheme.buildSectionHeader(
+            context: context,
+            icon: Icons.tune_outlined,
+            title: 'Préférences Générales',
+          ),
+          const SizedBox(height: 8),
+
+          // 1. Sélection de la devise de base
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.currency_exchange_outlined),
+            title: const Text('Devise de Base'),
+            subtitle: const Text('Devise principale pour les totaux'),
+            trailing: DropdownButton<String>(
+              value: settingsProvider.baseCurrency,
+              underline: const SizedBox(),
+              onChanged: (val) {
+                if (val != null) {
+                  settingsProvider.setBaseCurrency(val);
+                }
+              },
+              items: _baseCurrencies.map((currency) {
+                return DropdownMenuItem(
+                  value: currency,
+                  child: Text(currency),
+                );
+              }).toList(),
+            ),
+          ),
+
+          // 2. Sélection du niveau utilisateur
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.person_outline),
+            title: const Text('Niveau d\'utilisateur'),
+            subtitle: const Text('Affiche des aides contextuelles'),
+            trailing: DropdownButton<UserLevel>(
+              value: settingsProvider.userLevel,
+              underline: const SizedBox(),
+              onChanged: (val) {
+                if (val != null) settingsProvider.setUserLevel(val);
+              },
+              items: UserLevel.values.map((level) {
+                return DropdownMenuItem(
+                  value: level,
+                  child: Text(level.toString().split('.').last),
+                );
+              }).toList(),
+            ),
           ),
         ],
       ),
@@ -165,9 +238,9 @@ class _PortfolioCard extends StatelessWidget {
                         portfolioProvider.setActivePortfolio(portfolio.id),
                     itemBuilder: (context) => portfolioProvider.portfolios
                         .map((p) => PopupMenuItem(
-                              value: p,
-                              child: Text(p.name),
-                            ))
+                      value: p,
+                      child: Text(p.name),
+                    ))
                         .toList(),
                   ),
               ],
@@ -200,7 +273,7 @@ class _PortfolioCard extends StatelessWidget {
                 onPressed: portfolioProvider.activePortfolio == null
                     ? null
                     : () => portfolioProvider
-                        .deletePortfolio(portfolioProvider.activePortfolio!.id),
+                    .deletePortfolio(portfolioProvider.activePortfolio!.id),
               ),
             ],
           ),
@@ -211,7 +284,7 @@ class _PortfolioCard extends StatelessWidget {
 
   void _showRenameDialog(BuildContext context, PortfolioProvider provider) {
     final nameController =
-        TextEditingController(text: provider.activePortfolio?.name ?? '');
+    TextEditingController(text: provider.activePortfolio?.name ?? '');
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -301,7 +374,6 @@ class _PortfolioCard extends StatelessWidget {
 // ============================================================================
 // CARD: LOGS DE SYNCHRONISATION
 // ============================================================================
-
 class _SyncLogsCard extends StatelessWidget {
   const _SyncLogsCard();
 
@@ -309,7 +381,6 @@ class _SyncLogsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final portfolioProvider = context.watch<PortfolioProvider>();
-
     return AppTheme.buildStyledCard(
       context: context,
       child: Column(
@@ -333,8 +404,8 @@ class _SyncLogsCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   '• Téléchargez l\'historique complet en CSV\n'
-                  '• Analysez les erreurs récurrentes\n'
-                  '• Maximum 1000 entrées conservées',
+                      '• Analysez les erreurs récurrentes\n'
+                      '• Maximum 1000 entrées conservées',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -414,12 +485,12 @@ class _SyncLogsCard extends StatelessWidget {
   }
 
   Widget _buildStatColumn(
-    BuildContext context,
-    String label,
-    int value,
-    IconData icon,
-    Color color,
-  ) {
+      BuildContext context,
+      String label,
+      int value,
+      IconData icon,
+      Color color,
+      ) {
     final theme = Theme.of(context);
     return Column(
       children: [
@@ -454,12 +525,11 @@ class _SyncLogsCard extends StatelessWidget {
   }
 
   Future<void> _downloadLogs(
-    BuildContext context,
-    PortfolioProvider provider,
-  ) async {
+      BuildContext context,
+      PortfolioProvider provider,
+      ) async {
     try {
       final logs = provider.getAllSyncLogs();
-
       if (logs.isEmpty) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -473,7 +543,6 @@ class _SyncLogsCard extends StatelessWidget {
       }
 
       final filePath = await SyncLogExportService.saveLogsToFile(logs);
-
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -499,16 +568,16 @@ class _SyncLogsCard extends StatelessWidget {
   }
 
   Future<void> _clearLogs(
-    BuildContext context,
-    PortfolioProvider provider,
-  ) async {
+      BuildContext context,
+      PortfolioProvider provider,
+      ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Effacer les logs ?'),
         content: const Text(
           'Tous les logs de synchronisation seront définitivement supprimés. '
-          'Cette action est irréversible.',
+              'Cette action est irréversible.',
         ),
         actions: [
           TextButton(
@@ -572,7 +641,7 @@ class _OnlineModeCardState extends State<_OnlineModeCard> {
           SnackBar(
             content: Text(key.isEmpty ? "Clé supprimée" : "Clé sauvegardée"),
             backgroundColor:
-                key.isEmpty ? Colors.orange[800] : Colors.green[600],
+            key.isEmpty ? Colors.orange[800] : Colors.green[600],
           ),
         );
       }
@@ -684,48 +753,11 @@ class _OnlineModeCardState extends State<_OnlineModeCard> {
   }
 }
 
-// === NIVEAU UTILISATEUR ===
-class _UserLevelCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final settingsProvider = context.watch<SettingsProvider>();
-
-    return AppTheme.buildStyledCard(
-      context: context,
-      child: Row(
-        children: [
-          Icon(Icons.person_outline,
-              color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text('Niveau d\'utilisateur',
-                style: Theme.of(context).textTheme.titleLarge),
-          ),
-          DropdownButton<UserLevel>(
-            value: settingsProvider.userLevel,
-            underline: const SizedBox(),
-            onChanged: (val) {
-              if (val != null) settingsProvider.setUserLevel(val);
-            },
-            items: UserLevel.values.map((level) {
-              return DropdownMenuItem(
-                value: level,
-                child: Text(level.toString().split('.').last),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // === ZONE DANGER ===
 class _DangerZoneCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Card(
       elevation: 0,
       color: theme.colorScheme.errorContainer.withOpacity(0.1),
@@ -790,7 +822,7 @@ class _DangerZoneCard extends StatelessWidget {
                   .resetAllData();
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const LaunchScreen()),
-                (_) => false,
+                    (_) => false,
               );
             },
           ),

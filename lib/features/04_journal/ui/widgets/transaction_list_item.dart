@@ -1,5 +1,5 @@
 // lib/features/04_journal/ui/widgets/transaction_list_item.dart
-// NOUVEAU FICHIER
+// REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +10,8 @@ import 'package:portefeuille/core/utils/currency_formatter.dart';
 class TransactionListItem extends StatelessWidget {
   final Transaction transaction;
   final String accountName;
+  // NOUVEAU : La devise du compte est requise
+  final String accountCurrency;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
 
@@ -17,6 +19,7 @@ class TransactionListItem extends StatelessWidget {
     super.key,
     required this.transaction,
     required this.accountName,
+    required this.accountCurrency, // NOUVEAU
     required this.onDelete,
     required this.onEdit,
   });
@@ -62,11 +65,14 @@ class TransactionListItem extends StatelessWidget {
   }
 
   // Helper pour obtenir le sous-titre (détails)
+  // MODIFIÉ : Utilise la devise de l'actif (priceCurrency)
   String _getSubtitle(Transaction tr) {
     if (tr.type == TransactionType.Buy || tr.type == TransactionType.Sell) {
       final qty = tr.quantity?.toStringAsFixed(4) ?? 'N/A';
+      // Utilise la devise de l'actif (ex: USD) ou la devise du compte par défaut
+      final priceCurrency = tr.priceCurrency ?? accountCurrency;
       final price = (tr.price != null)
-          ? CurrencyFormatter.format(tr.price!)
+          ? CurrencyFormatter.format(tr.price!, priceCurrency)
           : 'N/A';
       return "$qty @ $price";
     }
@@ -82,7 +88,8 @@ class TransactionListItem extends StatelessWidget {
 
     // Le montant total inclut déjà le signe (+/-) et les frais
     final totalAmount = transaction.totalAmount;
-    final color = totalAmount >= 0 ? Colors.green.shade400 : theme.colorScheme.onSurface;
+    final color =
+    totalAmount >= 0 ? Colors.green.shade400 : theme.colorScheme.onSurface;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -107,7 +114,8 @@ class TransactionListItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      CurrencyFormatter.format(totalAmount),
+                      // MODIFIÉ : Utilise la devise du COMPTE
+                      CurrencyFormatter.format(totalAmount, accountCurrency),
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: color,
                         fontWeight: FontWeight.bold,
@@ -138,9 +146,11 @@ class TransactionListItem extends StatelessWidget {
                     onTap: onDelete,
                     child: Row(
                       children: [
-                        Icon(Icons.delete_outline, size: 20, color: theme.colorScheme.error),
+                        Icon(Icons.delete_outline,
+                            size: 20, color: theme.colorScheme.error),
                         SizedBox(width: 8),
-                        Text('Supprimer', style: TextStyle(color: theme.colorScheme.error)),
+                        Text('Supprimer',
+                            style: TextStyle(color: theme.colorScheme.error)),
                       ],
                     ),
                   ),

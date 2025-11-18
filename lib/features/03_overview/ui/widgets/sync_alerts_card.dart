@@ -3,16 +3,16 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
+// NOUVEL IMPORT
+import 'package:portefeuille/features/00_app/models/background_activity.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:provider/provider.dart';
 
 class SyncAlertsCard extends StatelessWidget {
   const SyncAlertsCard({super.key});
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Consumer<PortfolioProvider>(
       builder: (context, provider, child) {
         final metadata = provider.allMetadata;
@@ -66,7 +66,7 @@ class SyncAlertsCard extends StatelessWidget {
                   ),
                   subtitle: const Text(
                     'Ces actifs n\'ont pas encore été synchronisés avec une API de prix. '
-                    'Lancez une synchronisation pour tenter de récupérer les prix automatiquement.',
+                        'Lancez une synchronisation pour tenter de récupérer les prix automatiquement.',
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.help_outline),
@@ -97,7 +97,7 @@ class SyncAlertsCard extends StatelessWidget {
                   ),
                   subtitle: const Text(
                     'Ces actifs (fonds en euros, produits non cotés) ne peuvent pas être synchronisés automatiquement. '
-                    'Vous devez saisir le prix manuellement.',
+                        'Vous devez saisir le prix manuellement.',
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.help_outline),
@@ -173,17 +173,17 @@ class SyncAlertsCard extends StatelessWidget {
                               const SizedBox(height: 8),
                               ...explanation.solutions
                                   .map((solution) => Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 4.0),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text('• '),
-                                            Expanded(child: Text(solution)),
-                                          ],
-                                        ),
-                                      )),
+                                padding:
+                                const EdgeInsets.only(bottom: 4.0),
+                                child: Row(
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('• '),
+                                    Expanded(child: Text(solution)),
+                                  ],
+                                ),
+                              )),
                               if (meta.syncErrorMessage != null) ...[
                                 const SizedBox(height: 12),
                                 Text(
@@ -217,26 +217,30 @@ class SyncAlertsCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: provider.isSyncing
+                // --- MODIFIÉ : Utilise le nouveau getter ---
+                onPressed: provider.isProcessingInBackground
                     ? null
                     : () {
-                        provider.synchroniserLesPrix();
-                      },
-                icon: provider.isSyncing
+                  provider.synchroniserLesPrix();
+                },
+                icon: provider.isProcessingInBackground
                     ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
                     : const Icon(Icons.sync),
                 label: Text(
-                  provider.isSyncing
-                      ? 'Synchronisation en cours...'
+                  provider.activity is Syncing
+                      ? 'Synchronisation...'
+                      : provider.activity is Recalculating
+                      ? 'Recalcul...'
                       : 'Resynchroniser tout',
                 ),
+                // --- FIN MODIFICATION ---
               ),
             ),
           ],
@@ -266,7 +270,7 @@ class SyncAlertsCard extends StatelessWidget {
       return _ErrorExplanation(
         shortMessage: 'Erreur inconnue',
         detailedExplanation:
-            'Une erreur s\'est produite mais aucun détail n\'est disponible.',
+        'Une erreur s\'est produite mais aucun détail n\'est disponible.',
         solutions: ['Réessayez la synchronisation'],
       );
     }
@@ -281,7 +285,7 @@ class SyncAlertsCard extends StatelessWidget {
       return _ErrorExplanation(
         shortMessage: 'Problème de connexion Internet',
         detailedExplanation:
-            'L\'application n\'a pas pu se connecter aux serveurs de données financières. '
+        'L\'application n\'a pas pu se connecter aux serveurs de données financières. '
             'Cela peut être dû à un problème de connexion Internet ou à une indisponibilité temporaire du service.',
         solutions: [
           'Vérifiez votre connexion Internet',
@@ -298,7 +302,7 @@ class SyncAlertsCard extends StatelessWidget {
       return _ErrorExplanation(
         shortMessage: 'Actif introuvable dans les bases de données',
         detailedExplanation:
-            'Le ticker (symbole boursier) de cet actif n\'existe pas dans les bases de données des APIs utilisées '
+        'Le ticker (symbole boursier) de cet actif n\'existe pas dans les bases de données des APIs utilisées '
             '(Yahoo Finance, FMP). Cela arrive souvent pour :\n'
             '• Les fonds en euros (pas cotés en bourse)\n'
             '• Les actifs avec un ticker incorrect\n'
@@ -318,7 +322,7 @@ class SyncAlertsCard extends StatelessWidget {
       return _ErrorExplanation(
         shortMessage: 'Limite d\'utilisation de l\'API atteinte',
         detailedExplanation:
-            'Vous avez atteint la limite quotidienne de requêtes autorisées par l\'API gratuite. '
+        'Vous avez atteint la limite quotidienne de requêtes autorisées par l\'API gratuite. '
             'Les APIs gratuites ont généralement une limite de 250 à 500 requêtes par jour.',
         solutions: [
           'Attendez demain pour que le quota se réinitialise',
@@ -332,7 +336,7 @@ class SyncAlertsCard extends StatelessWidget {
     return _ErrorExplanation(
       shortMessage: 'Erreur lors de la récupération des données',
       detailedExplanation:
-          'Une erreur technique s\'est produite lors de la communication avec l\'API de données financières. '
+      'Une erreur technique s\'est produite lors de la communication avec l\'API de données financières. '
           'Consultez l\'erreur technique ci-dessous pour plus de détails.',
       solutions: [
         'Réessayez la synchronisation',
@@ -345,7 +349,6 @@ class SyncAlertsCard extends StatelessWidget {
   /// Affiche un dialog expliquant le fonctionnement de la synchronisation
   void _showSyncExplanationDialog(BuildContext context) {
     final theme = Theme.of(context);
-
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -403,9 +406,9 @@ class SyncAlertsCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 '1. FMP (Financial Modeling Prep) - si clé API configurée\n'
-                '2. Yahoo Finance - API de secours gratuite\n\n'
-                'Note : Certains actifs (fonds en euros, produits non cotés) '
-                'ne peuvent pas être synchronisés automatiquement.',
+                    '2. Yahoo Finance - API de secours gratuite\n\n'
+                    'Note : Certains actifs (fonds en euros, produits non cotés) '
+                    'ne peuvent pas être synchronisés automatiquement.',
                 style: theme.textTheme.bodyMedium,
               ),
             ],
@@ -424,7 +427,6 @@ class SyncAlertsCard extends StatelessWidget {
   /// Dialog expliquant pourquoi certains actifs ne peuvent pas être synchronisés
   void _showUnsyncableExplanationDialog(BuildContext context) {
     final theme = Theme.of(context);
-
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -443,17 +445,17 @@ class SyncAlertsCard extends StatelessWidget {
               const SizedBox(height: 12),
               const Text(
                 'Les APIs de données financières (Yahoo Finance, FMP) ne contiennent que des actifs '
-                'cotés publiquement sur les marchés boursiers.\n\n'
-                'Les actifs suivants ne sont PAS synchronisables :\n'
-                '• Fonds en euros (contrats d\'assurance-vie)\n'
-                '• Produits structurés non cotés\n'
-                '• Parts de SCPI\n'
-                '• Comptes à terme\n'
-                '• Tout actif sans ticker boursier public\n\n'
-                'Pour ces actifs, vous devez :\n'
-                '1. Consulter votre relevé bancaire/d\'assurance\n'
-                '2. Saisir le prix manuellement dans l\'application\n'
-                '3. Le prix sera marqué comme "Manuel" (✏️) et ne sera jamais écrasé automatiquement',
+                    'cotés publiquement sur les marchés boursiers.\n\n'
+                    'Les actifs suivants ne sont PAS synchronisables :\n'
+                    '• Fonds en euros (contrats d\'assurance-vie)\n'
+                    '• Produits structurés non cotés\n'
+                    '• Parts de SCPI\n'
+                    '• Comptes à terme\n'
+                    '• Tout actif sans ticker boursier public\n\n'
+                    'Pour ces actifs, vous devez :\n'
+                    '1. Consulter votre relevé bancaire/d\'assurance\n'
+                    '2. Saisir le prix manuellement dans l\'application\n'
+                    '3. Le prix sera marqué comme "Manuel" (✏️) et ne sera jamais écrasé automatiquement',
               ),
               const SizedBox(height: 16),
               Text(
@@ -465,9 +467,9 @@ class SyncAlertsCard extends StatelessWidget {
               const SizedBox(height: 8),
               const Text(
                 '1. Allez dans l\'onglet "Journal" → "Synthèse Actifs"\n'
-                '2. Cliquez sur le prix actuel de l\'actif\n'
-                '3. Saisissez le nouveau prix\n'
-                '4. Validez : l\'actif sera marqué comme "Manuel"',
+                    '2. Cliquez sur le prix actuel de l\'actif\n'
+                    '3. Saisissez le nouveau prix\n'
+                    '4. Validez : l\'actif sera marqué comme "Manuel"',
               ),
             ],
           ),
@@ -512,7 +514,6 @@ class _ErrorExplanation {
   final String shortMessage;
   final String detailedExplanation;
   final List<String> solutions;
-
   _ErrorExplanation({
     required this.shortMessage,
     required this.detailedExplanation,

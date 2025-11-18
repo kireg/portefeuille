@@ -284,8 +284,12 @@ class ApiService {
   /// Exemple : _fetchExchangeRateFromFrankfurter('USD', 'EUR') → 0.92
   Future<double?> _fetchExchangeRateFromFrankfurter(
       String from, String to) async {
+    final String baseUrl = kIsWeb
+        ? 'https://corsproxy.io/?https://api.frankfurter.app'
+        : 'https://api.frankfurter.app';
+
     final url =
-        Uri.parse('https://api.frankfurter.app/latest?from=$from&to=$to');
+    Uri.parse('$baseUrl/latest?from=$from&to=$to');
 
     try {
       debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -339,9 +343,9 @@ class ApiService {
 
   /// Récupère le taux de change entre deux devises.
   /// Utilise l'API Frankfurter (données BCE) avec mise en cache de 24h
+  /// MODIFIÉ : Propage une exception si le taux n'est pas trouvé.
   Future<double> getExchangeRate(String from, String to) async {
     debugPrint("\n🔄 getExchangeRate appelé: $from → $to");
-
     // Si les devises sont identiques, le taux est 1
     if (from == to) {
       debugPrint("✅ Devises identiques ($from = $to), taux = 1.0");
@@ -364,10 +368,8 @@ class ApiService {
     }
 
     debugPrint("🌐 CACHE MISS: Appel API Frankfurter...");
-
     // Appeler Frankfurter
     final rate = await _fetchExchangeRateFromFrankfurter(from, to);
-
     if (rate != null) {
       // Mettre en cache
       _exchangeRateCache[cacheKey] = rate;
@@ -376,10 +378,11 @@ class ApiService {
       return rate;
     }
 
-    // Fallback : retourner 1.0 si échec (évite les crashs)
-    debugPrint("⚠️ FALLBACK: Taux $from→$to = 1.0 (Frankfurter indisponible)");
-    debugPrint("💡 Les conversions ne seront pas exactes!");
-    return 1.0;
+    // --- CORRECTION ---
+    // Au lieu de retourner 1.0, on propage l'erreur.
+    debugPrint("❌ ERREUR CRITIQUE: Taux $from→$to indisponible. Propagation de l'erreur.");
+    throw Exception("Impossible d'obtenir le taux de change pour $from→$to");
+    // --- FIN CORRECTION ---
   }
 
   /// Recherche un ticker ou un ISIN

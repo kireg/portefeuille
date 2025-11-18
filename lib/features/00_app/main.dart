@@ -79,6 +79,7 @@ class MyApp extends StatelessWidget {
   final PortfolioRepository repository;
 
   const MyApp({super.key, required this.repository});
+
   @override
   Widget build(BuildContext context) {
     // Le MultiProvider reste inchangé
@@ -95,15 +96,31 @@ class MyApp extends StatelessWidget {
             repository: repository,
             apiService: context.read<ApiService>(),
           ),
+          // ▼▼▼ CORRECTION DE LA LOGIQUE 'UPDATE' ▼▼▼
           update: (context, settingsProvider, portfolioProvider) {
+            debugPrint(
+                "--- ⚡️ ChangeNotifierProxyProvider: UPDATE ⚡️ ---");
+            debugPrint(
+                "  -> Nouvelle devise injectée: ${settingsProvider.baseCurrency}");
+
             if (portfolioProvider == null) {
-              return PortfolioProvider(
+              // Cas de la création initiale
+              debugPrint("  -> PortfolioProvider est créé.");
+              final newProvider = PortfolioProvider(
                   repository: repository,
                   apiService: context.read<ApiService>());
+              newProvider.updateSettings(settingsProvider); // Set initial
+              return newProvider;
             }
+
+            // Appel SYSTÉMATIQUE de updateSettings.
+            // PortfolioProvider gérera lui-même s'il doit y avoir un recalcul.
+            debugPrint(
+                "  -> ❗️ Appel de updateSettings (le provider va comparer les devises)");
             portfolioProvider.updateSettings(settingsProvider);
             return portfolioProvider;
           },
+          // ▲▲▲ FIN CORRECTION ▲▲▲
         ),
       ],
       child: Consumer<SettingsProvider>(
