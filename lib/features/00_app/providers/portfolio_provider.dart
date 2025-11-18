@@ -122,8 +122,12 @@ class PortfolioProvider extends ChangeNotifier {
     debugPrint(
         "🔄 [Provider] updateSettings: Nouvelle devise = ${settingsProvider.baseCurrency}");
 
-    final currencyChanged = (_settingsProvider != null &&
-        _settingsProvider!.baseCurrency != settingsProvider.baseCurrency);
+    final oldCurrency = _settingsProvider?.baseCurrency;
+
+    // ✅ COMPARER AUSSI AVEC LA DEVISE ACTUELLEMENT AFFICHÉE
+    final currencyChanged = (oldCurrency != null &&
+        oldCurrency != settingsProvider.baseCurrency) ||
+        (_aggregatedData.baseCurrency != settingsProvider.baseCurrency);
 
     final wasOffline = _settingsProvider?.isOnlineMode ?? false;
     final wasNull = _settingsProvider == null;
@@ -131,9 +135,11 @@ class PortfolioProvider extends ChangeNotifier {
     _settingsProvider = settingsProvider;
 
     if (currencyChanged && !_isLoading) {
-      debugPrint("  -> 🚀 Changement de devise détecté");
+      debugPrint("  -> 🚀 Changement de devise détecté: ${_aggregatedData.baseCurrency} → ${settingsProvider.baseCurrency}");
       _setActivity(const Recalculating());
-      _recalculateAggregatedData();
+      notifyListeners();
+      Future.microtask(() => _recalculateAggregatedData());
+      return;
     }
 
     if (_isFirstSettingsUpdate) {
@@ -253,6 +259,8 @@ class PortfolioProvider extends ChangeNotifier {
     debugPrint("--- 🔄 DÉBUT _recalculateAggregatedData ---");
 
     final targetCurrency = _settingsProvider?.baseCurrency ?? 'EUR';
+    debugPrint("  -> targetCurrency: $targetCurrency");
+    debugPrint("  -> activePortfolio: ${_activePortfolio?.name}");
 
     try {
       _aggregatedData = await _calculationService.calculate(
@@ -264,8 +272,10 @@ class PortfolioProvider extends ChangeNotifier {
           "  -> ✅ Calcul OK. Valeur totale: ${_aggregatedData.totalValue} $targetCurrency");
     } catch (e) {
       debugPrint("  -> ❌ ERREUR CALCUL: $e");
+      debugPrint("  -> StackTrace: ${StackTrace.current}"); // ✅ AJOUTER
     } finally {
       _setActivity(const Idle());
+      debugPrint("  -> 📢 notifyListeners() appelé"); // ✅ AJOUTER
       notifyListeners();
       debugPrint("--- ℹ️ FIN _recalculateAggregatedData ---");
     }
