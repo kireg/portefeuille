@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
-import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:provider/provider.dart';

@@ -1,7 +1,6 @@
 // lib/features/00_app/services/sync_service.dart
 
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/core/data/models/sync_log.dart';

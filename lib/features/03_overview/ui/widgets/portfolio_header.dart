@@ -23,7 +23,7 @@ class PortfolioHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final provider = context.watch<PortfolioProvider>();
-    final settings = context.watch<SettingsProvider>();
+    context.watch<SettingsProvider>();
     // La devise que l'on VEUT afficher
     // Elle vient du provider, qui la stocke dans _aggregatedData
     final baseCurrency = provider.currentBaseCurrency;

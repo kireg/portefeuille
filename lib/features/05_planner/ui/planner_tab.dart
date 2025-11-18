@@ -1,17 +1,12 @@
 // lib/features/05_planner/ui/planner_tab.dart
 // REMPLACEZ LE FICHIER COMPLET
 
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
-import '../../../core/data/models/asset.dart';
 import '../../00_app/providers/portfolio_provider.dart';
 // NOUVEL IMPORT
-import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 // FIN NOUVEL IMPORT
 import '../../07_management/ui/screens/add_savings_plan_screen.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';

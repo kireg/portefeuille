@@ -131,7 +131,7 @@ class _GeneralSettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settingsProvider = context.watch<SettingsProvider>();
-    final theme = Theme.of(context);
+    Theme.of(context);
 
     return AppTheme.buildStyledCard(
       context: context,

@@ -9,7 +9,6 @@ import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
-import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
 // --- (Le modèle AggregatedAsset a été déplacé dans core/data/models) ---

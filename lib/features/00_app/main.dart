@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart' hide AssetMetadata;
 
 // Core
 import 'package:portefeuille/core/data/models/portfolio.dart';
@@ -37,6 +38,9 @@ import 'package:portefeuille/core/ui/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. ACTIVATION DU MODE IMMERSIF
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
   // 1. Initialiser Hive
   await Hive.initFlutter();
@@ -96,7 +100,7 @@ class MyApp extends StatelessWidget {
             repository: repository,
             apiService: context.read<ApiService>(),
           ),
-          // ▼▼▼ CORRECTION DE LA LOGIQUE 'UPDATE' ▼▼▼
+
           update: (context, settingsProvider, portfolioProvider) {
             debugPrint(
                 "--- ⚡️ ChangeNotifierProxyProvider: UPDATE ⚡️ ---");
@@ -120,7 +124,7 @@ class MyApp extends StatelessWidget {
             portfolioProvider.updateSettings(settingsProvider);
             return portfolioProvider;
           },
-          // ▲▲▲ FIN CORRECTION ▲▲▲
+
         ),
       ],
       child: Consumer<SettingsProvider>(

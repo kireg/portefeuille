@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/account.dart';
-import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
