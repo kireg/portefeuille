@@ -1,7 +1,7 @@
 // lib/features/00_app/providers/settings_provider.dart
 
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:portefeuille/core/data/repositories/settings_repository.dart';
 import 'package:portefeuille/core/utils/constants.dart';
 import 'package:portefeuille/core/data/abstractions/i_settings.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -26,7 +26,7 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
   static const int _defaultAppColorValue = 0xFF00bcd4;
   static const String _defaultBaseCurrency = 'EUR';
 
-  late final Box _settingsBox;
+  late final SettingsRepository _settingsRepo;
   late final FlutterSecureStorage _secureStorage;
 
   // État
@@ -55,8 +55,8 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
   @override
   int get appColorValue => _appColor.value;
 
-  SettingsProvider() {
-    _settingsBox = Hive.box(AppConstants.kSettingsBoxName);
+  SettingsProvider({SettingsRepository? settingsRepository}) {
+    _settingsRepo = settingsRepository ?? SettingsRepository();
     _secureStorage = const FlutterSecureStorage(
       aOptions: AndroidOptions(encryptedSharedPreferences: true),
     );
@@ -65,17 +65,17 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
   }
 
   void _loadSyncSettings() {
-    _isOnlineMode = _settingsBox.get(_kIsOnlineMode, defaultValue: _defaultOnlineMode);
+    _isOnlineMode = _settingsRepo.get(_kIsOnlineMode, defaultValue: _defaultOnlineMode);
 
-    final userLevelIndex = _settingsBox.get(_kUserLevel, defaultValue: _defaultUserLevelIndex);
+    final userLevelIndex = _settingsRepo.get(_kUserLevel, defaultValue: _defaultUserLevelIndex);
     _userLevel = UserLevel.values[userLevelIndex.clamp(0, UserLevel.values.length - 1)];
 
-    final appColorValue = _settingsBox.get(_kAppColor, defaultValue: _defaultAppColorValue);
+    final appColorValue = _settingsRepo.get(_kAppColor, defaultValue: _defaultAppColorValue);
     _appColor = Color(appColorValue);
 
-    _baseCurrency = _settingsBox.get(_kBaseCurrency, defaultValue: _defaultBaseCurrency);
-    _migrationV1Done = _settingsBox.get(_kMigrationV1Done, defaultValue: false);
-    _migrationV2Done = _settingsBox.get(_kMigrationV2Done, defaultValue: false);
+    _baseCurrency = _settingsRepo.get(_kBaseCurrency, defaultValue: _defaultBaseCurrency);
+    _migrationV1Done = _settingsRepo.get(_kMigrationV1Done, defaultValue: false);
+    _migrationV2Done = _settingsRepo.get(_kMigrationV2Done, defaultValue: false);
   }
 
   Future<void> _loadAsyncSettings() async {
@@ -85,35 +85,35 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
 
   void setBaseCurrency(String currency) {
     _baseCurrency = currency.toUpperCase();
-    _settingsBox.put(_kBaseCurrency, _baseCurrency);
+    _settingsRepo.put(_kBaseCurrency, _baseCurrency);
     notifyListeners();
   }
 
   Future<void> setMigrationV1Done() async {
     _migrationV1Done = true;
-    await _settingsBox.put(_kMigrationV1Done, true);
+    await _settingsRepo.put(_kMigrationV1Done, true);
   }
 
   Future<void> setMigrationV2Done() async {
     _migrationV2Done = true;
-    await _settingsBox.put(_kMigrationV2Done, true);
+    await _settingsRepo.put(_kMigrationV2Done, true);
   }
 
   void toggleOnlineMode(bool value) {
     _isOnlineMode = value;
-    _settingsBox.put(_kIsOnlineMode, value);
+    _settingsRepo.put(_kIsOnlineMode, value);
     notifyListeners();
   }
 
   void setUserLevel(UserLevel level) {
     _userLevel = level;
-    _settingsBox.put(_kUserLevel, level.index);
+    _settingsRepo.put(_kUserLevel, level.index);
     notifyListeners();
   }
 
   void setAppColor(Color color) {
     _appColor = color;
-    _settingsBox.put(_kAppColor, color.value);
+    _settingsRepo.put(_kAppColor, color.value);
     notifyListeners();
   }
 
@@ -131,7 +131,7 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
   /// Utile après un import de données.
   Future<void> reloadSettings() async {
     debugPrint("🔄 [SettingsProvider] Rechargement des paramètres...");
-    _loadSyncSettings(); // Recharge les valeurs de la box
+    _loadSyncSettings(); // Recharge les valeurs via SettingsRepository
     await _loadAsyncSettings(); // Recharge la clé API
     notifyListeners(); // Informe l'UI des nouveaux settings (couleur, devise...)
   }
