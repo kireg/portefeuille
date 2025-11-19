@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:hive/hive.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Mock du SettingsProvider pour les tests
 class MockSettingsProvider extends SettingsProvider {
@@ -33,12 +34,79 @@ class MockSettingsProvider extends SettingsProvider {
   }
 }
 
+class FakeSecureStorage extends FlutterSecureStorage {
+  // --- MOCK POUR LES TESTS ---
+  // Ce mock permet d'éviter les erreurs de plugin manquant en test Flutter.
+  // Il accepte tous les paramètres nommés attendus par l'API FlutterSecureStorage.
+  final Map<String, String> _store = {};
+  @override
+  Future<String?> read(
+      {required String key,
+      IOSOptions? iOptions,
+      AndroidOptions? aOptions,
+      LinuxOptions? lOptions,
+      MacOsOptions? mOptions,
+      WindowsOptions? winOptions,
+      WebOptions? webOptions,
+      /* Ajout wOptions pour compatibilité */ Object? wOptions}) async {
+    return _store[key];
+  }
+
+  @override
+  Future<void> write(
+      {required String key,
+      required String? value,
+      IOSOptions? iOptions,
+      AndroidOptions? aOptions,
+      LinuxOptions? lOptions,
+      MacOsOptions? mOptions,
+      WindowsOptions? winOptions,
+      WebOptions? webOptions,
+      /* Ajout wOptions pour compatibilité */ Object? wOptions}) async {
+    if (value == null) {
+      _store.remove(key);
+    } else {
+      _store[key] = value;
+    }
+  }
+
+  @override
+  Future<void> delete(
+      {required String key,
+      IOSOptions? iOptions,
+      AndroidOptions? aOptions,
+      LinuxOptions? lOptions,
+      MacOsOptions? mOptions,
+      WindowsOptions? winOptions,
+      WebOptions? webOptions,
+      /* Ajout wOptions pour compatibilité */ Object? wOptions}) async {
+    _store.remove(key);
+  }
+
+  @override
+  Future<Map<String, String>> readAll(
+      {IOSOptions? iOptions,
+      AndroidOptions? aOptions,
+      LinuxOptions? lOptions,
+      MacOsOptions? mOptions,
+      WindowsOptions? winOptions,
+      WebOptions? webOptions,
+      /* Ajout wOptions pour compatibilité */ Object? wOptions}) async {
+    return Map.from(_store);
+  }
+}
+
 void main() {
+  // Initialisation du binding Flutter pour les tests qui utilisent des plugins
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   // Configuration de Hive pour les tests
   setUpAll(() async {
     // Hive nécessite une initialisation pour les tests
     // On utilise un répertoire temporaire
     Hive.init('./test/hive_test_data');
+    // Remplace FlutterSecureStorage par le fake pour tous les tests
+    FlutterSecureStorage.setMockInitialValues({});
   });
 
   tearDownAll(() async {

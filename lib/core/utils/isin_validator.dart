@@ -19,20 +19,24 @@ class IsinValidator {
   /// - AAPL → false (trop court)
   /// - 123456789012 → false (ne commence pas par des lettres)
   static bool isValidIsinFormat(String value) {
-    if (value.length != 12) return false;
+    // Correction : Nettoyer la chaîne et mettre en majuscules
+    final cleaned = value.trim().toUpperCase().replaceAll(RegExp(r'\s'), '');
+    if (cleaned.length != 12) return false;
 
     // Vérifier les 2 premiers caractères sont des lettres majuscules
-    final countryCode = value.substring(0, 2);
+    final countryCode = cleaned.substring(0, 2);
     if (!RegExp(r'^[A-Z]{2}$').hasMatch(countryCode)) {
       return false;
     }
-
+    // Vérifier que le code pays est valide
+    if (!hasValidCountryCode(cleaned)) {
+      return false;
+    }
     // Vérifier que les 10 caractères suivants sont alphanumériques
-    final securityId = value.substring(2);
+    final securityId = cleaned.substring(2);
     if (!RegExp(r'^[A-Z0-9]{10}$').hasMatch(securityId)) {
       return false;
     }
-
     return true;
   }
 
@@ -145,8 +149,11 @@ class IsinValidator {
 
   /// Vérifie si le code pays de l'ISIN est dans la liste des codes connus
   static bool hasValidCountryCode(String isin) {
-    if (isin.length < 2) return false;
-    final countryCode = isin.substring(0, 2).toUpperCase();
+    // Correction : Nettoyer la chaîne et vérifier la longueur
+    final cleaned = isin.trim().toUpperCase().replaceAll(RegExp(r'\s'), '');
+    if (cleaned.length < 2) return false;
+    if (cleaned.length != 12) return false; // Ajout : doit être un ISIN complet
+    final countryCode = cleaned.substring(0, 2);
     return validCountryCodes.contains(countryCode);
   }
 }

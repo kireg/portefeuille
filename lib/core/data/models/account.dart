@@ -87,7 +87,10 @@ class Account {
     // Migration
     this.stale_assets,
     this.stale_cashBalance,
-  });
+  }) {
+    // Hydrate automatiquement les assets à partir des transactions
+    assets = generateAssetsFromTransactions(transactions);
+  }
 
   double get totalValue {
     final assetsValue =
