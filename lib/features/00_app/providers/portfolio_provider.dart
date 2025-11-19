@@ -387,16 +387,26 @@ class PortfolioProvider extends ChangeNotifier {
     }
   }
 
-  void addDemoPortfolio() {
+  Future<Portfolio?> addDemoPortfolio() async {
     if (_portfolios.any((p) => p.name == "Portefeuille de Démo (2020-2025)")) {
-      return;
+      // Portfolio de démo déjà existant, le sélectionner comme actif
+      final existingDemo = _portfolios.firstWhere(
+          (p) => p.name == "Portefeuille de Démo (2020-2025)");
+      _activePortfolio = existingDemo;
+      await _refreshDataFromSource();
+      return existingDemo;
     }
     debugPrint("🔄 [Provider] addDemoPortfolio");
-    _demoDataService.createDemoPortfolio().then((demo) {
+    try {
+      final demo = await _demoDataService.createDemoPortfolio();
       _portfolios.add(demo);
       _activePortfolio = demo;
-      _refreshDataFromSource();
-    });
+      await _refreshDataFromSource();
+      return demo;
+    } catch (e) {
+      debugPrint("❌ Erreur lors de la création du portefeuille de démo: $e");
+      return null;
+    }
   }
 
   void addNewPortfolio(String name) {

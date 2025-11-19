@@ -131,12 +131,18 @@ class ApiService {
     if (!_settings.hasFmpApiKey) return null;
     final apiKey = _settings.fmpApiKey!;
 
+    // Utiliser un proxy CORS sur web pour contourner les restrictions CORS
+    final baseUrl = kIsWeb
+        ? 'https://corsproxy.io/?https://financialmodelingprep.com'
+        : 'https://financialmodelingprep.com';
+    
     final uri = Uri.parse(
-        'https://financialmodelingprep.com/api/v3/quote/$ticker?apikey=$apiKey');
+        '$baseUrl/api/v3/quote/$ticker?apikey=$apiKey');
 
     try {
+      debugPrint("🔄 FMP: Récupération prix pour $ticker (web: $kIsWeb)");
       final response =
-      await _httpClient.get(uri).timeout(const Duration(seconds: 5));
+      await _httpClient.get(uri).timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data is List && data.isNotEmpty) {
@@ -186,10 +192,15 @@ class ApiService {
 
       try {
         debugPrint(
-            "🔄 Yahoo Finance: Tentative ${attempt + 1}/$maxRetries pour $ticker (timeout: ${timeout.inSeconds}s)");
+            "🔄 Yahoo Finance: Tentative ${attempt + 1}/$maxRetries pour $ticker (timeout: ${timeout.inSeconds}s, web: $kIsWeb)");
 
+        // Utiliser un proxy CORS sur web pour contourner les restrictions CORS
+        final baseUrl = kIsWeb
+            ? 'https://corsproxy.io/?https://query1.finance.yahoo.com'
+            : 'https://query1.finance.yahoo.com';
+            
         final yahooUrl = Uri.parse(
-            'https://query1.finance.yahoo.com/v7/finance/spark?symbols=$ticker&range=1d&interval=1d');
+            '$baseUrl/v7/finance/spark?symbols=$ticker&range=1d&interval=1d');
 
         final response = await _httpClient.get(yahooUrl,
             headers: {'User-Agent': 'Mozilla/5.0'}).timeout(timeout);
@@ -402,13 +413,18 @@ class ApiService {
       return _searchCache[query] ?? [];
     }
 
+    // Utiliser un proxy CORS sur web pour contourner les restrictions CORS
+    final baseUrl = kIsWeb
+        ? 'https://corsproxy.io/?https://query1.finance.yahoo.com'
+        : 'https://query1.finance.yahoo.com';
+        
     final url = Uri.parse(
-        'https://query1.finance.yahoo.com/v1/finance/search?q=$query&lang=fr-FR&region=FR');
+        '$baseUrl/v1/finance/search?q=$query&lang=fr-FR&region=FR');
     try {
-      debugPrint("🔍 Recherche de ticker: '$query' - URL: $url");
+      debugPrint("🔍 Recherche de ticker: '$query' - URL: $url (web: $kIsWeb)");
       final response = await _httpClient.get(url, headers: {
         'User-Agent': 'Mozilla/5.0'
-      }).timeout(const Duration(seconds: 5));
+      }).timeout(const Duration(seconds: 8));
       debugPrint("✅ Réponse reçue - Status: ${response.statusCode}");
 
       if (response.statusCode != 200) {
