@@ -34,6 +34,7 @@ import 'package:portefeuille/core/data/models/sync_log.dart';
 // Features
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+import 'package:portefeuille/features/00_app/services/route_manager.dart';
 import 'package:portefeuille/core/ui/splash_screen.dart';
 
 void main() async {
@@ -142,7 +143,9 @@ class MyApp extends StatelessWidget {
             supportedLocales: const [
               Locale('fr', 'FR'),
             ],
-            home: const SplashScreen(),
+            // Utiliser les routes nommées centralisées via RouteManager
+            initialRoute: RouteManager.splash,
+            onGenerateRoute: RouteManager.onGenerateRoute,
           );
         },
       ),

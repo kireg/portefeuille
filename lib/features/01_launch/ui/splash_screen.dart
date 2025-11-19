@@ -6,8 +6,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
-import 'launch_screen.dart';
-import 'package:portefeuille/features/02_dashboard/ui/dashboard_screen.dart';
+import 'package:portefeuille/features/00_app/services/route_manager.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -72,13 +71,12 @@ class _SplashScreenState extends State<SplashScreen>
         if (mounted) {
           final bool hasPortfolios = portfolioProvider.portfolios.isNotEmpty;
 
-          final Widget nextScreen = hasPortfolios
-              ? const DashboardScreen()
-              : const LaunchScreen();
+          // Utiliser des routes nommées au lieu d'importer les écrans
+          final String nextRoute = hasPortfolios
+              ? RouteManager.dashboard
+              : RouteManager.launch;
 
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => nextScreen),
-          );
+          Navigator.of(context).pushReplacementNamed(nextRoute);
         }
       });
     }

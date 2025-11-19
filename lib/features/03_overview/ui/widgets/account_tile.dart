@@ -4,12 +4,12 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+import 'package:portefeuille/features/00_app/services/route_manager.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/ui/widgets/account_type_chip.dart';
 import 'asset_list_item.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
-import 'package:portefeuille/features/07_management/ui/screens/add_account_screen.dart';
 
 // ▼▼▼ ENUM DÉPLACÉ ICI (EN DEHORS DE LA CLASSE) ▼▼▼
 enum _AccountAction { edit, delete }
@@ -64,14 +64,13 @@ class AccountTile extends StatelessWidget {
 
   // Helper pour l'action "Modifier"
   void _onEdit(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => AddAccountScreen(
-        institutionId: institutionId,
-        // On passe le compte à modifier
-        accountToEdit: account,
-      ),
+    // Utiliser route nommée avec arguments au lieu d'importer AddAccountScreen
+    Navigator.of(context).pushNamed(
+      RouteManager.addAccount,
+      arguments: {
+        'institutionId': institutionId,
+        'accountToEdit': account,
+      },
     );
   }
 
