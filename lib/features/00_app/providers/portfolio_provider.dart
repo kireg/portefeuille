@@ -15,6 +15,7 @@ import 'package:portefeuille/core/data/models/projection_data.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/core/data/models/sync_log.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
+import 'package:portefeuille/core/data/models/history_point.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
@@ -318,7 +319,9 @@ class PortfolioProvider extends ChangeNotifier {
     _syncMessage = "Synchronisation en cours...";
     notifyListeners();
 
-    final result = await _syncService.synchronize(_activePortfolio!);
+    final baseCurrency = _settingsProvider?.baseCurrency ?? 'EUR';
+    final result = await _syncService.synchronize(_activePortfolio!,
+        baseCurrency: baseCurrency);
 
     if (result.hasUpdates) {
       await _refreshDataFromSource();
@@ -337,7 +340,9 @@ class PortfolioProvider extends ChangeNotifier {
     _syncMessage = "Synchronisation forcée en cours...";
     notifyListeners();
 
-    final result = await _syncService.forceSync(_activePortfolio!);
+    final baseCurrency = _settingsProvider?.baseCurrency ?? 'EUR';
+    final result = await _syncService.forceSync(_activePortfolio!,
+        baseCurrency: baseCurrency);
 
     if (result.hasUpdates) {
       await _refreshDataFromSource();
@@ -378,21 +383,56 @@ class PortfolioProvider extends ChangeNotifier {
   // ============================================================
 
   Future<void> addTransaction(Transaction transaction) async {
-    debugPrint("🔄 [Provider] addTransaction");
+    debugPrint("🔄 [Provider] addTransaction (Optimized)");
     await _transactionService.add(transaction);
-    await _refreshDataFromSource();
+    
+    if (_activePortfolio != null) {
+       final account = _findAccount(transaction.accountId);
+       if (account != null) {
+         account.transactions.add(transaction);
+         await _regenerateAssetsForAccount(account);
+       }
+    }
+    
+    await _recalculateAggregatedData();
   }
 
   Future<void> deleteTransaction(String transactionId) async {
-    debugPrint("🔄 [Provider] deleteTransaction");
+    debugPrint("🔄 [Provider] deleteTransaction (Optimized)");
     await _transactionService.delete(transactionId);
-    await _refreshDataFromSource();
+    
+    if (_activePortfolio != null) {
+       for (var inst in _activePortfolio!.institutions) {
+         for (var acc in inst.accounts) {
+           final index = acc.transactions.indexWhere((t) => t.id == transactionId);
+           if (index != -1) {
+             acc.transactions.removeAt(index);
+             await _regenerateAssetsForAccount(acc);
+             break;
+           }
+         }
+       }
+    }
+    
+    await _recalculateAggregatedData();
   }
 
   Future<void> updateTransaction(Transaction transaction) async {
-    debugPrint("🔄 [Provider] updateTransaction");
+    debugPrint("🔄 [Provider] updateTransaction (Optimized)");
     await _transactionService.update(transaction);
-    await _refreshDataFromSource();
+    
+    if (_activePortfolio != null) {
+       final account = _findAccount(transaction.accountId);
+       if (account != null) {
+         final index = account.transactions.indexWhere((t) => t.id == transaction.id);
+         if (index != -1) {
+           account.transactions[index] = transaction;
+           await _regenerateAssetsForAccount(account);
+         }
+       }
+    }
+    
+    await _recalculateAggregatedData();
   }
 
   // ============================================================
@@ -765,5 +805,75 @@ class PortfolioProvider extends ChangeNotifier {
     }
   }
 
+  // ============================================================
+  // HISTORY
+  // ============================================================
 
+  Future<List<HistoryPoint>> getPortfolioValueHistory() async {
+    if (_activePortfolio == null) return [];
+
+    final accountIds = _activePortfolio!.institutions
+        .expand((i) => i.accounts)
+        .map((a) => a.id)
+        .toSet();
+
+    final allTransactions = _repository.getAllTransactions();
+    final relevantTransactions = allTransactions
+        .where((t) => accountIds.contains(t.accountId))
+        .toList();
+
+    final priceHistory = _repository.getAllPriceHistory();
+    final rateHistory = _repository.getAllExchangeRates();
+
+    return await _calculationService.calculateHistory(
+      portfolio: _activePortfolio!,
+      transactions: relevantTransactions,
+      priceHistory: priceHistory,
+      rateHistory: rateHistory,
+      targetCurrency: _settingsProvider?.baseCurrency ?? 'EUR',
+      allMetadata: allMetadata,
+    );
+  }
+
+  // ============================================================
+  // OPTIMIZED HELPERS
+  // ============================================================
+
+  Account? _findAccount(String accountId) {
+    if (_activePortfolio == null) return null;
+    for (var inst in _activePortfolio!.institutions) {
+      for (var acc in inst.accounts) {
+        if (acc.id == accountId) return acc;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _regenerateAssetsForAccount(Account account) async {
+    // Regenerate assets
+    account.assets = Account.generateAssetsFromTransactions(account.transactions);
+    
+    // Hydrate assets
+    final allMetadata = _repository.getAllAssetMetadata();
+    for (var asset in account.assets) {
+       final metadata = allMetadata[asset.ticker];
+       if (metadata != null) {
+         asset.currentPrice = metadata.currentPrice;
+         asset.priceCurrency = metadata.activeCurrency;
+         asset.estimatedAnnualYield = metadata.estimatedAnnualYield;
+       } else {
+         asset.priceCurrency = account.activeCurrency;
+       }
+       
+       // Exchange rate
+       try {
+         asset.currentExchangeRate = await _apiService.getExchangeRate(
+            asset.priceCurrency, 
+            account.activeCurrency
+         );
+       } catch (e) {
+         asset.currentExchangeRate = 1.0;
+       }
+    }
+  }
 }

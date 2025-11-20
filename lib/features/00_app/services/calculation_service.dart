@@ -9,6 +9,12 @@ import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
+import 'package:portefeuille/core/data/models/transaction.dart';
+import 'package:portefeuille/core/data/models/transaction_type.dart';
+import 'package:portefeuille/core/data/models/price_history_point.dart';
+import 'package:portefeuille/core/data/models/exchange_rate_history.dart';
+import 'package:portefeuille/core/data/models/history_point.dart';
+import 'package:portefeuille/core/data/models/account.dart';
 
 class CalculationService {
   final ApiService _apiService;
@@ -251,5 +257,175 @@ class CalculationService {
 
     aggregatedAssets.sort((a, b) => b.totalValue.compareTo(a.totalValue));
     return aggregatedAssets;
+  }
+
+  Future<List<HistoryPoint>> calculateHistory({
+    required Portfolio portfolio,
+    required List<Transaction> transactions,
+    required List<PriceHistoryPoint> priceHistory,
+    required List<ExchangeRateHistory> rateHistory,
+    required String targetCurrency,
+    required Map<String, AssetMetadata> allMetadata,
+  }) async {
+    if (transactions.isEmpty) return [];
+
+    // Sort transactions by date
+    transactions.sort((a, b) => a.date.compareTo(b.date));
+
+    final startDate = transactions.first.date;
+    final endDate = DateTime.now();
+    final history = <HistoryPoint>[];
+
+    // Maps for fast access
+    // Price History: Ticker -> Date -> Price
+    final priceMap = <String, Map<DateTime, double>>{};
+    for (var p in priceHistory) {
+      final dateKey = DateTime(p.date.year, p.date.month, p.date.day);
+      (priceMap[p.ticker] ??= {})[dateKey] = p.price;
+    }
+
+    // Exchange Rate History: Pair -> Date -> Rate
+    final rateMap = <String, Map<DateTime, double>>{};
+    for (var r in rateHistory) {
+      final dateKey = DateTime(r.date.year, r.date.month, r.date.day);
+      (rateMap[r.pair] ??= {})[dateKey] = r.rate;
+    }
+
+    // Current quantities: AccountId -> Ticker -> Quantity
+    final currentQuantities = <String, Map<String, double>>{};
+    
+    // Current cash: AccountId -> Cash
+    final currentCash = <String, double>{};
+
+    // Optimization: Keep track of last known prices and rates
+    final lastKnownPrices = <String, double>{};
+    final lastKnownRates = <String, double>{}; // Pair -> Rate
+
+    // Helper to get rate from lastKnownRates
+    double getRate(String from, String to) {
+      if (from == to) return 1.0;
+      
+      final pair1 = '$from-$to';
+      if (lastKnownRates.containsKey(pair1)) return lastKnownRates[pair1]!;
+      
+      final pair2 = '$to-$from';
+      if (lastKnownRates.containsKey(pair2)) return 1.0 / lastKnownRates[pair2]!;
+      
+      return 1.0; // Fallback
+    }
+
+    int txIndex = 0;
+
+    // Iterate day by day
+    for (var day = startDate;
+        day.isBefore(endDate) || day.isAtSameMomentAs(endDate);
+        day = day.add(const Duration(days: 1))) {
+      
+      final dateKey = DateTime(day.year, day.month, day.day);
+
+      // 1. Apply transactions for this day
+      while (txIndex < transactions.length &&
+          transactions[txIndex].date.isBefore(day.add(const Duration(days: 1)))) {
+        final tx = transactions[txIndex];
+        
+        // Update Cash
+        currentCash[tx.accountId] = (currentCash[tx.accountId] ?? 0.0) + tx.totalAmount;
+
+        // Update Quantities
+        if (tx.assetTicker != null) {
+          final accountQuantities = currentQuantities[tx.accountId] ??= {};
+          if (tx.type == TransactionType.Buy) {
+            accountQuantities[tx.assetTicker!] =
+                (accountQuantities[tx.assetTicker!] ?? 0.0) + (tx.quantity ?? 0.0);
+          } else if (tx.type == TransactionType.Sell) {
+            accountQuantities[tx.assetTicker!] =
+                (accountQuantities[tx.assetTicker!] ?? 0.0) - (tx.quantity ?? 0.0);
+          }
+        }
+        txIndex++;
+      }
+
+      // 2. Update last known prices and rates for this day
+      for (var ticker in priceMap.keys) {
+        final prices = priceMap[ticker]!;
+        if (prices.containsKey(dateKey)) {
+          lastKnownPrices[ticker] = prices[dateKey]!;
+        }
+      }
+      
+      for (var pair in rateMap.keys) {
+        final rates = rateMap[pair]!;
+        if (rates.containsKey(dateKey)) {
+          lastKnownRates[pair] = rates[dateKey]!;
+        }
+      }
+
+      // 3. Calculate Total Value
+      double dailyTotal = 0.0;
+
+      // Cash Value
+      for (var entry in currentCash.entries) {
+        final accountId = entry.key;
+        final cash = entry.value;
+        
+        Account? account;
+        for (var inst in portfolio.institutions) {
+          for (var acc in inst.accounts) {
+            if (acc.id == accountId) {
+              account = acc;
+              break;
+            }
+          }
+          if (account != null) break;
+        }
+            
+        if (account != null) {
+             final rate = getRate(account.activeCurrency, targetCurrency);
+             dailyTotal += cash * rate;
+        }
+      }
+
+      // Assets Value
+      for (var accountId in currentQuantities.keys) {
+        Account? account;
+        for (var inst in portfolio.institutions) {
+          for (var acc in inst.accounts) {
+            if (acc.id == accountId) {
+              account = acc;
+              break;
+            }
+          }
+          if (account != null) break;
+        }
+
+        if (account == null) continue;
+
+        final accountCurrency = account.activeCurrency;
+        final accountToBaseRate = getRate(accountCurrency, targetCurrency);
+
+        final accountQuantities = currentQuantities[accountId]!;
+        for (var entry in accountQuantities.entries) {
+            final ticker = entry.key;
+            final quantity = entry.value;
+            if (quantity <= 0) continue;
+            
+            final price = lastKnownPrices[ticker] ?? 0.0;
+            final metadata = allMetadata[ticker];
+            final assetCurrency = metadata?.priceCurrency ?? 'EUR';
+            
+            final assetToAccountRate = getRate(assetCurrency, accountCurrency);
+            
+            // Value in Account Currency
+            final valueInAccount = quantity * price * assetToAccountRate;
+            
+            // Value in Base Currency
+            dailyTotal += valueInAccount * accountToBaseRate;
+        }
+      }
+      
+      history.add(HistoryPoint(day, dailyTotal));
+    }
+    
+    return history;
   }
 }

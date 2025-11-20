@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/core/data/models/sync_log.dart';
+import 'package:portefeuille/core/data/models/price_history_point.dart';
+import 'package:portefeuille/core/data/models/exchange_rate_history.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:uuid/uuid.dart';
@@ -60,15 +62,19 @@ class SyncService {
         _uuid = uuid ?? const Uuid();
 
   /// Force la synchronisation des prix en vidant d'abord le cache.
-  Future<SyncResult> forceSync(Portfolio portfolio) async {
+  Future<SyncResult> forceSync(Portfolio portfolio, {String baseCurrency = 'EUR'}) async {
     _apiService.clearCache();
-    return await synchronize(portfolio);
+    return await synchronize(portfolio, baseCurrency: baseCurrency);
   }
 
   /// Synchronise les prix en utilisant la logique de fallback de l'ApiService.
-  Future<SyncResult> synchronize(Portfolio portfolio) async {
+  Future<SyncResult> synchronize(Portfolio portfolio, {String baseCurrency = 'EUR'}) async {
     // Extraire tous les tickers uniques
     final tickers = _extractTickers(portfolio);
+    
+    // 1. Synchroniser les taux de change (Historique)
+    await _syncExchangeRates(portfolio, baseCurrency);
+
     if (tickers.isEmpty) {
       return SyncResult();
     }
@@ -122,6 +128,16 @@ class SyncService {
           );
 
           saveFutures.add(_repository.saveAssetMetadata(metadata));
+          
+          // Sauvegarder l'historique des prix
+          final pricePoint = PriceHistoryPoint(
+            ticker: result.ticker,
+            date: DateTime.now(),
+            price: result.price!,
+            currency: result.currency,
+          );
+          saveFutures.add(_repository.savePriceHistoryPoint(pricePoint));
+
           saveFutures.add(_saveSyncLog(SyncLog.success(
             id: _uuid.v4(),
             ticker: result.ticker,
@@ -195,5 +211,48 @@ class SyncService {
 
   Future<void> _saveSyncLog(SyncLog log) async {
     await _repository.addSyncLog(log);
+  }
+
+  Future<void> _syncExchangeRates(Portfolio portfolio, String baseCurrency) async {
+    final pairsToSync = <String>{};
+
+    for (var inst in portfolio.institutions) {
+      for (var acc in inst.accounts) {
+        // 1. Account -> Base
+        if (acc.activeCurrency != baseCurrency) {
+          pairsToSync.add('${acc.activeCurrency}-$baseCurrency');
+        }
+
+        for (var asset in acc.assets) {
+          // 2. Asset -> Account
+          if (asset.priceCurrency.isNotEmpty &&
+              asset.priceCurrency != acc.activeCurrency) {
+            pairsToSync.add('${asset.priceCurrency}-${acc.activeCurrency}');
+          }
+        }
+      }
+    }
+
+    debugPrint("🔄 [SyncService] Synchronisation des taux : $pairsToSync");
+
+    for (final pair in pairsToSync) {
+      final parts = pair.split('-');
+      final from = parts[0];
+      final to = parts[1];
+
+      try {
+        final rate = await _apiService.getExchangeRate(from, to);
+        
+        // Sauvegarder l'historique
+        final history = ExchangeRateHistory(
+          pair: pair,
+          date: DateTime.now(),
+          rate: rate,
+        );
+        await _repository.saveExchangeRate(history);
+      } catch (e) {
+        debugPrint("⚠️ Impossible de synchroniser le taux $pair : $e");
+      }
+    }
   }
 }

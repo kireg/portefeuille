@@ -9,6 +9,8 @@ import 'package:portefeuille/core/ui/widgets/portfolio_header.dart';
 import 'widgets/allocation_chart.dart';
 import 'widgets/asset_type_allocation_chart.dart';
 import 'widgets/sync_alerts_card.dart';
+import 'widgets/portfolio_history_chart.dart';
+import 'package:portefeuille/core/data/models/history_point.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
 import 'package:portefeuille/features/03_overview/ui/widgets/institution_tile.dart';
 
@@ -52,6 +54,37 @@ class OverviewTab extends StatelessWidget {
                   AppTheme.buildStyledCard(
                     context: context,
                     child: const PortfolioHeader(), // <-- MODIFIÉ
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Graphique d'historique (NOUVEAU)
+                  AppTheme.buildStyledCard(
+                    context: context,
+                    child: FutureBuilder<List<HistoryPoint>>(
+                      future: portfolioProvider.getPortfolioValueHistory(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const SizedBox(
+                            height: 250,
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return SizedBox(
+                            height: 250,
+                            child: Center(child: Text("Erreur: ${snapshot.error}")),
+                          );
+                        }
+                        final history = snapshot.data ?? [];
+                        if (history.isEmpty) {
+                           return const SizedBox.shrink();
+                        }
+                        return PortfolioHistoryChart(
+                          history: history,
+                          currency: portfolioProvider.currentBaseCurrency,
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(height: 12),
 
