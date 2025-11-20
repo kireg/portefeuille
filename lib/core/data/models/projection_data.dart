@@ -2,23 +2,18 @@ import 'dart:math';
 
 class ProjectionData {
   final int year;
-  final double initialInvestedCapital;
-  final double currentPortfolioValue;
-  final double newInvestments;
+  final double currentCapital;
+  final double cumulativeContributions;
+  final double cumulativeGains;
   final double totalValue;
 
   ProjectionData({
     required this.year,
-    required this.initialInvestedCapital,
-    required this.currentPortfolioValue,
-    required this.newInvestments,
+    required this.currentCapital,
+    required this.cumulativeContributions,
+    required this.cumulativeGains,
     required this.totalValue,
   });
-
-  double get investedCapital => initialInvestedCapital + newInvestments;
-  double get totalGain => totalValue - investedCapital;
-  double get realizedGains => currentPortfolioValue - initialInvestedCapital;
-  double get projectedGains => totalValue - currentPortfolioValue - newInvestments;
 }
 
 class ProjectionCalculator {
@@ -26,7 +21,7 @@ class ProjectionCalculator {
   static List<ProjectionData> generateProjectionData({
     required int duration,
     required double initialPortfolioValue,
-    required double initialInvestedCapital,
+    required double initialInvestedCapital, // Not used anymore for projection logic as per new requirements, but kept if needed or we can remove it. The issue says "Capital actuel" should be the current portfolio value.
     required double portfolioAnnualYield,
     required double totalMonthlyInvestment,
     required double averagePlansYield,
@@ -34,22 +29,28 @@ class ProjectionCalculator {
     List<ProjectionData> data = [];
 
     for (int year = 1; year <= duration; year++) {
+      // 1. Future value of current capital (Compound interest)
       final double futureBaseValue =
           initialPortfolioValue * pow(1 + portfolioAnnualYield, year);
 
-      // Calcul de la valeur future des versements
+      // 2. Future value of monthly contributions (Compound interest)
       final double futureSavingsValue = (totalMonthlyInvestment > 0 && averagePlansYield > 0)
-          ? totalMonthlyInvestment * 12 * ((pow(1 + averagePlansYield, year) - 1) / averagePlansYield) * (1 + averagePlansYield / 12) // Approximation pour versements mensuels
-          : totalMonthlyInvestment * 12 * year; // Cas sans intérêt composé
+          ? totalMonthlyInvestment * 12 * ((pow(1 + averagePlansYield, year) - 1) / averagePlansYield) * (1 + averagePlansYield / 12)
+          : totalMonthlyInvestment * 12 * year;
 
-      final double newInvestments = totalMonthlyInvestment * 12 * year;
+      // 3. Total projected value
       final double totalValue = futureBaseValue + futureSavingsValue;
+
+      // 4. Components
+      final double currentCapital = initialPortfolioValue;
+      final double cumulativeContributions = totalMonthlyInvestment * 12 * year;
+      final double cumulativeGains = totalValue - currentCapital - cumulativeContributions;
 
       data.add(ProjectionData(
         year: year,
-        initialInvestedCapital: initialInvestedCapital,
-        currentPortfolioValue: initialPortfolioValue,
-        newInvestments: newInvestments,
+        currentCapital: currentCapital,
+        cumulativeContributions: cumulativeContributions,
+        cumulativeGains: cumulativeGains,
         totalValue: totalValue,
       ));
     }

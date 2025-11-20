@@ -332,23 +332,18 @@ class _PlannerTabState extends State<PlannerTab> {
                           children: [
                             AppTheme.buildLegendItem(
                               color: theme.colorScheme.primary.withOpacity(0.6),
-                              label: 'Capital investi',
-                              theme: theme,
-                            ),
-                            AppTheme.buildLegendItem(
-                              color: Colors.green.shade200,
-                              label: 'Gains réalisés',
-                              theme: theme,
-                            ),
-                            AppTheme.buildLegendItem(
-                              color: Colors.green.shade600,
-                              label: 'Gains projetés',
+                              label: 'Capital actuel',
                               theme: theme,
                             ),
                             AppTheme.buildLegendItem(
                               color: theme.colorScheme.secondary
                                   .withOpacity(0.8),
-                              label: 'Nouveaux versements',
+                              label: 'Cumul des versements',
+                              theme: theme,
+                            ),
+                            AppTheme.buildLegendItem(
+                              color: Colors.green.shade600,
+                              label: 'Cumul des gains projetés',
                               theme: theme,
                             ),
                           ],
@@ -398,40 +393,21 @@ class _PlannerTabState extends State<PlannerTab> {
             toY: d.totalValue,
             borderRadius: BorderRadius.zero,
             width: 18,
-            rodStackItems: d.year == 1
-                ? [
+            rodStackItems: [
               BarChartRodStackItem(
                 0,
-                d.initialInvestedCapital,
+                d.currentCapital,
                 theme.colorScheme.primary.withOpacity(0.6),
               ),
               BarChartRodStackItem(
-                d.initialInvestedCapital,
-                d.currentPortfolioValue,
-                Colors.green.shade200,
+                d.currentCapital,
+                d.currentCapital + d.cumulativeContributions,
+                theme.colorScheme.secondary.withOpacity(0.8),
               ),
-              if (d.newInvestments > 0)
-                BarChartRodStackItem(
-                  d.currentPortfolioValue,
-                  d.currentPortfolioValue + d.newInvestments,
-                  theme.colorScheme.secondary.withOpacity(0.8),
-                ),
               BarChartRodStackItem(
-                d.currentPortfolioValue + d.newInvestments,
+                d.currentCapital + d.cumulativeContributions,
                 d.totalValue,
                 Colors.green.shade600,
-              ),
-            ]
-                : [
-              BarChartRodStackItem(
-                0,
-                d.investedCapital, // Total investi (initial + nouveaux)
-                theme.colorScheme.primary.withOpacity(0.6),
-              ),
-              BarChartRodStackItem(
-                d.investedCapital,
-                d.totalValue, // Total gains (réalisés + projetés)
-                Colors.green.shade400,
               ),
             ],
           ),
@@ -509,22 +485,12 @@ class _PlannerTabState extends State<PlannerTab> {
         touchTooltipData: BarTouchTooltipData(
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
             final d = data[groupIndex];
-            // MODIFIÉ : Utilise la devise de base pour les tooltips
-            if (d.year == 1) {
-              return BarTooltipItem(
-                'Année ${d.year}\n'
-                    'Total: ${CurrencyFormatter.format(d.totalValue, baseCurrency)}\n'
-                    'Investi: ${CurrencyFormatter.format(d.investedCapital, baseCurrency)}\n'
-                    'Gains réalisés: ${CurrencyFormatter.format(d.realizedGains, baseCurrency)}\n'
-                    'Gains projetés: ${CurrencyFormatter.format(d.projectedGains, baseCurrency)}',
-                theme.textTheme.bodySmall!.copyWith(color: Colors.white),
-              );
-            }
             return BarTooltipItem(
               'Année ${d.year}\n'
                   'Total: ${CurrencyFormatter.format(d.totalValue, baseCurrency)}\n'
-                  'Investi: ${CurrencyFormatter.format(d.investedCapital, baseCurrency)}\n'
-                  'Gains: ${CurrencyFormatter.format(d.totalGain, baseCurrency)}',
+                  'Capital actuel: ${CurrencyFormatter.format(d.currentCapital, baseCurrency)}\n'
+                  'Cumul versements: ${CurrencyFormatter.format(d.cumulativeContributions, baseCurrency)}\n'
+                  'Cumul gains: ${CurrencyFormatter.format(d.cumulativeGains, baseCurrency)}',
               theme.textTheme.bodySmall!.copyWith(color: Colors.white),
             );
           },
