@@ -169,12 +169,17 @@ class PortfolioCard extends StatelessWidget {
                   ? "Nouveau Portefeuille"
                   : nameController.text.trim();
               Navigator.pop(ctx);
-              await Navigator.push(
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => InitialSetupWizard(portfolioName: name),
                 ),
               );
+              
+              // Si le wizard a terminé avec succès, on ferme les paramètres pour revenir à l'accueil
+              if (result == true && context.mounted) {
+                Navigator.of(context).pop();
+              }
             },
           ),
         ],

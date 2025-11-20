@@ -3,23 +3,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
+import 'package:portefeuille/features/01_launch/ui/providers/setup_wizard_provider.dart';
+import 'package:portefeuille/features/01_launch/ui/widgets/wizard_dialogs/add_account_dialog.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
-import 'package:portefeuille/core/data/models/institution.dart';
-import 'package:portefeuille/core/data/models/account.dart';
-import 'package:portefeuille/core/data/models/transaction.dart';
-import 'package:portefeuille/core/data/models/transaction_type.dart';
 
-// Import des étapes (à créer)
-import 'wizard_steps/step1_online_mode.dart';
-import 'wizard_steps/step2_institutions.dart';
-import 'wizard_steps/step3_accounts.dart';
-import 'wizard_steps/step4_assets.dart';
-import 'wizard_steps/step5_summary.dart';
-
-class InitialSetupWizard extends StatefulWidget {
+class InitialSetupWizard extends StatelessWidget {
   final String portfolioName;
 
   const InitialSetupWizard({
@@ -28,138 +18,124 @@ class InitialSetupWizard extends StatefulWidget {
   });
 
   @override
-  State<InitialSetupWizard> createState() => _InitialSetupWizardState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => SetupWizardProvider()..setPortfolioName(portfolioName),
+      child: const _WizardContent(),
+    );
+  }
 }
 
-class _InitialSetupWizardState extends State<InitialSetupWizard> {
-  int _currentStep = 0;
-  final int _totalSteps = 5;
-  bool _isSaving = false;
+class _WizardContent extends StatefulWidget {
+  const _WizardContent();
 
-  // État du wizard
-  bool _enableOnlineMode = false;
-  final List<WizardInstitution> _institutions = [];
-  final List<WizardAccount> _accounts = [];
-  final List<WizardAsset> _assets = [];
+  @override
+  State<_WizardContent> createState() => _WizardContentState();
+}
+
+class _WizardContentState extends State<_WizardContent> {
+  int _currentStep = 0;
+  final int _totalSteps = 3;
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<SetupWizardProvider>();
+
     return WillPopScope(
       onWillPop: () async {
-        // Confirmation avant de quitter
         if (_currentStep > 0) {
-          final shouldExit = await _showExitConfirmation();
-          return shouldExit ?? false;
+          setState(() => _currentStep--);
+          return false;
         }
-        return true;
+        return await _showExitConfirmation(context);
       },
       child: Scaffold(
         appBar: AppBar(
-          title:
-              Text('Configuration initiale (${_currentStep + 1}/$_totalSteps)'),
+          title: Text('Configuration (${_currentStep + 1}/$_totalSteps)'),
           leading: _currentStep > 0
               ? IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  onPressed: _previousStep,
+                  onPressed: () => setState(() => _currentStep--),
                 )
               : null,
         ),
         body: Column(
           children: [
-            // Indicateur de progression
             LinearProgressIndicator(
               value: (_currentStep + 1) / _totalSteps,
-              backgroundColor: Colors.grey[300],
+              backgroundColor: Colors.grey[200],
             ),
-            // Contenu de l'étape actuelle
             Expanded(
-              child: _buildCurrentStep(),
+              child: _buildStepContent(context, provider),
             ),
-            // Boutons de navigation
-            _buildNavigationButtons(),
+            _buildBottomBar(context, provider),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCurrentStep() {
+  Widget _buildStepContent(BuildContext context, SetupWizardProvider provider) {
     switch (_currentStep) {
       case 0:
-        return Step1OnlineMode(
-          enableOnlineMode: _enableOnlineMode,
-          onChanged: (value) => setState(() => _enableOnlineMode = value),
-        );
+        return _Step1Config(provider: provider);
       case 1:
-        return Step2Institutions(
-          institutions: _institutions,
-          onInstitutionsChanged: () => setState(() {}),
-        );
+        return _Step2Accounts(provider: provider);
       case 2:
-        return Step3Accounts(
-          institutions: _institutions,
-          accounts: _accounts,
-          onAccountsChanged: () => setState(() {}),
-        );
-      case 3:
-        return Step4Assets(
-          accounts: _accounts,
-          assets: _assets,
-          enableOnlineMode: _enableOnlineMode,
-          onAssetsChanged: () => setState(() {}),
-        );
-      case 4:
-        return Step5Summary(
-          institutions: _institutions,
-          accounts: _accounts,
-          assets: _assets,
-          portfolioName: widget.portfolioName,
-        );
+        return _Step3Summary(provider: provider);
       default:
-        return const Center(child: Text('Étape inconnue'));
+        return const SizedBox.shrink();
     }
   }
 
-  Widget _buildNavigationButtons() {
+  Widget _buildBottomBar(BuildContext context, SetupWizardProvider provider) {
+    final isLastStep = _currentStep == _totalSteps - 1;
+    final canProceed = _canProceed(provider);
+
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
           ),
         ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Bouton Précédent
           if (_currentStep > 0)
-            TextButton.icon(
-              onPressed: _previousStep,
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Précédent'),
+            TextButton(
+              onPressed: provider.isSaving ? null : () => setState(() => _currentStep--),
+              child: const Text('Précédent'),
             )
           else
-            const SizedBox.shrink(),
-
-          // Bouton Suivant / Terminer MODIFIÉ
+            TextButton(
+              onPressed: () => Navigator.maybePop(context),
+              child: const Text('Annuler'),
+            ),
           ElevatedButton.icon(
-            // Désactive le bouton si sauvegarde en cours
-            onPressed: (_canProceed() && !_isSaving) ? _nextStep : null,
-            // Affiche un loader si sauvegarde en cours
-            icon: _isSaving
+            onPressed: canProceed
+                ? () {
+                    if (isLastStep) {
+                      _finishWizard(context, provider);
+                    } else {
+                      setState(() => _currentStep++);
+                    }
+                  }
+                : null,
+            icon: provider.isSaving
                 ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            )
-                : Icon(_currentStep == _totalSteps - 1 ? Icons.check : Icons.arrow_forward),
-            label: Text(_currentStep == _totalSteps - 1
-                ? (_isSaving ? 'Création...' : 'Terminer')
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : Icon(isLastStep ? Icons.check : Icons.arrow_forward),
+            label: Text(isLastStep
+                ? (provider.isSaving ? 'Création...' : 'Terminer')
                 : 'Suivant'),
           ),
         ],
@@ -167,211 +143,336 @@ class _InitialSetupWizardState extends State<InitialSetupWizard> {
     );
   }
 
-  bool _canProceed() {
+  bool _canProceed(SetupWizardProvider provider) {
+    if (provider.isSaving) return false;
     switch (_currentStep) {
       case 0:
-        return true; // Toujours possible de continuer (choix facultatif)
+        return provider.isStep1Valid;
       case 1:
-        return _institutions.isNotEmpty &&
-            _institutions.every((i) => i.isValid);
+        return provider.isStep2Valid;
       case 2:
-        return _accounts.isNotEmpty && _accounts.every((a) => a.isValid);
-      case 3:
-        return true; // Les actifs sont facultatifs
-      case 4:
-        return true; // Récapitulatif
+        return provider.canFinish;
       default:
         return false;
     }
   }
 
-  void _previousStep() {
-    if (_currentStep > 0) {
-      setState(() => _currentStep--);
-    }
-  }
-
-  void _nextStep() async {
-    if (_currentStep < _totalSteps - 1) {
-      setState(() => _currentStep++);
-    } else {
-      // Dernière étape : terminer le wizard
-      await _finishWizard();
-    }
-  }
-
-  Future<void> _finishWizard() async {
-    if (_isSaving) return; // 🔒 Sécurité anti-double clic
-    setState(() => _isSaving = true);
-
+  Future<void> _finishWizard(BuildContext context, SetupWizardProvider provider) async {
     try {
       final portfolioProvider = context.read<PortfolioProvider>();
       final settingsProvider = context.read<SettingsProvider>();
-
-      // 1. Activer le mode en ligne si demandé
-      if (_enableOnlineMode && !settingsProvider.isOnlineMode) {
-        settingsProvider.toggleOnlineMode(true);
-      }
-
-      // 2. Créer le portefeuille
-      await _createPortfolioData(portfolioProvider);
-
-      // 3. Attendre et recharger
-      await Future.delayed(const Duration(milliseconds: 500));
-      await portfolioProvider.loadAllPortfolios();
-
-      // 4. Synchronisation éventuelle
-      if (_enableOnlineMode && settingsProvider.isOnlineMode) {
-        debugPrint('🔄 Mode en ligne : sync des prix...');
-        try {
-          await portfolioProvider.forceSynchroniserLesPrix();
-        } catch (e) {
-          debugPrint('⚠️ Erreur sync prix : $e');
-        }
-      }
-
+      
+      await provider.createPortfolio(portfolioProvider, settingsProvider);
+      
       if (mounted) {
         Navigator.of(context).pop(true);
       }
     } catch (e) {
-      debugPrint('❌ Erreur wizard : $e');
-      // En cas d'erreur, on réactive le bouton pour permettre de réessayer
-      if (mounted) setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
-  Future<void> _createPortfolioData(PortfolioProvider provider) async {
-    // Générer les transactions à partir des données du wizard
-    try {
-      const uuid = Uuid();
-
-      // 1. Créer le portefeuille
-      provider.addNewPortfolio(widget.portfolioName);
-      await Future.delayed(const Duration(
-          milliseconds: 200)); // Attendre que le provider se mette à jour
-
-      // 2. Créer les institutions et comptes
-      for (final wizardInstitution in _institutions) {
-        // Créer l'institution
-        final institution = Institution(
-          id: uuid.v4(),
-          name: wizardInstitution.name,
-          accounts: [],
-        );
-        provider.addInstitution(institution);
-        await Future.delayed(const Duration(milliseconds: 50));
-
-        // Créer les comptes pour cette institution
-        final institutionAccounts = _accounts
-            .where((a) => a.institutionName == wizardInstitution.name)
-            .toList();
-
-        for (final wizardAccount in institutionAccounts) {
-          // Créer le compte
-          final account = Account(
-            id: uuid.v4(),
-            name: wizardAccount.name,
-            type: wizardAccount.type,
-          );
-          provider.addAccount(institution.id, account);
-          await Future.delayed(const Duration(milliseconds: 50));
-
-          // 3. Calculer le total des actifs pour ce compte
-          final accountAssets = _assets
-              .where((a) => a.accountDisplayName == wizardAccount.displayName)
-              .toList();
-
-          final totalAssetsValue = accountAssets.fold<double>(
-            0.0,
-            (sum, asset) => sum + (asset.quantity * asset.averagePrice),
-          );
-
-          // 4. Créer une transaction Deposit pour le solde initial
-          // IMPORTANT : On ajoute le cash + la valeur des actifs car les actifs
-          // vont être "achetés" via des transactions Buy qui vont déduire du cash
-          final totalDeposit = wizardAccount.cashBalance + totalAssetsValue;
-
-          if (totalDeposit > 0) {
-            final depositTransaction = Transaction(
-              id: uuid.v4(),
-              accountId: account.id,
-              type: TransactionType.Deposit,
-              date: DateTime.now(),
-              amount: totalDeposit,
-              fees: 0.0,
-              notes: 'Solde initial (assistant de configuration)',
-            );
-            await provider.addTransaction(depositTransaction);
-            await Future.delayed(const Duration(milliseconds: 50));
-          }
-
-          // 5. Créer les transactions Buy pour les actifs
-
-          for (final wizardAsset in accountAssets) {
-            final buyTransaction = Transaction(
-              id: uuid.v4(),
-              accountId: account.id,
-              type: TransactionType.Buy,
-              date: wizardAsset.firstPurchaseDate,
-              amount: -(wizardAsset.quantity *
-                  wizardAsset.averagePrice), // Négatif pour un achat
-              fees: 0.0,
-              assetTicker: wizardAsset.ticker,
-              assetName: wizardAsset.name,
-              assetType: wizardAsset.type,
-              quantity: wizardAsset.quantity,
-              price: wizardAsset.averagePrice,
-              notes: 'Position initiale (assistant de configuration)',
-            );
-            await provider.addTransaction(buyTransaction);
-            await Future.delayed(const Duration(milliseconds: 50));
-
-            // Sauvegarder le prix actuel dans les métadonnées
-            await provider.updateAssetPrice(
-                wizardAsset.ticker, wizardAsset.currentPrice);
-            await Future.delayed(const Duration(milliseconds: 50));
-
-            // Sauvegarder le rendement estimé dans les métadonnées (si fourni)
-            if (wizardAsset.estimatedYield != null) {
-              await provider.updateAssetYield(
-                  wizardAsset.ticker, wizardAsset.estimatedYield!);
-              await Future.delayed(const Duration(milliseconds: 50));
-            }
-          }
-        }
-      }
-
-      // 5. Forcer une mise à jour complète du provider
-      provider.updateActivePortfolio();
-
-      debugPrint('✅ Portefeuille créé avec succès !');
-      debugPrint('  - ${_institutions.length} institution(s)');
-      debugPrint('  - ${_accounts.length} compte(s)');
-      debugPrint('  - ${_assets.length} actif(s)');
-    } catch (e) {
-      debugPrint('❌ Erreur lors de la création du portefeuille : $e');
-      rethrow;
-    }
-  }
-
-  Future<bool?> _showExitConfirmation() {
-    return showDialog<bool>(
+  Future<bool> _showExitConfirmation(BuildContext context) async {
+    final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Quitter l\'assistant ?'),
-        content: const Text(
-          'Vos données ne seront pas sauvegardées si vous quittez maintenant.',
-        ),
+        title: const Text('Quitter ?'),
+        content: const Text('Vos modifications seront perdues.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Annuler'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Quitter'),
           ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+}
+
+// --- Step Widgets ---
+
+class _Step1Config extends StatelessWidget {
+  final SetupWizardProvider provider;
+
+  const _Step1Config({required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Commençons par les bases',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 24),
+          TextFormField(
+            initialValue: provider.portfolioName,
+            decoration: const InputDecoration(
+              labelText: 'Nom du portefeuille',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.folder),
+            ),
+            onChanged: provider.setPortfolioName,
+          ),
+          const SizedBox(height: 32),
+          SwitchListTile(
+            title: const Text('Activer le mode en ligne'),
+            subtitle: const Text(
+              'Récupération automatique des prix et synchronisation (optionnel)',
+            ),
+            value: provider.enableOnlineMode,
+            onChanged: provider.setOnlineMode,
+            secondary: const Icon(Icons.cloud_sync),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Step2Accounts extends StatelessWidget {
+  final SetupWizardProvider provider;
+
+  const _Step2Accounts({required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Vos comptes d\'investissement',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Ajoutez vos comptes (PEA, CTO, Crypto...) et leurs actifs.',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: provider.accounts.isEmpty
+              ? _buildEmptyState(context)
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: provider.accounts.length,
+                  itemBuilder: (context, index) {
+                    final account = provider.accounts[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          child: Icon(_getIconForType(account)),
+                        ),
+                        title: Text(account.name),
+                        subtitle: Text(
+                          '${account.institutionName} • ${account.assets.length} actifs',
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${account.totalValue.toStringAsFixed(2)} €',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            PopupMenuButton(
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Text('Modifier'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text('Supprimer', style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                              onSelected: (value) {
+                                if (value == 'delete') {
+                                  provider.removeAccount(account.id);
+                                } else if (value == 'edit') {
+                                  _editAccount(context, account);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        onTap: () => _editAccount(context, account),
+                      ),
+                    );
+                  },
+                ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _addAccount(context),
+              icon: const Icon(Icons.add),
+              label: const Text('AJOUTER UN COMPTE'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.all(16),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.account_balance_wallet_outlined, size: 64, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text(
+            'Aucun compte ajouté',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getIconForType(WizardAccount account) {
+    // Simple mapping based on type name or similar
+    if (account.type.name.toLowerCase().contains('crypto')) return Icons.currency_bitcoin;
+    if (account.type.name.toLowerCase().contains('pea')) return Icons.euro;
+    return Icons.account_balance;
+  }
+
+  Future<void> _addAccount(BuildContext context) async {
+    final institutions = provider.accounts.map((a) => a.institutionName).toSet().toList();
+    final result = await showDialog<WizardAccount>(
+      context: context,
+      builder: (context) => AddAccountDialog(
+        enableOnlineMode: provider.enableOnlineMode,
+        existingInstitutions: institutions,
+      ),
+    );
+    if (result != null) {
+      provider.addAccount(result);
+    }
+  }
+
+  Future<void> _editAccount(BuildContext context, WizardAccount account) async {
+    final institutions = provider.accounts.map((a) => a.institutionName).toSet().toList();
+    final result = await showDialog<WizardAccount>(
+      context: context,
+      builder: (context) => AddAccountDialog(
+        initialAccount: account,
+        enableOnlineMode: provider.enableOnlineMode,
+        existingInstitutions: institutions,
+      ),
+    );
+    if (result != null) {
+      provider.updateAccount(account.id, result);
+    }
+  }
+}
+
+class _Step3Summary extends StatelessWidget {
+  final SetupWizardProvider provider;
+
+  const _Step3Summary({required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalValue = provider.accounts.fold(0.0, (sum, a) => sum + a.totalValue);
+    final totalAssets = provider.accounts.fold(0, (sum, a) => sum + a.assets.length);
+
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Récapitulatif',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 24),
+          _buildSummaryCard(context, 'Portefeuille', provider.portfolioName, Icons.folder),
+          const SizedBox(height: 16),
+          _buildSummaryCard(
+            context,
+            'Valeur Totale Estimée',
+            '${totalValue.toStringAsFixed(2)} €',
+            Icons.savings,
+            isHighlight: true,
+          ),
+          const SizedBox(height: 24),
+          const Text('Détails', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          _buildDetailRow('Comptes', '${provider.accounts.length}'),
+          _buildDetailRow('Actifs totaux', '$totalAssets'),
+          _buildDetailRow('Mode en ligne', provider.enableOnlineMode ? 'Activé' : 'Désactivé'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(BuildContext context, String title, String value, IconData icon, {bool isHighlight = false}) {
+    return Card(
+      color: isHighlight ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Icon(icon, size: 32, color: isHighlight ? Theme.of(context).primaryColor : Colors.grey),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isHighlight ? Theme.of(context).primaryColor : null,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
