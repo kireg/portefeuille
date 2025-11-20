@@ -1,13 +1,13 @@
-// lib/features/06_settings/ui/widgets/online_mode_card.dart
-
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
 
 class OnlineModeCard extends StatefulWidget {
   const OnlineModeCard({super.key});
-
   @override
   State<OnlineModeCard> createState() => _OnlineModeCardState();
 }
@@ -54,9 +54,13 @@ class _OnlineModeCardState extends State<OnlineModeCard> {
     }
   }
 
+  // --- Tableau de statut des prix (Importé de app_settings.dart) ---
+
+
   @override
   Widget build(BuildContext context) {
     final settingsProvider = context.watch<SettingsProvider>();
+    final portfolioProvider = context.watch<PortfolioProvider>(); // Nécessaire pour les métadonnées
     final theme = Theme.of(context);
 
     return AppTheme.buildStyledCard(
@@ -79,17 +83,20 @@ class _OnlineModeCardState extends State<OnlineModeCard> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Prix en temps réel, analyse IA',
+            'Prix en temps réel',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
+
           if (settingsProvider.isOnlineMode) ...[
+            // Affichage du tableau de statut
             const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 12),
+
             Text('Clé API FMP (optionnel)',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                )),
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(
               'Améliore la fiabilité de la récupération des prix.',
@@ -147,4 +154,3 @@ class _OnlineModeCardState extends State<OnlineModeCard> {
     );
   }
 }
-

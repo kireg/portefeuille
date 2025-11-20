@@ -32,7 +32,7 @@ class AssetListItem extends StatelessWidget {
 
     final pnlPercentage = asset.profitAndLossPercentage;
     final pnlColor =
-        pnlConverted >= 0 ? Colors.green.shade400 : Colors.red.shade400;
+    pnlConverted >= 0 ? Colors.green.shade400 : Colors.red.shade400;
     return ListTile(
       dense: true,
       title: Text(
@@ -43,13 +43,15 @@ class AssetListItem extends StatelessWidget {
         text: TextSpan(
           style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
           children: <TextSpan>[
+            // CORRECTION ICI : Suppression des \ devant les $
             TextSpan(
                 text:
-                    '\${asset.quantity} x \\${CurrencyFormatter.format(asset.averagePrice, asset.priceCurrency)}'),
+                '${asset.quantity} x ${CurrencyFormatter.format(asset.averagePrice, asset.priceCurrency)}'),
             if (asset.estimatedAnnualYield > 0)
               TextSpan(
+                // CORRECTION ICI : Suppression des \ devant les $
                 text:
-                    '  •  Rdt. Annuel Est. \\${NumberFormat.percentPattern().format(asset.estimatedAnnualYield)}',
+                '  •  Rdt. Annuel Est. ${NumberFormat.percentPattern().format(asset.estimatedAnnualYield)}',
                 style: TextStyle(color: Colors.deepPurple[400]),
               ),
           ],
@@ -61,23 +63,23 @@ class AssetListItem extends StatelessWidget {
         child: isProcessing
             ? _buildTrailingShimmer(theme)
             : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    CurrencyFormatter.format(totalValueConverted, baseCurrency),
-                    style: theme.textTheme.bodyLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    // Fix: remove extra brace
-                    '\${CurrencyFormatter.format(pnlConverted, baseCurrency)} (\${(pnlPercentage * 100).toStringAsFixed(2)}%)',
-                    style: theme.textTheme.bodySmall?.copyWith(color: pnlColor),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              CurrencyFormatter.format(totalValueConverted, baseCurrency),
+              style: theme.textTheme.bodyLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              // CORRECTION ICI : Suppression des \ devant les $
+              '${CurrencyFormatter.format(pnlConverted, baseCurrency)} (${(pnlPercentage * 100).toStringAsFixed(2)}%)',
+              style: theme.textTheme.bodySmall?.copyWith(color: pnlColor),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -116,4 +118,3 @@ class AssetListItem extends StatelessWidget {
     );
   }
 }
-
