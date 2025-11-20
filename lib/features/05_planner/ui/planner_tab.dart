@@ -282,12 +282,68 @@ class _PlannerTabState extends State<PlannerTab> {
                         AppTheme.buildSectionHeader(
                           context: context,
                           icon: Icons.trending_up,
-                          title: 'Projection ($_selectedDuration ans)',
+                          title: 'Projection',
+                          trailing: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '$_selectedDuration ans',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
+                        if (projectionData.isNotEmpty) ...[
+                          // Résumé en haut du graphique
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: theme.dividerColor.withOpacity(0.5)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildSummaryItem(
+                                  context,
+                                  'Capital total',
+                                  projectionData.last.totalValue,
+                                  baseCurrency,
+                                  theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                                Container(
+                                    width: 1,
+                                    height: 40,
+                                    color: theme.dividerColor),
+                                _buildSummaryItem(
+                                  context,
+                                  'Gains estimés',
+                                  projectionData.last.cumulativeGains,
+                                  baseCurrency,
+                                  theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
                         SizedBox(
-                          height: 250,
-                          // --- MODIFIÉ : Stack pour l'overlay ---
+                          height: 300,
                           child: Stack(
                             children: [
                               if (projectionData.isEmpty)
@@ -296,8 +352,6 @@ class _PlannerTabState extends State<PlannerTab> {
                               else
                                 BarChart(_buildChartData(
                                     projectionData, theme, baseCurrency)),
-
-                              // --- NOUVEAU : Overlay ---
                               if (isProcessing)
                                 Positioned.fill(
                                   child: Container(
@@ -319,12 +373,10 @@ class _PlannerTabState extends State<PlannerTab> {
                                     ),
                                   ),
                                 ),
-                              // --- FIN NOUVEAU ---
                             ],
                           ),
-                          // --- FIN Stack ---
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
                         Wrap(
                           spacing: 16,
                           runSpacing: 8,
@@ -348,22 +400,25 @@ class _PlannerTabState extends State<PlannerTab> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
                         Center(
-                          child: ToggleButtons(
-                            isSelected: _durations
-                                .map((d) => d == _selectedDuration)
-                                .toList(),
-                            onPressed: (index) {
+                          child: SegmentedButton<int>(
+                            segments: _durations.map((d) {
+                              return ButtonSegment<int>(
+                                value: d,
+                                label: Text('$d ans'),
+                              );
+                            }).toList(),
+                            selected: {_selectedDuration},
+                            onSelectionChanged: (Set<int> newSelection) {
                               setState(() {
-                                _selectedDuration = _durations[index];
+                                _selectedDuration = newSelection.first;
                               });
                             },
-                            borderRadius: BorderRadius.circular(8),
-                            constraints: const BoxConstraints(
-                                minHeight: 40, minWidth: 60),
-                            children:
-                            _durations.map((d) => Text('$d ans')).toList(),
+                            style: ButtonStyle(
+                              visualDensity: VisualDensity.compact,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
                           ),
                         ),
                       ],
@@ -379,6 +434,25 @@ class _PlannerTabState extends State<PlannerTab> {
     );
   }
 
+  Widget _buildSummaryItem(BuildContext context, String label, double value,
+      String currency, TextStyle? valueStyle) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).hintColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          CurrencyFormatter.format(value, currency),
+          style: valueStyle,
+        ),
+      ],
+    );
+  }
+
   // MODIFIÉ : Accepte la devise de base
   BarChartData _buildChartData(
       List<ProjectionData> data, ThemeData theme, String baseCurrency) {
@@ -391,8 +465,8 @@ class _PlannerTabState extends State<PlannerTab> {
         barRods: [
           BarChartRodData(
             toY: d.totalValue,
-            borderRadius: BorderRadius.zero,
-            width: 18,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+            width: 20,
             rodStackItems: [
               BarChartRodStackItem(
                 0,
@@ -422,24 +496,27 @@ class _PlannerTabState extends State<PlannerTab> {
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 60,
+            reservedSize: 50,
             getTitlesWidget: (value, meta) {
               if (value == 0 || value > maxValue) return const SizedBox();
 
               String text;
-              if (value > 1000000) {
+              if (value >= 1000000) {
                 text = '${(value / 1000000).toStringAsFixed(1)}M';
-              } else if (value > 1000) {
-                text = '${(value / 1000).toStringAsFixed(0)}K';
+              } else if (value >= 1000) {
+                text = '${(value / 1000).toStringAsFixed(0)}k';
               } else {
                 text = value.toStringAsFixed(0);
               }
 
               return Padding(
-                padding: const EdgeInsets.only(right: 4.0),
+                padding: const EdgeInsets.only(right: 8.0),
                 child: Text(
                   text,
-                  style: theme.textTheme.bodySmall,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.hintColor,
+                    fontWeight: FontWeight.w500,
+                  ),
                   textAlign: TextAlign.right,
                 ),
               );
@@ -451,17 +528,23 @@ class _PlannerTabState extends State<PlannerTab> {
             showTitles: true,
             getTitlesWidget: (value, meta) {
               final year = value.toInt();
-              if (year % (_selectedDuration > 10 ? 2 : 1) != 0 &&
-                  year != 1 &&
-                  year != _selectedDuration) {
+              // Afficher moins de labels si beaucoup d'années
+              int step = 1;
+              if (_selectedDuration > 20) step = 5;
+              else if (_selectedDuration > 10) step = 2;
+
+              if (year % step != 0 && year != 1 && year != _selectedDuration) {
                 return const SizedBox();
               }
 
               return Padding(
-                padding: const EdgeInsets.only(top: 4.0),
+                padding: const EdgeInsets.only(top: 8.0),
                 child: Text(
                   year.toString(),
-                  style: theme.textTheme.bodySmall,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.hintColor,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               );
             },
@@ -477,21 +560,54 @@ class _PlannerTabState extends State<PlannerTab> {
         drawVerticalLine: false,
         horizontalInterval: interval,
         getDrawingHorizontalLine: (value) => FlLine(
-          color: Colors.grey.withOpacity(0.1),
+          color: theme.dividerColor.withOpacity(0.2),
           strokeWidth: 1,
+          dashArray: [5, 5],
         ),
       ),
       barTouchData: BarTouchData(
         touchTooltipData: BarTouchTooltipData(
+          tooltipPadding: const EdgeInsets.all(12),
+          tooltipMargin: 8,
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
             final d = data[groupIndex];
             return BarTooltipItem(
-              'Année ${d.year}\n'
-                  'Total: ${CurrencyFormatter.format(d.totalValue, baseCurrency)}\n'
-                  'Capital actuel: ${CurrencyFormatter.format(d.currentCapital, baseCurrency)}\n'
-                  'Cumul versements: ${CurrencyFormatter.format(d.cumulativeContributions, baseCurrency)}\n'
-                  'Cumul gains: ${CurrencyFormatter.format(d.cumulativeGains, baseCurrency)}',
-              theme.textTheme.bodySmall!.copyWith(color: Colors.white),
+              'Année ${d.year}\n',
+              theme.textTheme.titleSmall!.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              children: [
+                TextSpan(
+                  text: 'Total: ${CurrencyFormatter.format(d.totalValue, baseCurrency)}\n',
+                  style: theme.textTheme.bodySmall!.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                ),
+                TextSpan(
+                  text: 'Capital: ${CurrencyFormatter.format(d.currentCapital, baseCurrency)}\n',
+                  style: theme.textTheme.bodySmall!.copyWith(
+                    color: theme.colorScheme.primary.withOpacity(0.8),
+                    height: 1.5,
+                  ),
+                ),
+                TextSpan(
+                  text: 'Versements: ${CurrencyFormatter.format(d.cumulativeContributions, baseCurrency)}\n',
+                  style: theme.textTheme.bodySmall!.copyWith(
+                    color: Colors.purple.shade200,
+                    height: 1.5,
+                  ),
+                ),
+                TextSpan(
+                  text: 'Gains: ${CurrencyFormatter.format(d.cumulativeGains, baseCurrency)}',
+                  style: theme.textTheme.bodySmall!.copyWith(
+                    color: Colors.green.shade300,
+                    height: 1.5,
+                  ),
+                ),
+              ],
             );
           },
         ),
