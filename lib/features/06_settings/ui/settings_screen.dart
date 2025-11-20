@@ -1,5 +1,3 @@
-// lib/features/06_settings/ui/settings_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -26,13 +24,13 @@ class SettingsScreen extends StatelessWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Le titre existant
+                  // Le titre
                   AppTheme.buildScreenTitle(
                     context: context,
                     title: 'Paramètres',
                     centered: true,
                   ),
-                  // La croix de fermeture positionnée à droite
+                  // La croix de fermeture
                   Positioned(
                     right: 8,
                     top: 0,
@@ -52,7 +50,7 @@ class SettingsScreen extends StatelessWidget {
                 delegate: SliverChildListDelegate([
                   const AppearanceCard(),
                   const SizedBox(height: 12),
-                  GeneralSettingsCard(), // Note: J'ai retiré 'const' si le constructeur n'est pas const
+                  const GeneralSettingsCard(),
                   const SizedBox(height: 12),
                   const PortfolioCard(),
                   const SizedBox(height: 12),
