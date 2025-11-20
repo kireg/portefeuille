@@ -16,6 +16,7 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
   static const String _kMigrationV1Done = 'migration_v1_done';
   static const String _kMigrationV2Done = 'migration_v2_done';
   static const String _kBaseCurrency = 'baseCurrency';
+  static const String _kLastPortfolioId = 'lastPortfolioId';
 
   // Clé sécurisée
   static const String _kFmpApiKey = 'fmpApiKey';
@@ -37,6 +38,7 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
   String? _fmpApiKey;
   bool _migrationV1Done = false;
   bool _migrationV2Done = false;
+  String? _lastPortfolioId;
 
   // Getters
   bool get isOnlineMode => _isOnlineMode;
@@ -76,6 +78,7 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
     _baseCurrency = _settingsRepo.get(_kBaseCurrency, defaultValue: _defaultBaseCurrency);
     _migrationV1Done = _settingsRepo.get(_kMigrationV1Done, defaultValue: false);
     _migrationV2Done = _settingsRepo.get(_kMigrationV2Done, defaultValue: false);
+    _lastPortfolioId = _settingsRepo.get(_kLastPortfolioId);
   }
 
   Future<void> _loadAsyncSettings() async {
@@ -135,4 +138,13 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
     await _loadAsyncSettings(); // Recharge la clé API
     notifyListeners(); // Informe l'UI des nouveaux settings (couleur, devise...)
   }
+
+  String? get lastPortfolioId => _lastPortfolioId;
+
+  void setLastPortfolioId(String id) {
+    _lastPortfolioId = id;
+    _settingsRepo.put(_kLastPortfolioId, id);
+    // Pas besoin de notifyListeners() ici car cela n'affecte pas directement l'UI globale
+  }
+
 }

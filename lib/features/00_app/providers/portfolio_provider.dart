@@ -230,29 +230,51 @@ class PortfolioProvider extends ChangeNotifier {
 
   /// Rechargement complet (lourd) : hydratation + calcul
   Future<void> _refreshDataFromSource() async {
-    debugPrint("--- 🔄 DÉBUT _refreshDataFromSource (LOURD) ---");
+    debugPrint("--- 🔄 DÉBUT _refreshDataFromSource ---");
 
     // 1. Hydratation
-    _portfolios = await _hydrationService.hydrateAll();
+    final rawPortfolios = await _hydrationService.hydrateAll();
 
-    // 2. Sélection du portfolio actif
+    // 2. NETTOYAGE : On filtre les portefeuilles invalides (noms vides ou nulls)
+    _portfolios = rawPortfolios.where((p) => p.id.isNotEmpty && p.name.trim().isNotEmpty).toList();
+
+    // 3. Sélection du portfolio actif
     if (_portfolios.isNotEmpty) {
-      if (_activePortfolio == null) {
-        _activePortfolio = _portfolios.first;
-      } else {
+      // A. Essayer de garder le portefeuille actuel s'il existe encore
+      if (_activePortfolio != null) {
         try {
-          _activePortfolio =
-              _portfolios.firstWhere((p) => p.id == _activePortfolio!.id);
+          _activePortfolio = _portfolios.firstWhere((p) => p.id == _activePortfolio!.id);
         } catch (e) {
-          _activePortfolio = _portfolios.first;
+          _activePortfolio = null;
         }
       }
+
+      // B. Si aucun actif, essayer de récupérer le dernier utilisé via les Settings
+      if (_activePortfolio == null && _settingsProvider != null) {
+        final lastId = _settingsProvider!.lastPortfolioId;
+        if (lastId != null && lastId.isNotEmpty) {
+          try {
+            _activePortfolio = _portfolios.firstWhere((p) => p.id == lastId);
+          } catch (_) {
+            // L'ID sauvegardé ne correspond à rien, on prendra le défaut
+          }
+        }
+      }
+
+      // C. Fallback : Prendre le premier de la liste par défaut
+      _activePortfolio ??= _portfolios.first;
+
     } else {
       _activePortfolio = null;
     }
 
-    // 3. Calcul
+    // 4. Calcul
     await _recalculateAggregatedData();
+
+    // 5. Sauvegarder le choix actuel pour la prochaine fois
+    if (_activePortfolio != null) {
+      _settingsProvider?.setLastPortfolioId(_activePortfolio!.id);
+    }
 
     debugPrint("--- ℹ️ FIN _refreshDataFromSource ---");
   }
@@ -381,6 +403,8 @@ class PortfolioProvider extends ChangeNotifier {
     debugPrint("🔄 [Provider] setActivePortfolio");
     try {
       _activePortfolio = _portfolios.firstWhere((p) => p.id == portfolioId);
+      // Sauvegarde de la préférence
+      _settingsProvider?.setLastPortfolioId(portfolioId);
       _recalculateAggregatedData();
     } catch (e) {
       debugPrint("Portefeuille non trouvé : $portfolioId");

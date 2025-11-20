@@ -34,6 +34,7 @@ class InitialSetupWizard extends StatefulWidget {
 class _InitialSetupWizardState extends State<InitialSetupWizard> {
   int _currentStep = 0;
   final int _totalSteps = 5;
+  bool _isSaving = false;
 
   // État du wizard
   bool _enableOnlineMode = false;
@@ -145,14 +146,21 @@ class _InitialSetupWizardState extends State<InitialSetupWizard> {
           else
             const SizedBox.shrink(),
 
-          // Bouton Suivant / Terminer
+          // Bouton Suivant / Terminer MODIFIÉ
           ElevatedButton.icon(
-            onPressed: _canProceed() ? _nextStep : null,
-            icon: Icon(_currentStep == _totalSteps - 1
-                ? Icons.check
-                : Icons.arrow_forward),
-            label:
-                Text(_currentStep == _totalSteps - 1 ? 'Terminer' : 'Suivant'),
+            // Désactive le bouton si sauvegarde en cours
+            onPressed: (_canProceed() && !_isSaving) ? _nextStep : null,
+            // Affiche un loader si sauvegarde en cours
+            icon: _isSaving
+                ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            )
+                : Icon(_currentStep == _totalSteps - 1 ? Icons.check : Icons.arrow_forward),
+            label: Text(_currentStep == _totalSteps - 1
+                ? (_isSaving ? 'Création...' : 'Terminer')
+                : 'Suivant'),
           ),
         ],
       ),
@@ -193,46 +201,42 @@ class _InitialSetupWizardState extends State<InitialSetupWizard> {
   }
 
   Future<void> _finishWizard() async {
-    final portfolioProvider = context.read<PortfolioProvider>();
-    final settingsProvider = context.read<SettingsProvider>();
+    if (_isSaving) return; // 🔒 Sécurité anti-double clic
+    setState(() => _isSaving = true);
 
-    // 1. Activer le mode en ligne si demandé
-    if (_enableOnlineMode && !settingsProvider.isOnlineMode) {
-      settingsProvider.toggleOnlineMode(true);
-    }
+    try {
+      final portfolioProvider = context.read<PortfolioProvider>();
+      final settingsProvider = context.read<SettingsProvider>();
 
-    // 2. Créer le portefeuille et les entités
-    await _createPortfolioData(portfolioProvider);
-
-    // 3. Attendre un peu pour que toutes les données soient bien sauvegardées
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // 4. Recharger tous les portefeuilles depuis la base de données
-    await portfolioProvider.loadAllPortfolios();
-
-    // 5. Synchroniser les prix UNIQUEMENT en mode en ligne
-    // GARDE-FOU : Vérifier que le mode en ligne est VRAIMENT activé
-    if (_enableOnlineMode && settingsProvider.isOnlineMode) {
-      debugPrint('🔄 Mode en ligne activé : synchronisation des prix...');
-      try {
-        await portfolioProvider.forceSynchroniserLesPrix();
-        debugPrint('✅ Synchronisation des prix terminée');
-      } catch (e) {
-        debugPrint('⚠️ Erreur lors de la synchronisation des prix : $e');
-        // Ne pas bloquer si la sync échoue, les prix manuels sont déjà sauvegardés
-      }
-    } else {
-      debugPrint(
-          '📴 Mode hors ligne : synchronisation des prix DÉSACTIVÉE (utilisation des prix manuels)');
+      // 1. Activer le mode en ligne si demandé
       if (_enableOnlineMode && !settingsProvider.isOnlineMode) {
-        debugPrint(
-            '⚠️ ALERTE : Mode en ligne demandé mais non activé dans les paramètres !');
+        settingsProvider.toggleOnlineMode(true);
       }
-    }
 
-    // 6. Fermer le wizard et laisser le parent gérer la navigation
-    if (mounted) {
-      Navigator.of(context).pop(true); // Retourner true pour indiquer le succès
+      // 2. Créer le portefeuille
+      await _createPortfolioData(portfolioProvider);
+
+      // 3. Attendre et recharger
+      await Future.delayed(const Duration(milliseconds: 500));
+      await portfolioProvider.loadAllPortfolios();
+
+      // 4. Synchronisation éventuelle
+      if (_enableOnlineMode && settingsProvider.isOnlineMode) {
+        debugPrint('🔄 Mode en ligne : sync des prix...');
+        try {
+          await portfolioProvider.forceSynchroniserLesPrix();
+        } catch (e) {
+          debugPrint('⚠️ Erreur sync prix : $e');
+        }
+      }
+
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur wizard : $e');
+      // En cas d'erreur, on réactive le bouton pour permettre de réessayer
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
