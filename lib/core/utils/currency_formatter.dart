@@ -84,4 +84,12 @@ class CurrencyFormatter {
     );
     return formatter.format(value);
   }
+
+  /// Formate une quantité d'actif (jusqu'à 8 décimales, sans zéros inutiles).
+  /// Ex: 10.0 -> "10"
+  /// Ex: 0.123456 -> "0,123456"
+  static String formatQuantity(double value) {
+    final formatter = NumberFormat('#,##0.########', 'fr_FR');
+    return formatter.format(value);
+  }
 }

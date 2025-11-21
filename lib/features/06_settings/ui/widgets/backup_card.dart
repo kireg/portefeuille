@@ -27,10 +27,42 @@ class _BackupCardState extends State<BackupCard> {
     final provider = context.read<PortfolioProvider>();
     try {
       final jsonString = await provider.getExportJson();
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/backup.json');
-      await file.writeAsString(jsonString);
-      await Share.shareXFiles([XFile(file.path)], subject: 'Sauvegarde Portefeuille');
+
+      if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        // Desktop: Save File Dialog
+        String? outputFile = await FilePicker.platform.saveFile(
+          dialogTitle: 'Enregistrer la sauvegarde',
+          fileName: 'backup_portefeuille_${DateTime.now().toIso8601String().replaceAll(':', '-')}.json',
+          allowedExtensions: ['json'],
+          type: FileType.custom,
+        );
+
+        if (outputFile != null) {
+          // Ensure extension
+          if (!outputFile.toLowerCase().endsWith('.json')) {
+            outputFile = '$outputFile.json';
+          }
+          final file = File(outputFile);
+          await file.writeAsString(jsonString);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Sauvegarde enregistrée : $outputFile')),
+            );
+          }
+        }
+      } else {
+        // Mobile: Share
+        final tempDir = await getTemporaryDirectory();
+        final file = File('${tempDir.path}/backup.json');
+        await file.writeAsString(jsonString);
+        await Share.shareXFiles([XFile(file.path)], subject: 'Sauvegarde Portefeuille');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de l\'export : $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isBusy = false);
     }

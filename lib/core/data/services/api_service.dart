@@ -29,6 +29,8 @@ class TickerSuggestion {
   final String currency;
   // NOUVEAU : Code ISIN de l'actif (si disponible)
   final String? isin;
+  // NOUVEAU : Prix actuel de l'actif
+  final double? price;
 
   TickerSuggestion({
     required this.ticker,
@@ -36,6 +38,7 @@ class TickerSuggestion {
     required this.exchange,
     required this.currency,
     this.isin,
+    this.price,
   });
 }
 
@@ -440,44 +443,51 @@ class ApiService {
       debugPrint("📊 ${quotes.length} résultats trouvés");
 
       // OPTION C : Récupérer la devise réelle pour chaque résultat via getPrice()
+      // On utilise Future.wait pour paralléliser les appels et accélérer la recherche
+      final futures = <Future<TickerSuggestion?>>[];
+
       for (final quote in quotes) {
         final String? ticker = quote['symbol'];
         final String? name = quote['longname'] ?? quote['shortname'];
         final String? exchange = quote['exchDisp'];
-
-        // NOUVEAU : Récupérer l'ISIN si disponible dans la réponse API
-        // NOTE IMPORTANTE : L'API Yahoo Finance Search ne fournit PAS l'ISIN dans sa réponse.
-        // Ce champ restera null jusqu'à ce qu'une autre source (FMP, API dédiée) soit utilisée.
-        // La structure est néanmoins prête pour une future implémentation.
         final String? isin = quote['isin'];
 
         if (ticker != null && name != null && exchange != null) {
           if (quote['quoteType'] == 'EQUITY' ||
               quote['quoteType'] == 'ETF' ||
+              quote['quoteType'] == 'MUTUALFUND' ||
+              quote['quoteType'] == 'INDEX' ||
               quote['quoteType'] == 'CRYPTOCURRENCY') {
-            // OPTION C : Appel getPrice() pour obtenir la vraie devise
-            String currency = '???';
-            try {
-              final priceResult = await getPrice(ticker);
-              if (priceResult.price != null) {
-                currency = priceResult.currency;
-                debugPrint("💱 Devise récupérée pour $ticker: $currency");
+            
+            futures.add(() async {
+              String currency = '???';
+              double? price;
+              try {
+                final priceResult = await getPrice(ticker);
+                if (priceResult.price != null) {
+                  currency = priceResult.currency;
+                  price = priceResult.price;
+                  debugPrint("💱 Devise récupérée pour $ticker: $currency");
+                }
+              } catch (e) {
+                debugPrint("⚠️ Impossible de récupérer la devise pour $ticker: $e");
               }
-            } catch (e) {
-              debugPrint(
-                  "⚠️ Impossible de récupérer la devise pour $ticker: $e");
-            }
 
-            suggestions.add(TickerSuggestion(
-              ticker: ticker,
-              name: name,
-              exchange: exchange,
-              currency: currency,
-              isin: isin,
-            ));
+              return TickerSuggestion(
+                ticker: ticker,
+                name: name,
+                exchange: exchange,
+                currency: currency,
+                isin: isin,
+                price: price,
+              );
+            }());
           }
         }
       }
+
+      final results = await Future.wait(futures);
+      suggestions.addAll(results.whereType<TickerSuggestion>());
 
       debugPrint("✅ ${suggestions.length} suggestions valides avec devises");
       _searchCache[query] = suggestions;

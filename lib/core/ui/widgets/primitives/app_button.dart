@@ -64,6 +64,7 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
           opacity: isDisabled ? 0.5 : 1.0,
           child: Container(
             width: widget.isFullWidth ? double.infinity : null,
+            alignment: Alignment.center, // Fix: Center content to prevent loader stretching
             padding: const EdgeInsets.symmetric(
               vertical: 14,
               horizontal: 24,

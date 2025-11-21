@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:portefeuille/core/data/models/account_type.dart';
+import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/wizard_dialogs/add_asset_dialog.dart';
 
@@ -217,7 +218,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                         title:
                             Text(asset.name, overflow: TextOverflow.ellipsis),
                         subtitle: Text(
-                          '${asset.quantity} x ${asset.currentPrice} €\n= ${(asset.quantity * asset.currentPrice).toStringAsFixed(2)} €',
+                          '${CurrencyFormatter.formatQuantity(asset.quantity)} x ${asset.currentPrice} €\n= ${(asset.quantity * asset.currentPrice).toStringAsFixed(2)} €',
                         ),
                         isThreeLine: true,
                         trailing: Row(

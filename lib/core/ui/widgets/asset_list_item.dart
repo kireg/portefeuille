@@ -60,7 +60,7 @@ class AssetListItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${asset.quantity} ${asset.ticker}',
+                  '${CurrencyFormatter.formatQuantity(asset.quantity)} ${asset.ticker}',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,

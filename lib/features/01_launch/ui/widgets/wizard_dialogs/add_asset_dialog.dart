@@ -155,11 +155,11 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                               border: const OutlineInputBorder(),
                               prefixIcon: const Icon(Icons.search),
                               suffixIcon: _isLoadingPrice 
-                                ? const SizedBox(
-                                    width: 16, 
-                                    height: 16, 
-                                    child: Padding(
-                                      padding: EdgeInsets.all(12.0),
+                                ? const Padding(
+                                    padding: EdgeInsets.all(12.0),
+                                    child: SizedBox(
+                                      width: 16, 
+                                      height: 16, 
                                       child: CircularProgressIndicator(strokeWidth: 2),
                                     ),
                                   )
@@ -179,7 +179,18 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                             title: Text(suggestion.ticker),
                             subtitle: Text(
                                 '${suggestion.name} (${suggestion.exchange})'),
-                            trailing: Text(suggestion.currency),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                if (suggestion.price != null)
+                                  Text(
+                                    '${suggestion.price} ${suggestion.currency}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                Text(suggestion.currency, style: const TextStyle(fontSize: 12)),
+                              ],
+                            ),
                           );
                         },
                         onSelected: (suggestion) {

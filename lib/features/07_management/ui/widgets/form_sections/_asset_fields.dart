@@ -85,6 +85,18 @@ class AssetFields extends StatelessWidget {
                         "${suggestion.ticker} • ${suggestion.exchange}",
                         style: AppTypography.caption,
                       ),
+                      trailing: suggestion.price != null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '${suggestion.price} ${suggestion.currency}',
+                                  style: AppTypography.bodyBold.copyWith(fontSize: 12),
+                                ),
+                              ],
+                            )
+                          : Text(suggestion.currency, style: AppTypography.caption),
                       onTap: () => readState.onSuggestionSelected(suggestion, context),
                     );
                   },

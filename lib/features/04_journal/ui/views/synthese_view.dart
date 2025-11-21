@@ -293,7 +293,7 @@ class _AssetCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildInfoLabel('Quantité'),
-                    Text(asset.quantity.toStringAsFixed(2), style: AppTypography.body),
+                    Text(CurrencyFormatter.formatQuantity(asset.quantity), style: AppTypography.body),
                     const SizedBox(height: AppDimens.paddingS),
                     _buildInfoLabel('PRU'),
                     Text(
