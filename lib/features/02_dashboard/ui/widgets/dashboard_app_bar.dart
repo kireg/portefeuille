@@ -258,11 +258,12 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
   }
 
   void _openSettings(BuildContext context) {
-    // ... (Code existant inchangé)
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      // CORRECTION CRITIQUE ICI :
+      // On met transparent pour laisser le ClipRRect du SettingsScreen faire l'arrondi
+      backgroundColor: Colors.transparent,
       builder: (context) => const SettingsScreen(),
     );
   }
