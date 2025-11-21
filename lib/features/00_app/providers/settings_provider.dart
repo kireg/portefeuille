@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/repositories/settings_repository.dart';
-import 'package:portefeuille/core/utils/constants.dart';
 import 'package:portefeuille/core/data/abstractions/i_settings.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 

@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
+
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
-import 'package:portefeuille/core/ui/theme/app_theme.dart';
+
 import 'widgets/appearance_card.dart';
 import 'widgets/general_settings_card.dart';
 import 'widgets/portfolio_card.dart';
@@ -16,58 +23,60 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<PortfolioProvider, SettingsProvider>(
-      builder: (context, portfolioProvider, settingsProvider, child) {
-        return CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Le titre
-                  AppTheme.buildScreenTitle(
-                    context: context,
-                    title: 'Paramètres',
-                    centered: true,
-                  ),
-                  // La croix de fermeture
-                  Positioned(
-                    right: 8,
-                    top: 0,
-                    bottom: 0,
-                    child: IconButton(
-                      icon: const Icon(Icons.close),
-                      tooltip: 'Fermer',
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                ],
-              ),
+    // On consomme les providers pour que la page se rafraîchisse si besoin
+    context.watch<PortfolioProvider>();
+    context.watch<SettingsProvider>();
+
+    return AppScreen(
+      withSafeArea: false, // Géré par le modal ou le parent
+      body: Column(
+        children: [
+          // Header personnalisé avec bouton de fermeture
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppDimens.paddingL,
+                AppDimens.paddingL,
+                AppDimens.paddingM,
+                AppDimens.paddingM
             ),
-            SliverPadding(
-              padding: const EdgeInsets.all(16.0),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  const AppearanceCard(),
-                  const SizedBox(height: 12),
-                  const GeneralSettingsCard(),
-                  const SizedBox(height: 12),
-                  const PortfolioCard(),
-                  const SizedBox(height: 12),
-                  const OnlineModeCard(),
-                  const SizedBox(height: 12),
-                  const SyncLogsCard(),
-                  const SizedBox(height: 12),
-                  const BackupCard(),
-                  const SizedBox(height: 12),
-                  const DangerZoneCard(),
-                  const SizedBox(height: 32),
-                ]),
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Paramètres', style: AppTypography.h1),
+                AppIcon(
+                  icon: Icons.close,
+                  onTap: () => Navigator.of(context).pop(),
+                  backgroundColor: Colors.transparent,
+                  size: 24,
+                ),
+              ],
             ),
-          ],
-        );
-      },
+          ),
+
+          // Liste des options
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+              children: const [
+                FadeInSlide(delay: 0.1, child: AppearanceCard()),
+                SizedBox(height: AppDimens.paddingM),
+                FadeInSlide(delay: 0.15, child: GeneralSettingsCard()),
+                SizedBox(height: AppDimens.paddingM),
+                FadeInSlide(delay: 0.2, child: PortfolioCard()),
+                SizedBox(height: AppDimens.paddingM),
+                FadeInSlide(delay: 0.25, child: OnlineModeCard()),
+                SizedBox(height: AppDimens.paddingM),
+                FadeInSlide(delay: 0.3, child: SyncLogsCard()),
+                SizedBox(height: AppDimens.paddingM),
+                FadeInSlide(delay: 0.35, child: BackupCard()),
+                SizedBox(height: AppDimens.paddingM),
+                FadeInSlide(delay: 0.4, child: DangerZoneCard()),
+                SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

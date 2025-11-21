@@ -21,13 +21,14 @@ class PortfolioAdapter extends TypeAdapter<Portfolio> {
       name: fields[2] as String,
       institutions: (fields[0] as List?)?.cast<Institution>(),
       savingsPlans: (fields[3] as List?)?.cast<SavingsPlan>(),
+      valueHistory: (fields[4] as List?)?.cast<PortfolioValueHistoryPoint>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Portfolio obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.institutions)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class PortfolioAdapter extends TypeAdapter<Portfolio> {
       ..writeByte(2)
       ..write(obj.name)
       ..writeByte(3)
-      ..write(obj.savingsPlans);
+      ..write(obj.savingsPlans)
+      ..writeByte(4)
+      ..write(obj.valueHistory);
   }
 
   @override

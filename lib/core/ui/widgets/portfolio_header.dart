@@ -1,155 +1,113 @@
-// lib/core/ui/widgets/portfolio_header.dart
-// Centralized PortfolioHeader widget moved from features/03_overview/ui/widgets
-
-// ...existing code...
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/utils/currency_formatter.dart';
-import 'package:intl/intl.dart';
-import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_animated_value.dart';
 import 'package:provider/provider.dart';
-import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:intl/intl.dart';
+
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/utils/currency_formatter.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 
 class PortfolioHeader extends StatelessWidget {
   const PortfolioHeader({super.key});
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final provider = context.watch<PortfolioProvider>();
-    context.watch<SettingsProvider>();
     final baseCurrency = provider.currentBaseCurrency;
     final isProcessing = provider.isProcessingInBackground;
 
     final totalValue = provider.activePortfolioTotalValue;
     final totalPL = provider.activePortfolioTotalPL;
     final totalPLPercentage = provider.activePortfolioTotalPLPercentage;
-    final annualYield = provider.activePortfolioEstimatedAnnualYield;
+    final isPositive = totalPL >= 0;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(
-              'Valeur Totale du Portefeuille',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(color: Colors.grey[400]),
+    return AppCard(
+      backgroundColor: Colors.transparent,
+      padding: const EdgeInsets.all(AppDimens.paddingL),
+      child: Column(
+        // ▼▼▼ MODIFICATION : Centrage Horizontal ▼▼▼
+        crossAxisAlignment: CrossAxisAlignment.center,
+        // ▲▲▲ FIN MODIFICATION ▲▲▲
+        children: [
+          Text(
+            'Solde total'.toUpperCase(),
+            style: AppTypography.label.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 1.5,
             ),
-            const SizedBox(height: 8),
-            if (isProcessing)
-              _buildShimmer(theme)
-            else
-              Text(
-                CurrencyFormatter.format(totalValue, baseCurrency),
-                style: theme.textTheme.headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: AppDimens.paddingS),
+
+          if (isProcessing)
+            _buildShimmer()
+          else
+            AppAnimatedValue(
+              value: totalValue,
+              currency: baseCurrency,
+              style: AppTypography.hero.copyWith(
+                fontSize: 36,
               ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+            ),
+
+          const SizedBox(height: AppDimens.paddingM),
+
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.paddingM,
+                vertical: AppDimens.paddingS
+            ),
+            decoration: BoxDecoration(
+              color: (isPositive ? AppColors.success : AppColors.error).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppDimens.radiusS),
+              border: Border.all(
+                color: (isPositive ? AppColors.success : AppColors.error).withOpacity(0.2),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: isProcessing
-                      ? _buildStatShimmer(theme)
-                      : _buildStat(
-                          context,
-                          'Plus/Moins-value',
-                          '${CurrencyFormatter.format(totalPL, baseCurrency)} (${NumberFormat.percentPattern().format(totalPLPercentage)})',
-                          totalPL >= 0 ? Colors.green[400]! : Colors.red[400]!,
-                        ),
+                Icon(
+                  isPositive ? Icons.trending_up : Icons.trending_down,
+                  color: isPositive ? AppColors.success : AppColors.error,
+                  size: 16,
                 ),
-                Expanded(
-                  child: isProcessing
-                      ? _buildStatShimmer(theme)
-                      : _buildStat(
-                          context,
-                          'Rendement Annuel Estimé',
-                          NumberFormat.percentPattern().format(annualYield),
-                          Colors.deepPurple[400]!,
-                        ),
+                const SizedBox(width: 8),
+                Text(
+                  '${isPositive ? '+' : ''}${CurrencyFormatter.format(totalPL, baseCurrency)}',
+                  style: AppTypography.bodyBold.copyWith(
+                    color: isPositive ? AppColors.success : AppColors.error,
+                  ),
+                ),
+                Text(
+                  '  (${NumberFormat.percentPattern().format(totalPLPercentage)})',
+                  style: AppTypography.body.copyWith(
+                    color: (isPositive ? AppColors.success : AppColors.error).withOpacity(0.8),
+                  ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildShimmer(ThemeData theme) {
+  Widget _buildShimmer() {
     return Shimmer.fromColors(
-      baseColor: theme.colorScheme.surface,
-      highlightColor: theme.colorScheme.surfaceContainerHighest,
+      baseColor: AppColors.surfaceLight,
+      highlightColor: AppColors.surface,
       child: Container(
         width: 200,
-        height: theme.textTheme.headlineMedium?.fontSize ?? 34,
+        height: 40,
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(8),
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(AppDimens.radiusS),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatShimmer(ThemeData theme) {
-    return Column(
-      children: [
-        Shimmer.fromColors(
-          baseColor: theme.colorScheme.surface,
-          highlightColor: theme.colorScheme.surfaceContainerHighest,
-          child: Container(
-            width: 100,
-            height: theme.textTheme.bodySmall?.fontSize ?? 12,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Shimmer.fromColors(
-          baseColor: theme.colorScheme.surface,
-          highlightColor: theme.colorScheme.surfaceContainerHighest,
-          child: Container(
-            width: 130,
-            height: theme.textTheme.titleMedium?.fontSize ?? 16,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStat(
-      BuildContext context, String label, String value, Color valueColor) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[400]),
-          textAlign: TextAlign.center,
-          softWrap: true,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: valueColor,
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-          softWrap: true,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
     );
   }
 }
-

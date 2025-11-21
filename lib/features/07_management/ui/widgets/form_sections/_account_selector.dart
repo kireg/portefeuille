@@ -1,8 +1,8 @@
-// lib/features/07_management/ui/widgets/form_sections/_account_selector.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/features/07_management/ui/providers/transaction_form_state.dart';
-import 'package:provider/provider.dart';
+import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
 
 class AccountSelector extends StatelessWidget {
   const AccountSelector({super.key});
@@ -11,17 +11,16 @@ class AccountSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<TransactionFormState>();
 
-    return DropdownButtonFormField<Account>(
+    return AppDropdown<Account>(
+      label: 'Compte',
       value: state.selectedAccount,
+      prefixIcon: Icons.account_balance_wallet_outlined,
       isExpanded: true,
+      // On utilise la méthode existante du state qui génère déjà les DropdownMenuItem
       items: state.buildGroupedAccountItems(context),
       onChanged: (account) =>
           context.read<TransactionFormState>().selectAccount(account),
-      decoration: const InputDecoration(
-        labelText: 'Compte *',
-        border: OutlineInputBorder(),
-      ),
-      validator: (value) => value == null ? 'Compte requis' : null,
+      validator: (value) => value == null ? 'Requis' : null,
     );
   }
 }

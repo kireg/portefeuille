@@ -1,11 +1,13 @@
 // lib/features/00_app/services/demo_data_service.dart
 
+import 'dart:math'; // Pour Random
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/account_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
+import 'package:portefeuille/core/data/models/portfolio_value_history_point.dart'; // Import nécessaire
 import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
@@ -347,6 +349,9 @@ class DemoDataService {
     final demoPortfolio = Portfolio(
       id: demoPortfolioId,
       name: "Portefeuille de Démo (2020-2025)",
+      // ▼▼▼ AJOUT : Génération d'un historique fictif ▼▼▼
+      valueHistory: _generateFakeHistory(),
+      // ▲▲▲ FIN AJOUT ▲▲▲
       institutions: [
         Institution(
           id: _uuid.v4(),
@@ -470,6 +475,57 @@ class DemoDataService {
       transactions: demoTransactions,
       metadata: demoMetadata,
     );
+  }
+
+  /// Génère une courbe aléatoire "crédible" sur les 90 derniers jours
+  List<PortfolioValueHistoryPoint> _generateFakeHistory() {
+    final history = <PortfolioValueHistoryPoint>[];
+    final random = Random();
+    final now = DateTime.now();
+
+    // Valeur cible approximative (basée sur le portefeuille de démo)
+    double currentValue = 42000.0;
+
+    // On remonte le temps jour par jour
+    for (int i = 90; i >= 0; i--) {
+      final date = now.subtract(Duration(days: i));
+
+      // On ajoute un bruit aléatoire pour simuler la volatilité du marché
+      // Variation entre -1.5% et +1.6% par jour (légère tendance haussière globale)
+
+      history.add(PortfolioValueHistoryPoint(
+        date: date,
+        value: currentValue,
+      ));
+
+      // Pour la prochaine itération (qui est en fait la veille dans cette boucle inversée si on construisait à l'envers,
+      // mais ici on construit une liste triée chronologiquement à la fin, donc je dois faire évoluer la valeur "vers le passé" ou "vers le futur")
+
+      // Mieux : Construisons la liste de J-90 à J-0.
+      // J-90 valeur de départ : environ 38 000
+      // On avance jour par jour.
+    }
+
+    // Correction : Approche itérative propre
+    history.clear();
+    double value = 38000.0; // Valeur de départ arbitraire il y a 90 jours
+
+    for (int i = 90; i >= 0; i--) {
+      final date = now.subtract(Duration(days: i));
+
+      // Ajout du point
+      history.add(PortfolioValueHistoryPoint(
+        date: date,
+        value: value,
+      ));
+
+      // Calcul de la valeur du lendemain
+      // Volatilité
+      double change = (random.nextDouble() * 0.04) - 0.018; // -1.8% à +2.2%
+      value = value * (1 + change);
+    }
+
+    return history;
   }
 }
 

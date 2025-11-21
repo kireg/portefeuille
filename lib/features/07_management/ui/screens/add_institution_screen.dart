@@ -1,20 +1,19 @@
-// lib/features/07_management/ui/screens/add_institution_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 
+// Core UI
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+import 'package:portefeuille/core/ui/widgets/inputs/app_text_field.dart';
+
 class AddInstitutionScreen extends StatefulWidget {
-  /// Si onInstitutionCreated est fourni, l'institution sera retournée via ce callback
-  /// au lieu d'être ajoutée directement au provider (utile pour l'onglet Correction)
   final void Function(Institution)? onInstitutionCreated;
-  
-  const AddInstitutionScreen({
-    super.key,
-    this.onInstitutionCreated,
-  });
+
+  const AddInstitutionScreen({super.key, this.onInstitutionCreated});
 
   @override
   State<AddInstitutionScreen> createState() => _AddInstitutionScreenState();
@@ -39,52 +38,49 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
         accounts: [],
       );
 
-      // Si un callback est fourni, on retourne l'institution
-      // Sinon, on l'ajoute directement au provider
       if (widget.onInstitutionCreated != null) {
         widget.onInstitutionCreated!(newInstitution);
       } else {
         Provider.of<PortfolioProvider>(context, listen: false)
             .addInstitution(newInstitution);
       }
-
-      // On ferme le bottom sheet
       Navigator.of(context).pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // On ajoute un padding qui respecte le clavier
     final keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    // MODIFIÉ : Retrait du Scaffold, ajout du SingleChildScrollView
+    // Pas besoin de Scaffold ou AppScreen ici car c'est un BottomSheet
     return SingleChildScrollView(
       child: Padding(
-        // Padding global + padding pour le clavier
-        padding: EdgeInsets.only(
-          top: 16.0,
-          left: 16.0,
-          right: 16.0,
-          bottom: keyboardPadding + 16.0,
+        padding: EdgeInsets.fromLTRB(
+          AppDimens.paddingL,
+          AppDimens.paddingL,
+          AppDimens.paddingL,
+          keyboardPadding + AppDimens.paddingL,
         ),
         child: Form(
           key: _formKey,
           child: Column(
-            mainAxisSize: MainAxisSize.min, // Important pour le bottom sheet
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Ajouter une Institution',
-                style: Theme.of(context).textTheme.titleLarge,
+                'Nouvelle Banque', // Titre plus court et punchy
+                style: AppTypography.h2,
               ),
-              const SizedBox(height: 24),
-              TextFormField(
+              const SizedBox(height: AppDimens.paddingL),
+
+              // Notre nouveau champ de texte
+              AppTextField(
                 controller: _nameController,
-                autofocus: true, // Ouvre le clavier directement
-                decoration: const InputDecoration(
-                  labelText: "Nom de l'institution",
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Nom de l\'établissement',
+                hint: 'ex: Boursorama, Binance...',
+                prefixIcon: Icons.account_balance,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Le nom est requis';
@@ -92,14 +88,15 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
+
+              const SizedBox(height: AppDimens.paddingL),
+
+              // Notre nouveau bouton
+              AppButton(
+                label: 'Créer',
                 onPressed: _submitForm,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                ),
-                child: const Text('Enregistrer'),
-              )
+                icon: Icons.check,
+              ),
             ],
           ),
         ),

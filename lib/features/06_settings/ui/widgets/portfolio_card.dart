@@ -1,10 +1,13 @@
-// lib/features/06_settings/ui/widgets/portfolio_card.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
-import 'package:portefeuille/core/ui/theme/app_theme.dart';
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/initial_setup_wizard.dart';
 
 class PortfolioCard extends StatelessWidget {
@@ -12,81 +15,71 @@ class PortfolioCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final portfolioProvider = context.watch<PortfolioProvider>();
-    final theme = Theme.of(context);
+    final provider = context.watch<PortfolioProvider>();
 
-    return AppTheme.buildStyledCard(
-      context: context,
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppTheme.buildSectionHeader(
-            context: context,
-            icon: Icons.account_balance_wallet_outlined,
-            title: 'Portefeuille',
-          ),
-          const SizedBox(height: 16),
-          AppTheme.buildInfoContainer(
-            context: context,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Actif', style: theme.textTheme.bodySmall),
-                      const SizedBox(height: 4),
-                      Text(
-                        portfolioProvider.activePortfolio?.name ?? 'Aucun',
-                        style: theme.textTheme.titleMedium,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                if (portfolioProvider.portfolios.length > 1)
-                  PopupMenuButton<Portfolio>(
-                    icon: const Icon(Icons.swap_horiz),
-                    tooltip: 'Changer',
-                    onSelected: (portfolio) =>
-                        portfolioProvider.setActivePortfolio(portfolio.id),
-                    itemBuilder: (context) => portfolioProvider.portfolios
-                        .map((p) => PopupMenuItem(
-                              value: p,
-                              child: Text(p.name),
-                            ))
-                        .toList(),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8.0,
-            runSpacing: 8.0,
+          Row(
             children: [
-              OutlinedButton.icon(
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Nouveau'),
-                onPressed: () => _showNewPortfolioDialog(context, portfolioProvider),
-              ),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.edit, size: 18),
-                label: const Text('Renommer'),
-                onPressed: portfolioProvider.activePortfolio == null
-                    ? null
-                    : () => _showRenameDialog(context, portfolioProvider),
-              ),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.delete_outline, size: 18),
-                label: const Text('Supprimer'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: theme.colorScheme.error,
+              const AppIcon(icon: Icons.account_balance_wallet_outlined, color: AppColors.primary),
+              const SizedBox(width: AppDimens.paddingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Portefeuille Actif', style: AppTypography.caption),
+                    DropdownButtonHideUnderline(
+                      child: DropdownButton<Portfolio>(
+                        value: provider.activePortfolio,
+                        isDense: true,
+                        dropdownColor: AppColors.surfaceLight,
+                        style: AppTypography.h3.copyWith(color: AppColors.textPrimary),
+                        icon: const Icon(Icons.arrow_drop_down, color: AppColors.primary),
+                        onChanged: (newValue) {
+                          if (newValue != null) provider.setActivePortfolio(newValue.id);
+                        },
+                        items: provider.portfolios.map((p) {
+                          return DropdownMenuItem(
+                            value: p,
+                            child: Text(p.name, overflow: TextOverflow.ellipsis),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
                 ),
-                onPressed: portfolioProvider.activePortfolio == null
-                    ? null
-                    : () => portfolioProvider
-                        .deletePortfolio(portfolioProvider.activePortfolio!.id),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimens.paddingL),
+
+          // Actions
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              AppButton(
+                label: 'Nouveau',
+                icon: Icons.add,
+                type: AppButtonType.secondary,
+                isFullWidth: false,
+                onPressed: () => _showNewPortfolioDialog(context, provider),
+              ),
+              AppButton(
+                label: 'Renommer',
+                icon: Icons.edit,
+                type: AppButtonType.secondary,
+                isFullWidth: false,
+                onPressed: provider.activePortfolio == null ? null : () => _showRenameDialog(context, provider),
+              ),
+              AppButton(
+                label: 'Supprimer',
+                icon: Icons.delete_outline,
+                type: AppButtonType.ghost, // Style discret pour la suppression
+                isFullWidth: false,
+                onPressed: provider.activePortfolio == null ? null : () => provider.deletePortfolio(provider.activePortfolio!.id),
               ),
             ],
           ),
@@ -95,29 +88,30 @@ class PortfolioCard extends StatelessWidget {
     );
   }
 
+  // (Les méthodes _showRenameDialog et _showNewPortfolioDialog peuvent rester telles quelles 
+  // si vous acceptez qu'elles utilisent les Dialogs Flutter par défaut, 
+  // sinon il faudrait aussi refactorer les AlertDialog. Pour l'instant, ça passe.)
+  // ... Copiez ici les méthodes _showRenameDialog et _showNewPortfolioDialog de l'ancien fichier ...
   void _showRenameDialog(BuildContext context, PortfolioProvider provider) {
-    final nameController =
-        TextEditingController(text: provider.activePortfolio?.name ?? '');
+    final nameController = TextEditingController(text: provider.activePortfolio?.name ?? '');
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Renommer'),
+        backgroundColor: AppColors.surfaceLight,
+        title: Text('Renommer', style: AppTypography.h3),
         content: TextField(
           controller: nameController,
           autofocus: true,
+          style: AppTypography.body,
           decoration: const InputDecoration(labelText: 'Nouveau nom'),
         ),
         actions: [
-          TextButton(
-            child: const Text('Annuler'),
-            onPressed: () => Navigator.pop(ctx),
-          ),
+          TextButton(child: const Text('Annuler'), onPressed: () => Navigator.pop(ctx)),
           FilledButton(
             child: const Text('Enregistrer'),
             onPressed: () {
-              final name = nameController.text.trim();
-              if (name.isNotEmpty) {
-                provider.renameActivePortfolio(name);
+              if (nameController.text.isNotEmpty) {
+                provider.renameActivePortfolio(nameController.text.trim());
                 Navigator.pop(ctx);
               }
             },
@@ -132,42 +126,25 @@ class PortfolioCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Nouveau portefeuille'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Comment créer votre portefeuille ?'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nom',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
+        backgroundColor: AppColors.surfaceLight,
+        title: Text('Nouveau portefeuille', style: AppTypography.h3),
+        content: TextField(
+          controller: nameController,
+          style: AppTypography.body,
+          decoration: const InputDecoration(labelText: 'Nom'),
         ),
         actions: [
-          TextButton(
-            child: const Text('Annuler'),
-            onPressed: () => Navigator.pop(ctx),
-          ),
+          TextButton(child: const Text('Annuler'), onPressed: () => Navigator.pop(ctx)),
           OutlinedButton(
             child: const Text('Vide'),
             onPressed: () {
-              provider.addNewPortfolio(nameController.text.trim().isEmpty
-                  ? "Nouveau Portefeuille"
-                  : nameController.text.trim());
+              provider.addNewPortfolio(nameController.text);
               Navigator.pop(ctx);
             },
           ),
-          FilledButton.icon(
-            icon: const Icon(Icons.assistant_outlined, size: 18),
-            label: const Text('Assistant'),
-            onPressed: () async {
-              final name = nameController.text.trim().isEmpty
-                  ? "Nouveau Portefeuille"
-                  : nameController.text.trim();
+          FilledButton(
+            child: const Text('Assistant'),
+            onPressed: () {
               Navigator.pop(ctx);
               final result = await Navigator.push(
                 context,
@@ -187,4 +164,3 @@ class PortfolioCard extends StatelessWidget {
     );
   }
 }
-

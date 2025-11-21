@@ -1,64 +1,74 @@
-// lib/features/04_journal/ui/views/synthese_view.dart
-// REMPLACEZ LE FICHIER COMPLET
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+
+// Core UI
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/widgets/components/app_screen.dart'; // Si besoin de wrapper
+import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
+
+// Data & Logic
 import 'package:portefeuille/core/data/models/aggregated_asset.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
-import 'package:provider/provider.dart';
-import 'package:portefeuille/core/ui/theme/app_theme.dart';
-// --- (Le modèle AggregatedAsset a été déplacé dans core/data/models) ---
 
 class SyntheseView extends StatefulWidget {
   const SyntheseView({super.key});
+
   @override
   State<SyntheseView> createState() => _SyntheseViewState();
 }
 
 class _SyntheseViewState extends State<SyntheseView> {
-  // --- (La logique _aggregateAssets est maintenant dans le PortfolioProvider) ---
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    // RÉCUPÉRER LA DEVISE DE BASE
     return Consumer<PortfolioProvider>(
       builder: (context, provider, child) {
         final baseCurrency = provider.currentBaseCurrency;
         final aggregatedAssets = provider.aggregatedAssets;
-
-        // --- MODIFIÉ ---
         final isProcessing = provider.isProcessingInBackground;
-        // --- FIN MODIFICATION ---
 
         if (provider.activePortfolio == null) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: Text("Aucun portefeuille."));
         }
 
         if (aggregatedAssets.isEmpty) {
-          // --- MODIFIÉ : Ajout du titre même pour l'état vide ---
           return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AppTheme.buildScreenTitle(
-                context: context,
-                title: 'Synthèse',
-                centered: true,
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingL),
+                child: Text('Synthèse', style: AppTypography.h2),
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: AppTheme.buildEmptyStateCard(
-                    context: context,
-                    icon: Icons.pie_chart_outline,
-                    title: 'Aucun actif à agréger',
-                    subtitle:
-                    'Les actifs apparaîtront ici une fois que vous aurez ajouté des transactions.',
-                    buttonLabel: 'Ajouter une transaction',
-                    onPressed: () {
-                      // TODO: Remplacer par la navigation vers l'ajout de transaction
-                    },
+                  padding: const EdgeInsets.all(AppDimens.paddingM),
+                  child: AppCard(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AppIcon(
+                          icon: Icons.pie_chart_outline,
+                          size: 48,
+                          backgroundColor: AppColors.surfaceLight,
+                        ),
+                        const SizedBox(height: AppDimens.paddingM),
+                        Text('Aucun actif', style: AppTypography.h3),
+                        const SizedBox(height: AppDimens.paddingS),
+                        Text(
+                          'Ajoutez des transactions pour voir vos actifs ici.',
+                          style: AppTypography.body,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -66,265 +76,79 @@ class _SyntheseViewState extends State<SyntheseView> {
           );
         }
 
-        // --- MODIFIÉ : Ajout du titre et de la structure Column/Expanded ---
-        return Column(
+        return Stack(
           children: [
-            AppTheme.buildScreenTitle(
-              context: context,
-              title: 'Synthèse',
-              centered: true,
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: AppTheme.buildStyledCard(
-                  context: context,
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // --- SUPPRIMÉ : En-tête de section redondant ---
-                      // AppTheme.buildSectionHeader(
-                      //   context: context,
-                      //   icon: Icons.account_balance_outlined,
-                      //   title: 'Synthèse des Actifs',
-                      // ),
-                      // const SizedBox(height: 16),
-                      // --- FIN SUPPRESSION ---
-                      Expanded(
-                        // --- MODIFIÉ : Stack pour l'overlay ---
-                        child: Stack(
-                          children: [
-                            SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              child: LayoutBuilder(
-                                builder: (context, constraints) {
-                                  return SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        minWidth: constraints.maxWidth,
-                                      ),
-                                      child: DataTable(
-                                        columnSpacing: 20.0,
-                                        headingRowColor:
-                                        WidgetStateProperty.all(
-                                          theme.colorScheme
-                                              .surfaceContainerHighest
-                                              .withOpacity(0.3),
-                                        ),
-                                        columns: const [
-                                          DataColumn(label: Text('Statut')),
-                                          DataColumn(label: Text('Actif')),
-                                          DataColumn(
-                                              label: Text('Quantité'),
-                                              numeric: true),
-                                          DataColumn(
-                                              label: Text('PRU'),
-                                              numeric: true),
-                                          DataColumn(
-                                              label: Text('Prix actuel'),
-                                              numeric: true),
-                                          DataColumn(
-                                              label: Text('Valeur'),
-                                              numeric: true),
-                                          DataColumn(
-                                              label: Text('P/L'),
-                                              numeric: true),
-                                          DataColumn(
-                                              label: Text('Rendement %'),
-                                              numeric: true),
-                                        ],
-                                        rows: aggregatedAssets.map((asset) {
-                                          // ▼▼▼ MODIFIÉ : Toutes les valeurs sont déjà en devise de base ▼▼▼
-                                          final pnl = asset.profitAndLoss;
-                                          final pnlColor = pnl >= 0
-                                              ? Colors.green.shade400
-                                              : Colors.red.shade400;
-                                          // La devise d'affichage principale est la devise de BASE
-                                          final String displayCurrency =
-                                              baseCurrency;
-                                          final syncStatus = asset.syncStatus;
-                                          final tooltipMessage =
-                                          _buildTooltipMessage(
-                                              syncStatus,
-                                              asset.metadata,
-                                              asset.assetCurrency);
-                                          // ▲▲▲ FIN MODIFICATION ▲▲▲
-
-                                          return DataRow(
-                                            cells: [
-                                              DataCell(
-                                                Tooltip(
-                                                  message: tooltipMessage,
-                                                  child: Text(
-                                                    syncStatus.icon,
-                                                    style: const TextStyle(
-                                                        fontSize: 18),
-                                                  ),
-                                                ),
-                                              ),
-                                              DataCell(
-                                                Column(
-                                                  crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                                  mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                                  children: [
-                                                    Text(asset.name,
-                                                        style: theme
-                                                            .textTheme.bodyMedium
-                                                            ?.copyWith(
-                                                          fontWeight:
-                                                          FontWeight.bold,
-                                                        )),
-                                                    Text(asset.ticker,
-                                                        style: theme
-                                                            .textTheme.bodySmall
-                                                            ?.copyWith(
-                                                          color: Colors.grey,
-                                                        )),
-                                                  ],
-                                                ),
-                                              ),
-                                              DataCell(Text(
-                                                // TODO: Formatter avec 'formatWithoutSymbol'
-                                                  asset.quantity
-                                                      .toStringAsFixed(2))),
-                                              DataCell(Text(
-                                                // Affiche le PRU en devise de BASE
-                                                  CurrencyFormatter.format(
-                                                      asset.averagePrice,
-                                                      displayCurrency))),
-                                              DataCell(
-                                                InkWell(
-                                                  onTap: () =>
-                                                      _showEditPriceDialog(
-                                                          context,
-                                                          asset,
-                                                          provider,
-                                                          // Le prix est édité dans sa devise NATIVE
-                                                          asset.assetCurrency),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                    MainAxisSize.min,
-                                                    children: [
-                                                      Text(
-                                                        // Affiche le prix en devise de BASE
-                                                        CurrencyFormatter.format(
-                                                            asset.currentPrice,
-                                                            displayCurrency),
-                                                        style: TextStyle(
-                                                          color: theme
-                                                              .colorScheme
-                                                              .primary,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 4),
-                                                      Icon(
-                                                        Icons.edit,
-                                                        size: 16,
-                                                        color: theme
-                                                            .colorScheme
-                                                            .primary,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              DataCell(Text(
-                                                // Affiche la valeur en devise de BASE
-                                                  CurrencyFormatter.format(
-                                                      asset.totalValue,
-                                                      displayCurrency),
-                                                  style: theme
-                                                      .textTheme.bodyMedium
-                                                      ?.copyWith(
-                                                    fontWeight: FontWeight.bold,
-                                                  ))),
-                                              DataCell(
-                                                Text(
-                                                  // Affiche la P/L en devise de BASE
-                                                  CurrencyFormatter.format(
-                                                      pnl, displayCurrency),
-                                                  style: TextStyle(
-                                                      color: pnlColor),
-                                                ),
-                                              ),
-                                              DataCell(
-                                                InkWell(
-                                                  onTap: () =>
-                                                      _showEditYieldDialog(
-                                                          context,
-                                                          asset,
-                                                          provider),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                    MainAxisSize.min,
-                                                    children: [
-                                                      Text(
-                                                        '${(asset.estimatedAnnualYield * 100).toStringAsFixed(2)} %',
-                                                        style: TextStyle(
-                                                            color: theme
-                                                                .colorScheme
-                                                                .primary),
-                                                      ),
-                                                      const SizedBox(width: 4),
-                                                      Icon(Icons.edit,
-                                                          size: 16,
-                                                          color: theme
-                                                              .colorScheme
-                                                              .primary),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ),
-                                  );
-                                },
+            CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingL),
+                    child: Center(child: Text('Synthèse', style: AppTypography.h2)),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppDimens.paddingM,
+                      0,
+                      AppDimens.paddingM,
+                      80 // Espace pour le bas
+                  ),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                        final asset = aggregatedAssets[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: AppDimens.paddingM),
+                          child: FadeInSlide(
+                            delay: index * 0.05,
+                            child: _AssetCard(
+                              asset: asset,
+                              baseCurrency: baseCurrency,
+                              onEditPrice: () => _showEditPriceDialog(
+                                  context, asset, provider, asset.assetCurrency
+                              ),
+                              onEditYield: () => _showEditYieldDialog(
+                                  context, asset, provider
                               ),
                             ),
-                            // --- NOUVEAU : Overlay de chargement ---
-                            if (isProcessing)
-                              Positioned.fill(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: theme.scaffoldBackgroundColor
-                                        .withOpacity(0.7),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.center,
-                                      children: [
-                                        CircularProgressIndicator(),
-                                        SizedBox(height: 16),
-                                        Text('Recalcul des devises...'),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            // --- FIN NOUVEAU ---
-                          ],
-                        ),
-                        // --- FIN Stack ---
+                          ),
+                        );
+                      },
+                      childCount: aggregatedAssets.length,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            // Overlay de chargement si nécessaire
+            if (isProcessing)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.5),
+                  child: Center(
+                    child: AppCard(
+                      padding: const EdgeInsets.all(AppDimens.paddingL),
+                      backgroundColor: AppColors.surface,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(color: AppColors.primary),
+                          const SizedBox(height: AppDimens.paddingM),
+                          Text('Calcul en cours...', style: AppTypography.bodyBold),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         );
       },
     );
   }
+
+  // --- Dialogs d'édition (Code logique conservé, style adapté minimalement) ---
 
   void _showEditYieldDialog(
       BuildContext context, AggregatedAsset asset, PortfolioProvider provider) {
@@ -333,23 +157,27 @@ class _SyntheseViewState extends State<SyntheseView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Modifier le rendement de ${asset.ticker}'),
+        backgroundColor: AppColors.surfaceLight,
+        title: Text('Modifier rendement', style: AppTypography.h3),
         content: TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            labelText: 'Rendement annuel estimé (%)',
-            hintText: 'Ex: 3.5',
+          style: AppTypography.body,
+          decoration: InputDecoration(
+            labelText: 'Rendement annuel (%)',
+            labelStyle: AppTypography.caption,
             suffixText: '%',
+            enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.textTertiary)),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primary)),
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Annuler'),
+            child: Text('Annuler', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
           ),
-          FilledButton(
+          TextButton(
             onPressed: () {
               final enteredValue =
                   double.tryParse(controller.text.replaceAll(',', '.')) ??
@@ -358,85 +186,259 @@ class _SyntheseViewState extends State<SyntheseView> {
               provider.updateAssetYield(asset.ticker, newYieldAsDecimal);
               Navigator.of(ctx).pop();
             },
-            child: const Text('Sauvegarder'),
+            child: Text('Sauvegarder', style: AppTypography.label.copyWith(color: AppColors.primary)),
           ),
         ],
       ),
     );
   }
 
-  // MODIFIÉ : Accepte la devise NATIVE de l'actif pour l'édition
   void _showEditPriceDialog(BuildContext context, AggregatedAsset asset,
       PortfolioProvider provider, String nativeCurrency) {
-    // Doit trouver le prix natif actuel dans les métadonnées
     final nativePrice = asset.metadata?.currentPrice ?? asset.currentPrice;
+    final controller = TextEditingController(text: nativePrice.toStringAsFixed(2));
 
-    final controller =
-    TextEditingController(text: nativePrice.toStringAsFixed(2));
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Modifier le prix de ${asset.ticker}'),
+        backgroundColor: AppColors.surfaceLight,
+        title: Text('Modifier prix', style: AppTypography.h3),
         content: TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: AppTypography.body,
           decoration: InputDecoration(
             labelText: 'Prix actuel ($nativeCurrency)',
-            hintText: 'Ex: 451.98',
+            labelStyle: AppTypography.caption,
             suffixText: nativeCurrency,
+            enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.textTertiary)),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primary)),
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Annuler'),
+            child: Text('Annuler', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
           ),
-          FilledButton(
+          TextButton(
             onPressed: () {
               final newPrice =
                   double.tryParse(controller.text.replaceAll(',', '.')) ??
                       nativePrice;
-              // MODIFIÉ : Passe la devise NATIVE à la méthode de mise à jour
               provider.updateAssetPrice(asset.ticker, newPrice,
                   currency: nativeCurrency);
               Navigator.of(ctx).pop();
             },
-            child: const Text('Sauvegarder'),
+            child: Text('Sauvegarder', style: AppTypography.label.copyWith(color: AppColors.primary)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// --- Widget Carte d'Actif ---
+
+class _AssetCard extends StatelessWidget {
+  final AggregatedAsset asset;
+  final String baseCurrency;
+  final VoidCallback onEditPrice;
+  final VoidCallback onEditYield;
+
+  const _AssetCard({
+    required this.asset,
+    required this.baseCurrency,
+    required this.onEditPrice,
+    required this.onEditYield,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isPositive = asset.profitAndLoss >= 0;
+    final pnlColor = isPositive ? AppColors.success : AppColors.error;
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppDimens.paddingM),
+      child: Column(
+        children: [
+          // 1. En-tête (Icône + Nom + Statut)
+          Row(
+            children: [
+              _buildAssetIcon(),
+              const SizedBox(width: AppDimens.paddingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(asset.name, style: AppTypography.bodyBold, overflow: TextOverflow.ellipsis),
+                    Text(asset.ticker, style: AppTypography.caption),
+                  ],
+                ),
+              ),
+              _buildSyncStatusBadge(asset.syncStatus),
+            ],
+          ),
+
+          const SizedBox(height: AppDimens.paddingM),
+          Divider(height: 1, color: AppColors.border),
+          const SizedBox(height: AppDimens.paddingM),
+
+          // 2. Grille d'infos
+          Row(
+            children: [
+              // Colonne Gauche : Quantité & PRU
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoLabel('Quantité'),
+                    Text(asset.quantity.toStringAsFixed(2), style: AppTypography.body),
+                    const SizedBox(height: AppDimens.paddingS),
+                    _buildInfoLabel('PRU'),
+                    Text(
+                      CurrencyFormatter.format(asset.averagePrice, baseCurrency),
+                      style: AppTypography.body,
+                    ),
+                  ],
+                ),
+              ),
+              // Colonne Droite : Prix Actuel & Valeur
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _buildInfoLabel('Prix Actuel'),
+                    GestureDetector(
+                      onTap: onEditPrice,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            CurrencyFormatter.format(asset.currentPrice, baseCurrency),
+                            style: AppTypography.body.copyWith(color: AppColors.primary),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.edit, size: 12, color: AppColors.primary),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.paddingS),
+                    _buildInfoLabel('Valeur Totale'),
+                    Text(
+                      CurrencyFormatter.format(asset.totalValue, baseCurrency),
+                      style: AppTypography.bodyBold,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: AppDimens.paddingM),
+
+          // 3. Pied de page : P/L & Rendement
+          Container(
+            padding: const EdgeInsets.all(AppDimens.paddingS),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(AppDimens.radiusS),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // P/L
+                Row(
+                  children: [
+                    Icon(
+                      isPositive ? Icons.trending_up : Icons.trending_down,
+                      color: pnlColor,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${isPositive ? '+' : ''}${CurrencyFormatter.format(asset.profitAndLoss, baseCurrency)}',
+                      style: AppTypography.bodyBold.copyWith(color: pnlColor, fontSize: 13),
+                    ),
+                  ],
+                ),
+                // Rendement
+                GestureDetector(
+                  onTap: onEditYield,
+                  child: Row(
+                    children: [
+                      Text(
+                        'Rendement: ${(asset.estimatedAnnualYield * 100).toStringAsFixed(1)}%',
+                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.edit, size: 12, color: AppColors.textSecondary),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  // MODIFIÉ : Accepte la devise native
-  String _buildTooltipMessage(
-      SyncStatus status, AssetMetadata? metadata, String nativeCurrency) {
+  Widget _buildInfoLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Text(label, style: AppTypography.caption.copyWith(fontSize: 10)),
+    );
+  }
+
+  Widget _buildAssetIcon() {
+    final colorSeed = asset.ticker.hashCode;
+    // Génère une couleur unique mais cohérente pour chaque ticker
+    final color = Color((0xFF000000 + (colorSeed & 0xFFFFFF))).withOpacity(1.0);
+
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        asset.ticker.substring(0, asset.ticker.length > 2 ? 2 : asset.ticker.length).toUpperCase(),
+        style: AppTypography.bodyBold.copyWith(color: color),
+      ),
+    );
+  }
+
+  Widget _buildSyncStatusBadge(SyncStatus status) {
+    Color color;
+    IconData icon;
+
     switch (status) {
       case SyncStatus.synced:
-        final lastUpdate = metadata?.lastUpdated;
-        final source = metadata?.lastSyncSource ?? 'API';
-        if (lastUpdate != null) {
-          final date =
-              '${lastUpdate.day}/${lastUpdate.month}/${lastUpdate.year} ${lastUpdate.hour}:${lastUpdate.minute.toString().padLeft(2, '0')}';
-          return '✅ Synchronisé avec succès ($nativeCurrency)\nSource: $source\nDernière mise à jour: $date';
-        }
-        return '✅ Synchronisé avec succès ($nativeCurrency)\nSource: $source';
+        color = AppColors.success;
+        icon = Icons.check_circle;
+        break;
       case SyncStatus.error:
-        final errorMsg = metadata?.syncErrorMessage ?? 'Erreur inconnue';
-        return '⚠️ Erreur de synchronisation\n${errorMsg.length > 100 ? '${errorMsg.substring(0, 100)}...' : errorMsg}\n\nConsultez la Vue d\'ensemble pour plus de détails';
+        color = AppColors.error;
+        icon = Icons.error;
+        break;
       case SyncStatus.manual:
-        final lastUpdate = metadata?.lastUpdated;
-        if (lastUpdate != null) {
-          final date =
-              '${lastUpdate.day}/${lastUpdate.month}/${lastUpdate.year}';
-          return '✏️ Prix manuel ($nativeCurrency)\nDernière modification: $date\n\nLe prix ne sera pas remplacé automatiquement';
-        }
-        return '✏️ Prix manuel ($nativeCurrency)\nLe prix ne sera pas remplacé automatiquement';
+        color = AppColors.primary;
+        icon = Icons.edit;
+        break;
       case SyncStatus.never:
-        return '⭕ Jamais synchronisé\nAucune tentative de récupération automatique du prix\n\nLancez une synchronisation depuis la Vue d\'ensemble';
       case SyncStatus.unsyncable:
-        return '🚫 Non synchronisable ($nativeCurrency)\nCet actif ne peut pas être synchronisé automatiquement\n(fonds en euros, produit non coté)\n\nSaisissez le prix manuellement en cliquant sur "Prix actuel"';
+        color = AppColors.textTertiary;
+        icon = Icons.circle_outlined;
+        break;
     }
+
+    return Tooltip(
+      message: status.name, // Ou un message plus complet
+      child: Icon(icon, color: color, size: 18),
+    );
   }
 }

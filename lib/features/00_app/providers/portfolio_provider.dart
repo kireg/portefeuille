@@ -280,12 +280,11 @@ class PortfolioProvider extends ChangeNotifier {
   }
 
   /// Recalcul léger (uniquement les conversions)
+  /// Recalcul léger (uniquement les conversions)
   Future<void> _recalculateAggregatedData() async {
     debugPrint("--- 🔄 DÉBUT _recalculateAggregatedData ---");
 
     final targetCurrency = _settingsProvider?.baseCurrency ?? 'EUR';
-    debugPrint("  -> targetCurrency: $targetCurrency");
-    debugPrint("  -> activePortfolio: ${_activePortfolio?.name}");
 
     try {
       _aggregatedData = await _calculationService.calculate(
@@ -293,16 +292,38 @@ class PortfolioProvider extends ChangeNotifier {
         targetCurrency: targetCurrency,
         allMetadata: allMetadata,
       );
-      debugPrint(
-          "  -> ✅ Calcul OK. Valeur totale: ${_aggregatedData.totalValue} $targetCurrency");
+      debugPrint("  -> ✅ Calcul OK. Valeur totale: ${_aggregatedData.totalValue} $targetCurrency");
+
+      // ▼▼▼ NOUVEAU : Sauvegarde du point d'historique ▼▼▼
+      if (_activePortfolio != null && !_isLoading) {
+        // On enregistre l'historique seulement si le calcul a réussi
+        await _saveHistorySnapshot(_aggregatedData.totalValue);
+      }
+      // ▲▲▲ FIN NOUVEAU ▲▲▲
+
     } catch (e) {
       debugPrint("  -> ❌ ERREUR CALCUL: $e");
-      debugPrint("  -> StackTrace: ${StackTrace.current}"); // ✅ AJOUTER
+      debugPrint("  -> StackTrace: ${StackTrace.current}");
     } finally {
       _setActivity(const Idle());
-      debugPrint("  -> 📢 notifyListeners() appelé"); // ✅ AJOUTER
+      debugPrint("  -> 📢 notifyListeners() appelé");
       notifyListeners();
       debugPrint("--- ℹ️ FIN _recalculateAggregatedData ---");
+    }
+  }
+
+  /// Sauvegarde l'historique sans déclencher un rechargement complet de l'app
+  Future<void> _saveHistorySnapshot(double currentValue) async {
+    if (_activePortfolio == null) return;
+
+    // Utilise la méthode du modèle pour vérifier si une mise à jour est nécessaire
+    final hasChanged = _activePortfolio!.addOrUpdateHistoryPoint(currentValue);
+
+    if (hasChanged) {
+      debugPrint("📈 [Provider] Mise à jour de l'historique de valeur : $currentValue");
+      // Sauvegarde directe dans Hive sans passer par savePortfolio() pour éviter
+      // la boucle infinie (_refreshDataFromSource -> _recalculate -> save -> _refresh...)
+      await _repository.savePortfolio(_activePortfolio!);
     }
   }
 

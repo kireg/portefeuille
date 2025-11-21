@@ -1,192 +1,89 @@
-// lib/features/03_overview/ui/widgets/institution_tile.dart
-// NOUVEAU FICHIER (remplace l'ancien)
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Pour HapticFeedback
 import 'package:intl/intl.dart';
-import 'package:portefeuille/core/data/models/institution.dart';
-import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
-import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
-import 'package:portefeuille/features/00_app/services/modal_service.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/utils/currency_formatter.dart';
-import 'account_tile.dart';
-import 'package:portefeuille/core/ui/theme/app_theme.dart';
-import 'package:shimmer/shimmer.dart';
+
+import 'package:portefeuille/core/data/models/institution.dart';
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/ui/widgets/components/app_tile.dart';
+import 'package:portefeuille/core/utils/currency_formatter.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/services/modal_service.dart';
+
+import 'account_tile.dart'; // On garde celui-ci pour l'instant, on le migrera en phase 4
 
 class InstitutionTile extends StatelessWidget {
   final Institution institution;
-  const InstitutionTile({
-    super.key,
-    required this.institution,
-  });
+  const InstitutionTile({super.key, required this.institution});
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final portfolioProvider = context.watch<PortfolioProvider>();
-    // ▼▼▼ MODIFICATION ICI ▼▼▼
-    // Nous écoutons les deux providers
-    context.watch<SettingsProvider>();
-    // La devise que l'on VEUT afficher
-    // Elle vient du provider, qui la stocke dans _aggregatedData
-    final baseCurrency = portfolioProvider.currentBaseCurrency;
-    // --- MODIFIÉ ---
-    final isProcessing = portfolioProvider.isProcessingInBackground;
-    // --- FIN MODIFICATION ---
+    final provider = context.watch<PortfolioProvider>();
+    final baseCurrency = provider.currentBaseCurrency;
 
-    // Calcul des totaux CONVERTIS pour CETTE institution
+    // Calculs
     final institutionTotalValue = institution.accounts.fold(
-        0.0,
-            (sum, acc) =>
-        sum + portfolioProvider.getConvertedAccountValue(acc.id));
-    final institutionTotalPL = institution.accounts.fold(
-        0.0,
-            (sum, acc) => sum + portfolioProvider.getConvertedAccountPL(acc.id));
-    final institutionTotalInvested = institution.accounts.fold(
-        0.0,
-            (sum, acc) =>
-        sum + portfolioProvider.getConvertedAccountInvested(acc.id));
-    final institutionPLPercentage = (institutionTotalInvested == 0)
-        ? 0.0
-        : institutionTotalPL / institutionTotalInvested;
-    // ▲▲▲ FIN MODIFICATION ▲▲▲
+        0.0, (sum, acc) => sum + provider.getConvertedAccountValue(acc.id));
 
-    return AppTheme.buildInfoContainer(
-      context: context,
-      padding: EdgeInsets.zero,
+    return AppCard(
+      padding: EdgeInsets.zero, // On gère le padding en interne pour le collage des bords
       child: Theme(
-        data: theme.copyWith(
-          dividerColor: Colors.transparent,
-        ),
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
+          onExpansionChanged: (expanded) {
+            if (expanded) HapticFeedback.lightImpact();
+          },
           tilePadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
+              horizontal: AppDimens.paddingM,
+              vertical: AppDimens.paddingS
           ),
-          childrenPadding: EdgeInsets.zero,
+          leading: AppIcon(
+            icon: Icons.account_balance,
+            backgroundColor: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary,
+          ),
           title: Text(
             institution.name,
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
-            overflow: TextOverflow.ellipsis,
+            style: AppTypography.h3,
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // --- MODIFIÉ : Ajout du Shimmer ---
-              if (isProcessing)
-                _buildTrailingShimmer(theme)
-              else
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      // Utilise la valeur convertie
-                      CurrencyFormatter.format(
-                          institutionTotalValue, baseCurrency),
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    // Affiche la P/L convertie
-                    _buildProfitAndLoss(institutionTotalPL,
-                        institutionPLPercentage, theme, baseCurrency),
-                  ],
-                ),
-              // --- FIN MODIFICATION ---
-              const SizedBox(width: 8),
-              const Icon(Icons.expand_more),
+              Text(
+                CurrencyFormatter.format(institutionTotalValue, baseCurrency),
+                style: AppTypography.bodyBold,
+              ),
+              const SizedBox(width: AppDimens.paddingS),
+              const Icon(Icons.expand_more, color: AppColors.textTertiary),
             ],
           ),
           children: [
-            const Divider(height: 1, indent: 16),
+            // Ligne de séparation subtile
+            Divider(height: 1, color: AppColors.border),
+
+            // Liste des comptes
             ...institution.accounts.map((account) {
-              // Passe la devise de BASE (pour les totaux)
-              // et la devise du COMPTE (pour le cash)
               return AccountTile(
                 institutionId: institution.id,
                 account: account,
                 baseCurrency: baseCurrency,
                 accountCurrency: account.activeCurrency,
               );
-            }).toList(),
-            ListTile(
-              leading: Icon(
-                Icons.add,
-                color: theme.colorScheme.primary.withOpacity(0.6),
-              ),
-              title: Text(
-                'Ajouter un compte',
-                style: TextStyle(
-                  color: theme.colorScheme.primary.withOpacity(0.6),
-                ),
-              ),
-              onTap: () {
-                // Présenter en BottomSheet via ModalService (respecte la constitution)
-                ModalService.showAddAccount(context, institutionId: institution.id);
-              },
+            }),
+
+            // Bouton "Ajouter" en bas de liste
+            AppTile(
+              title: 'Ajouter un compte',
+              leading: const Icon(Icons.add_circle_outline, size: 18, color: AppColors.textSecondary),
+              onTap: () => ModalService.showAddAccount(context, institutionId: institution.id),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  // --- NOUVEAU WIDGET ---
-  Widget _buildTrailingShimmer(ThemeData theme) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Shimmer.fromColors(
-          baseColor: theme.colorScheme.surface,
-          highlightColor: theme.colorScheme.surfaceContainerHighest,
-          child: Container(
-            width: 80,
-            height: theme.textTheme.titleMedium?.fontSize ?? 16,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Shimmer.fromColors(
-          baseColor: theme.colorScheme.surface,
-          highlightColor: theme.colorScheme.surfaceContainerHighest,
-          child: Container(
-            width: 100,
-            height: theme.textTheme.bodySmall?.fontSize ?? 12,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  // --- FIN NOUVEAU WIDGET ---
-
-  // Helper P/L (inchangé, mais recevra des valeurs converties)
-  Widget _buildProfitAndLoss(
-      double pnl, double pnlPercentage, ThemeData theme, String baseCurrency) {
-    if (pnl == 0 && pnlPercentage == 0) return const SizedBox(height: 16);
-    final isPositive = pnl >= 0;
-    final color = isPositive ? Colors.green.shade400 : Colors.red.shade400;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(isPositive ? Icons.arrow_upward : Icons.arrow_downward,
-            color: color, size: 14),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            '${CurrencyFormatter.format(pnl, baseCurrency)} (${NumberFormat.percentPattern().format(pnlPercentage)})',
-            style: theme.textTheme.bodySmall?.copyWith(color: color),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
     );
   }
 }

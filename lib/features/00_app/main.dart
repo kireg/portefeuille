@@ -35,7 +35,6 @@ import 'package:portefeuille/core/data/models/sync_log.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/services/route_manager.dart';
-import 'package:portefeuille/core/ui/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -132,9 +131,14 @@ class MyApp extends StatelessWidget {
         builder: (context, settingsProvider, child) {
           return MaterialApp(
             title: 'Portefeuille',
+
+            // ▼▼▼ MODIFICATION MAJEURE ▼▼▼
+            // On force le thème sombre Premium défini dans core/ui
             theme: AppTheme.getTheme(settingsProvider.appColor),
+            themeMode: ThemeMode.dark,
+            // ▲▲▲ FIN MODIFICATION ▲▲▲
+
             debugShowCheckedModeBanner: false,
-            // Configuration pour afficher les dates en français
             localizationsDelegates: const [
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
@@ -143,7 +147,6 @@ class MyApp extends StatelessWidget {
             supportedLocales: const [
               Locale('fr', 'FR'),
             ],
-            // Utiliser les routes nommées centralisées via RouteManager
             initialRoute: RouteManager.splash,
             onGenerateRoute: RouteManager.onGenerateRoute,
           );

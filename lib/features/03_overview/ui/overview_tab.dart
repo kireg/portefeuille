@@ -1,15 +1,23 @@
-// lib/features/03_overview/ui/overview_tab.dart
-// REMPLACEZ LE FICHIER COMPLET
-
 import 'package:flutter/material.dart';
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:provider/provider.dart';
+
+// Core UI
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
+import 'package:portefeuille/core/ui/widgets/portfolio_header.dart';
+
+// Features
 import '../../00_app/providers/portfolio_provider.dart';
 import '../../00_app/services/modal_service.dart';
-import 'package:portefeuille/core/ui/widgets/portfolio_header.dart';
+import 'package:portefeuille/features/03_overview/ui/widgets/portfolio_history_chart.dart';
 import 'widgets/allocation_chart.dart';
 import 'widgets/asset_type_allocation_chart.dart';
 import 'widgets/sync_alerts_card.dart';
-import 'package:portefeuille/core/ui/theme/app_theme.dart';
 import 'package:portefeuille/features/03_overview/ui/widgets/institution_tile.dart';
 
 class OverviewTab extends StatelessWidget {
@@ -17,8 +25,6 @@ class OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Note : On n'utilise plus baseCurrency d'ici, on le lit du provider
-
     return Consumer<PortfolioProvider>(
       builder: (context, portfolioProvider, child) {
         final portfolio = portfolioProvider.activePortfolio;
@@ -28,158 +34,213 @@ class OverviewTab extends StatelessWidget {
         }
 
         final institutions = portfolio.institutions;
-        final theme = Theme.of(context);
 
-        // La devise de base vient maintenant du provider (elle est synchronisée)
-
-        return CustomScrollView(
-          slivers: [
-            // En-tête avec titre
-            SliverToBoxAdapter(
-              child: AppTheme.buildScreenTitle(
-                context: context,
-                title: 'Vue d\'ensemble',
-                centered: true,
-              ),
-            ),
-
-            // Contenu principal
-            SliverPadding(
-              padding: const EdgeInsets.all(16.0),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  // Header du portfolio (ne prend plus de paramètre)
-                  AppTheme.buildStyledCard(
-                    context: context,
-                    child: const PortfolioHeader(), // <-- MODIFIÉ
+        return AppScreen(
+          withSafeArea: false,
+          body: CustomScrollView(
+            slivers: [
+              // En-tête avec titre
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppDimens.paddingL,
+                      AppDimens.paddingL,
+                      AppDimens.paddingL,
+                      AppDimens.paddingM
                   ),
-                  const SizedBox(height: 12),
-
-                  // Graphiques d'allocation
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      if (constraints.maxWidth >= 800) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: AppTheme.buildStyledCard(
-                                context: context,
-                                // TODO: AllocationChart doit aussi être mis à jour
-                                child: AllocationChart(portfolio: portfolio),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: AppTheme.buildStyledCard(
-                                context: context,
-                                child: AssetTypeAllocationChart(
-                                  // ▼▼▼ MODIFIÉ ▼▼▼
-                                  // Utilise le getter du provider (données converties)
-                                  allocationData: portfolioProvider
-                                      .aggregatedValueByAssetType,
-                                  totalValue: portfolioProvider
-                                      .activePortfolioTotalValue,
-                                  // ▲▲▲ FIN MODIFICATION ▲▲▲
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-                      return Column(
-                        children: [
-                          AppTheme.buildStyledCard(
-                            context: context,
-                            child: AllocationChart(portfolio: portfolio),
-                          ),
-                          const SizedBox(height: 12),
-                          AppTheme.buildStyledCard(
-                            context: context,
-                            child: AssetTypeAllocationChart(
-                              // ▼▼▼ MODIFIÉ ▼▼▼
-                              allocationData: portfolioProvider
-                                  .aggregatedValueByAssetType,
-                              totalValue: portfolioProvider
-                                  .activePortfolioTotalValue,
-                              // ▲▲▲ FIN MODIFICATION ▲▲▲
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Section Institutions
-                  AppTheme.buildStyledCard(
-                    context: context,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AppTheme.buildSectionHeader(
-                          context: context,
-                          icon: Icons.account_balance,
-                          title: 'Structure du Portefeuille',
-                          trailing: IconButton(
-                            icon: const Icon(Icons.add_circle_outline),
-                            tooltip: 'Ajouter une institution',
-                            onPressed: () {
-                              // Utiliser le ModalService centralisé pour ouvrir le bottom sheet
-                              ModalService.showAddInstitution(context);
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Liste des institutions
-                        if (institutions.isEmpty)
-                          AppTheme.buildInfoContainer(
-                            context: context,
-                            child: Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Text(
-                                  'Aucune institution. Ajoutez-en une pour commencer.',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          )
-                        else
-                        // ▼▼▼ MODIFIÉ : Utilisation du nouveau widget InstitutionTile ▼▼▼
-                          ...institutions.asMap().entries.map((entry) {
-                            final index = entry.key;
-                            final institution = entry.value;
-                            return Column(
-                              children: [
-                                if (index > 0) const SizedBox(height: 12),
-                                // On passe juste le modèle Institution
-                                InstitutionTile(institution: institution),
-                              ],
-                            );
-                          }),
-                      ],
+                  child: FadeInSlide(
+                    delay: 0.0,
+                    child: Text(
+                      'Vue d\'ensemble',
+                      style: AppTypography.h1,
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(height: 12),
-
-                  // Alertes de synchronisation (en bas)
-                  AppTheme.buildStyledCard(
-                    context: context,
-                    child: const SyncAlertsCard(),
-                  ),
-
-                  const SizedBox(height: 32),
-                ]),
+                ),
               ),
-            ),
-          ],
+
+              // Contenu principal
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    // 1. Header (Total)
+                    FadeInSlide(
+                      delay: 0.1,
+                      child: const PortfolioHeader(),
+                    ),
+                    const SizedBox(height: AppDimens.paddingM),
+
+                    // 2. Graphique Historique
+                    FadeInSlide(
+                      delay: 0.2,
+                      child: AppCard(
+                        child: const PortfolioHistoryChart(),
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.paddingM),
+
+                    // 3. Allocations
+                    // CORRECTION : On utilise LayoutBuilder uniquement si nécessaire
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth >= 800) {
+                          // Mode Tablette / Desktop
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: FadeInSlide(
+                                    delay: 0.3,
+                                    child: _buildAllocationCard(portfolio)
+                                ),
+                              ),
+                              const SizedBox(width: AppDimens.paddingM),
+                              Expanded(
+                                child: FadeInSlide(
+                                    delay: 0.35,
+                                    child: _buildAssetTypeCard(portfolioProvider)
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          // Mode Mobile : Pas de LayoutBuilder complexe qui casse l'animation
+                          return Column(
+                            children: [
+                              FadeInSlide(
+                                  key: const ValueKey('alloc_chart'), // Clé pour préserver l'état
+                                  delay: 0.3,
+                                  child: _buildAllocationCard(portfolio)
+                              ),
+                              const SizedBox(height: AppDimens.paddingM),
+                              FadeInSlide(
+                                  key: const ValueKey('asset_chart'), // Clé pour préserver l'état
+                                  delay: 0.35,
+                                  child: _buildAssetTypeCard(portfolioProvider)
+                              ),
+                            ],
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(height: AppDimens.paddingM),
+
+                    // 4. Institutions
+                    FadeInSlide(
+                      delay: 0.4,
+                      child: _buildSectionTitle(
+                        context,
+                        'Structure du Portefeuille',
+                        Icons.account_balance,
+                        onAdd: () => ModalService.showAddInstitution(context),
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.paddingS),
+
+                    if (institutions.isEmpty)
+                      const FadeInSlide(
+                        delay: 0.45,
+                        child: AppCard(
+                          child: Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text('Aucune institution. Ajoutez-en une pour commencer.'),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      ...institutions.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final institution = entry.value;
+
+                        // Délai progressif
+                        final double itemDelay = 0.45 + (index * 0.05);
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: AppDimens.paddingS),
+                          child: FadeInSlide(
+                            delay: itemDelay,
+                            child: InstitutionTile(institution: institution),
+                          ),
+                        );
+                      }),
+
+                    // 5. Alertes
+                    Builder(
+                        builder: (context) {
+                          final double alertsDelay = 0.45 + (institutions.length * 0.05) + 0.05;
+                          return Column(
+                            children: [
+                              const SizedBox(height: AppDimens.paddingM),
+                              FadeInSlide(
+                                delay: alertsDelay > 0.8 ? 0.8 : alertsDelay,
+                                child: const SyncAlertsCard(),
+                              ),
+                              const SizedBox(height: 100), // Espace pour la nav bar flottante
+                            ],
+                          );
+                        }
+                    ),
+                  ]),
+                ),
+              ),
+            ],
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildAllocationCard(dynamic portfolio) {
+    return AppCard(
+      child: AllocationChart(portfolio: portfolio),
+    );
+  }
+
+  Widget _buildAssetTypeCard(PortfolioProvider provider) {
+    return AppCard(
+      child: AssetTypeAllocationChart(
+        allocationData: provider.aggregatedValueByAssetType,
+        totalValue: provider.activePortfolioTotalValue,
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(BuildContext context, String title, IconData icon, {VoidCallback? onAdd}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingXS, vertical: AppDimens.paddingS),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              AppIcon(icon: icon, size: 18, color: AppColors.primary, backgroundColor: Colors.transparent),
+              const SizedBox(width: 8),
+              Text(
+                title.toUpperCase(),
+                style: AppTypography.label.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+          if (onAdd != null)
+            GestureDetector(
+              onTap: onAdd,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceLight,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: const Icon(Icons.add, size: 16, color: AppColors.textPrimary),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

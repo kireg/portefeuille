@@ -1,14 +1,17 @@
-// lib/features/07_management/ui/screens/add_account_screen.dart
-// REMPLACEZ LE FICHIER COMPLET
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
+
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/account_type.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
-// ▼▼▼ CORRECTION : Faute de frappe dans le chemin ▼▼▼
-import 'package:provider/provider.dart';
-// ▲▲▲ FIN CORRECTION ▲▲▲
-import 'package:uuid/uuid.dart';
+
+// Core UI
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+import 'package:portefeuille/core/ui/widgets/inputs/app_text_field.dart';
+import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
 
 class AddAccountScreen extends StatefulWidget {
   final String institutionId;
@@ -58,42 +61,29 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       final provider = Provider.of<PortfolioProvider>(context, listen: false);
 
       if (_isEditing) {
-        // --- Mode Édition ---
-        // ▼▼▼ CORRECTION : On crée un NOUVEL objet Account ▼▼▼
         final oldAccount = widget.accountToEdit!;
-
-        // 1. On crée le nouvel objet avec les champs 'final' (du constructeur)
         final updatedAccount = Account(
-          id: oldAccount.id, // On garde l'ID existant
-          name: _nameController.text, // Nouveau nom
-          type: _selectedType, // Nouveau type
-          currency: oldAccount.currency, // Devise non modifiable
+          id: oldAccount.id,
+          name: _nameController.text,
+          type: _selectedType,
+          currency: oldAccount.currency, // Non modifiable
         );
-
-        // 2. On recopie manuellement les champs non-final
-        //    (qui sont gérés par le repository)
         updatedAccount.assets = oldAccount.assets;
         updatedAccount.transactions = oldAccount.transactions;
-        // ▲▲▲ FIN CORRECTION ▲▲▲
-
         provider.updateAccount(widget.institutionId, updatedAccount);
-
       } else {
-        // --- Mode Création (logique existante) ---
         final newAccount = Account(
           id: _uuid.v4(),
           name: _nameController.text,
           type: _selectedType,
           currency: _selectedCurrency,
         );
-
         if (widget.onAccountCreated != null) {
           widget.onAccountCreated!(newAccount);
         } else {
           provider.addAccount(widget.institutionId, newAccount);
         }
       }
-
       Navigator.of(context).pop();
     }
   }
@@ -101,45 +91,44 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
   @override
   Widget build(BuildContext context) {
     final keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
+
     return SingleChildScrollView(
       child: Padding(
-        padding: EdgeInsets.only(
-          top: 16.0,
-          left: 16.0,
-          right: 16.0,
-          bottom: keyboardPadding + 16.0,
+        padding: EdgeInsets.fromLTRB(
+          AppDimens.paddingL,
+          AppDimens.paddingL,
+          AppDimens.paddingL,
+          keyboardPadding + AppDimens.paddingL,
         ),
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _isEditing ? 'Modifier le Compte' : 'Ajouter un Compte',
-                style: Theme.of(context).textTheme.titleLarge,
+                _isEditing ? 'Modifier le Compte' : 'Nouveau Compte',
+                style: AppTypography.h2,
               ),
-              const SizedBox(height: 24),
-              TextFormField(
+              const SizedBox(height: AppDimens.paddingL),
+
+              // Nom
+              AppTextField(
                 controller: _nameController,
+                label: 'Nom du compte',
+                hint: 'ex: PEA, CTO...',
+                prefixIcon: Icons.account_balance_wallet,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Nom du compte (ex: PEA, CTO)',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Le nom est requis';
-                  }
-                  return null;
-                },
+                textCapitalization: TextCapitalization.words,
+                validator: (value) => (value == null || value.trim().isEmpty) ? 'Requis' : null,
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<AccountType>(
+              const SizedBox(height: AppDimens.paddingM),
+
+              // Type
+              AppDropdown<AccountType>(
+                label: 'Type de compte',
                 value: _selectedType,
-                decoration: const InputDecoration(
-                  labelText: 'Type de compte',
-                  border: OutlineInputBorder(),
-                ),
+                prefixIcon: Icons.category,
                 items: AccountType.values.map((type) {
                   return DropdownMenuItem(
                     value: type,
@@ -147,48 +136,34 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                   );
                 }).toList(),
                 onChanged: (type) {
-                  setState(() {
-                    if (type != null) {
-                      _selectedType = type;
-                    }
-                  });
+                  if (type != null) setState(() => _selectedType = type);
                 },
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
+              const SizedBox(height: AppDimens.paddingM),
+
+              // Devise
+              AppDropdown<String>(
+                label: 'Devise',
                 value: _selectedCurrency,
-                decoration: InputDecoration(
-                  labelText: 'Devise du compte',
-                  border: const OutlineInputBorder(),
-                  // ▼▼▼ CORRECTION : Remplacement de 'disabledHint' par 'hint' ▼▼▼
-                  hint: _isEditing
-                      ? const Text('Devise (non modifiable après création)')
-                      : null,
-                  // ▲▲▲ FIN CORRECTION ▲▲▲
-                ),
+                prefixIcon: Icons.currency_exchange,
+                // Désactivé en édition
+                onChanged: _isEditing ? null : (val) {
+                  if (val != null) setState(() => _selectedCurrency = val);
+                },
                 items: _currencies.map((currency) {
                   return DropdownMenuItem(
                     value: currency,
                     child: Text(currency),
                   );
                 }).toList(),
-                onChanged: _isEditing
-                    ? null // Désactive le dropdown si on édite
-                    : (currency) {
-                  setState(() {
-                    if (currency != null) {
-                      _selectedCurrency = currency;
-                    }
-                  });
-                },
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
+
+              const SizedBox(height: AppDimens.paddingL),
+
+              AppButton(
+                label: _isEditing ? 'Enregistrer' : 'Créer',
+                icon: _isEditing ? Icons.save : Icons.add,
                 onPressed: _submitForm,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                ),
-                child: Text(_isEditing ? 'Enregistrer' : 'Ajouter'),
               )
             ],
           ),

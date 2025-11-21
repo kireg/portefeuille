@@ -1,12 +1,15 @@
-// lib/features/07_management/ui/widgets/transaction_form_body.dart
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/07_management/ui/providers/transaction_form_state.dart';
-import 'package:provider/provider.dart';
+
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+
 import 'form_sections/_account_selector.dart';
 import 'form_sections/_common_fields.dart';
 import 'form_sections/_dynamic_fields.dart';
@@ -20,7 +23,6 @@ class TransactionFormBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Crée une instance locale du provider de formulaire
     return ChangeNotifierProvider(
       create: (ctx) => TransactionFormState(
         existingTransaction: existingTransaction,
@@ -36,32 +38,27 @@ class TransactionFormBody extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. L'en-tête
                 const FormHeader(),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppDimens.paddingL),
 
-                // 2. Les sélecteurs
                 const AccountSelector(),
-                const SizedBox(height: 16),
-                const TypeSelector(),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimens.paddingM),
 
-                // 3. Les champs dynamiques (le switch interne choisit le bon formulaire)
+                const TypeSelector(),
+                const SizedBox(height: AppDimens.paddingM),
+
                 const DynamicFields(),
 
-                // 4. Les champs communs (Date, Frais, Notes)
                 const CommonFields(),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppDimens.paddingXL),
 
-                // 5. Le bouton
-                ElevatedButton.icon(
+                AppButton(
+                  label: state.isEditing ? 'Enregistrer' : 'Créer',
+                  icon: state.isEditing ? Icons.save : Icons.add,
                   onPressed: () => state.submitForm(context),
-                  icon: const Icon(Icons.save),
-                  label: Text(state.isEditing ? 'Enregistrer' : 'Créer'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
                 ),
+
+                const SizedBox(height: AppDimens.paddingL),
               ],
             ),
           );

@@ -1,10 +1,13 @@
-// lib/core/ui/widgets/transaction_list_item.dart
-// Centralized TransactionListItem widget moved from features/04_journal/ui/widgets
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/widgets/components/app_tile.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 
 class TransactionListItem extends StatelessWidget {
@@ -23,136 +26,124 @@ class TransactionListItem extends StatelessWidget {
     required this.onEdit,
   });
 
-  IconData _getIconForType(TransactionType type) {
+  @override
+  Widget build(BuildContext context) {
+    final typeInfo = _getTypeInfo(transaction.type);
+    final isPositive = transaction.totalAmount >= 0;
+
+    return AppTile(
+      // 1. Icône colorée selon le type (Achat, Vente, etc.)
+      leading: AppIcon(
+        icon: typeInfo.icon,
+        color: typeInfo.color,
+        backgroundColor: typeInfo.color.withOpacity(0.1),
+      ),
+
+      // 2. Titre et sous-titre
+      title: _getTitle(transaction),
+      subtitle: _getSubtitle(transaction),
+
+      // 3. Montant et Date
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                CurrencyFormatter.format(transaction.totalAmount, accountCurrency),
+                style: AppTypography.bodyBold.copyWith(
+                  color: isPositive ? AppColors.success : AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                DateFormat('dd/MM/yy').format(transaction.date),
+                style: AppTypography.caption,
+              ),
+            ],
+          ),
+          const SizedBox(width: AppDimens.paddingS),
+
+          // 4. Menu contextuel (Edit/Delete)
+          Theme(
+            data: Theme.of(context).copyWith(
+              cardColor: AppColors.surfaceLight, // Fond du menu popup
+              iconTheme: const IconThemeData(color: AppColors.textSecondary),
+            ),
+            child: PopupMenuButton(
+              icon: const Icon(Icons.more_vert, size: 18),
+              onSelected: (value) {
+                if (value == 'edit') onEdit();
+                if (value == 'delete') onDelete();
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit_outlined, size: 18),
+                      const SizedBox(width: 12),
+                      Text('Modifier', style: AppTypography.body),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.delete_outline, size: 18, color: AppColors.error),
+                      const SizedBox(width: 12),
+                      Text('Supprimer', style: AppTypography.body.copyWith(color: AppColors.error)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helpers pour le style
+  ({IconData icon, Color color}) _getTypeInfo(TransactionType type) {
     switch (type) {
-      case TransactionType.Deposit:
-        return Icons.input;
-      case TransactionType.Withdrawal:
-        return Icons.output;
       case TransactionType.Buy:
-        return Icons.shopping_cart_checkout;
+        return (icon: Icons.shopping_cart_outlined, color: AppColors.primary); // Bleu
       case TransactionType.Sell:
-        return Icons.sell_outlined;
+        return (icon: Icons.sell_outlined, color: AppColors.accent); // Violet
       case TransactionType.Dividend:
-        return Icons.paid_outlined;
-      case TransactionType.Interest:
-        return Icons.percent_outlined;
+        return (icon: Icons.card_giftcard, color: AppColors.success); // Vert
+      case TransactionType.Deposit:
+        return (icon: Icons.arrow_downward, color: AppColors.success); // Vert
+      case TransactionType.Withdrawal:
+        return (icon: Icons.arrow_upward, color: AppColors.textSecondary); // Gris
       case TransactionType.Fees:
-        return Icons.receipt_long_outlined;
+        return (icon: Icons.receipt_long_outlined, color: AppColors.warning); // Orange
+      case TransactionType.Interest:
+        return (icon: Icons.percent, color: AppColors.success); // Vert
     }
   }
 
   String _getTitle(Transaction tr) {
     switch (tr.type) {
-      case TransactionType.Buy:
-        return "Achat ${tr.assetName ?? tr.assetTicker}";
-      case TransactionType.Sell:
-        return "Vente ${tr.assetName ?? tr.assetTicker}";
-      case TransactionType.Dividend:
-        return "Dividende ${tr.assetName ?? tr.assetTicker}";
-      case TransactionType.Deposit:
-        return "Dépôt de liquidités";
-      case TransactionType.Withdrawal:
-        return "Retrait de liquidités";
-      case TransactionType.Interest:
-        return "Intérêts perçus";
-      case TransactionType.Fees:
-        return "Frais divers";
+      case TransactionType.Buy:      return "Achat ${tr.assetTicker}";
+      case TransactionType.Sell:     return "Vente ${tr.assetTicker}";
+      case TransactionType.Dividend: return "Dividende ${tr.assetTicker}";
+      case TransactionType.Deposit:  return "Dépôt";
+      case TransactionType.Withdrawal: return "Retrait";
+      case TransactionType.Interest: return "Intérêts";
+      case TransactionType.Fees:     return "Frais";
     }
   }
 
   String _getSubtitle(Transaction tr) {
     if (tr.type == TransactionType.Buy || tr.type == TransactionType.Sell) {
-      final qty = tr.quantity?.toStringAsFixed(4) ?? 'N/A';
-      final priceCurrency = tr.priceCurrency ?? accountCurrency;
-      final price = (tr.price != null)
-          ? CurrencyFormatter.format(tr.price!, priceCurrency)
-          : 'N/A';
-      return "$qty @ $price";
+      final qty = tr.quantity?.toStringAsFixed(4) ?? '0';
+      final price = (tr.price != null) ? tr.price!.toStringAsFixed(2) : '0';
+      return "$qty x $price";
     }
     return tr.notes.isNotEmpty ? tr.notes : accountName;
   }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final title = _getTitle(transaction);
-    final subtitle = _getSubtitle(transaction);
-    final icon = _getIconForType(transaction.type);
-
-    final totalAmount = transaction.totalAmount;
-    final color =
-        totalAmount >= 0 ? Colors.green.shade400 : theme.colorScheme.onSurface;
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: ListTile(
-        leading: Icon(icon, color: color),
-        title: Text(
-          title,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          subtitle,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: SizedBox(
-          width: 150,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      CurrencyFormatter.format(totalAmount, accountCurrency),
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      DateFormat('dd/MM/yyyy').format(transaction.date),
-                      style: theme.textTheme.bodySmall,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuButton(
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    onTap: onEdit,
-                    child: const Row(
-                      children: [
-                        Icon(Icons.edit_outlined, size: 20),
-                        SizedBox(width: 8),
-                        Text('Modifier'),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    onTap: onDelete,
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline,
-                            size: 20, color: theme.colorScheme.error),
-                        SizedBox(width: 8),
-                        Text('Supprimer',
-                            style: TextStyle(color: theme.colorScheme.error)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
-

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/ui/theme/app_theme.dart';
-import 'package:provider/provider.dart';
-import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'appearance_settings.dart';
 
 class AppearanceCard extends StatelessWidget {
@@ -9,18 +11,18 @@ class AppearanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppTheme.buildStyledCard(
-      context: context,
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppTheme.buildSectionHeader(
-            context: context,
-            icon: Icons.palette_outlined,
-            title: 'Apparence',
+          Row(
+            children: [
+              const AppIcon(icon: Icons.palette_outlined, color: AppColors.accent),
+              const SizedBox(width: AppDimens.paddingM),
+              Text('Apparence', style: AppTypography.h3),
+            ],
           ),
-          const SizedBox(height: 16),
-          // Reuse the existing AppearanceSettings widget which renders color options
+          const SizedBox(height: AppDimens.paddingM),
           const AppearanceSettings(),
         ],
       ),
