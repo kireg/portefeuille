@@ -1,9 +1,17 @@
 // lib/features/01_launch/ui/splash_screen.dart
 
+import 'dart:ui'; // Nécessaire pour ImageFilter
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
+
+// Design System
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+
+// Logic
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/services/route_manager.dart';
@@ -14,304 +22,286 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late AnimationController _fadeController;
-  late AnimationController _backgroundAnimationController;
-  late Animation<double> _pulseAnimation;
-  late Animation<double> _fadeAnimation;
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+  late AnimationController _backgroundController;
+  late AnimationController _entranceController;
 
   @override
   void initState() {
     super.initState();
 
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+    // 1. Animation lente et infinie pour les orbes d'arrière-plan
+    _backgroundController = AnimationController(
+      duration: const Duration(seconds: 10),
       vsync: this,
     )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-    _backgroundAnimationController = AnimationController(
-      duration: const Duration(seconds: 15),
+
+    // 2. Animation d'entrée du contenu (Fade in + Slide up)
+    _entranceController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
-    )..repeat();
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
     );
 
-    _fadeController.forward();
+    // Démarrage après un petit délai pour laisser l'UI se monter
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _entranceController.forward();
+    });
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
-    _fadeController.dispose();
-    _backgroundAnimationController.dispose();
+    _backgroundController.dispose();
+    _entranceController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final Color kColor = Provider.of<SettingsProvider>(context).appColor;
+    final settings = Provider.of<SettingsProvider>(context);
+    final Color primaryColor = settings.appColor; // La couleur choisie par l'utilisateur
 
-    // Écouter le PortfolioProvider pour la navigation
+    // Navigation Logic
     final portfolioProvider = context.watch<PortfolioProvider>();
-
-    // Si le chargement EST TERMINÉ
     if (!portfolioProvider.isLoading) {
-      // Planifier la navigation après le build
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          final bool hasPortfolios = portfolioProvider.portfolios.isNotEmpty;
-
-          // Utiliser des routes nommées au lieu d'importer les écrans
-          final String nextRoute = hasPortfolios
-              ? RouteManager.dashboard
-              : RouteManager.launch;
-
-          Navigator.of(context).pushReplacementNamed(nextRoute);
+          // Petit délai artificiel pour laisser l'utilisateur apprécier l'animation (optionnel)
+          Future.delayed(const Duration(milliseconds: 800), () {
+            final bool hasPortfolios = portfolioProvider.portfolios.isNotEmpty;
+            final String nextRoute = hasPortfolios ? RouteManager.dashboard : RouteManager.launch;
+            Navigator.of(context).pushReplacementNamed(nextRoute);
+          });
         }
       });
     }
 
-    final List<Color> gradientColors = [
-      Color.lerp(kColor, Colors.black, 0.75)!,
-      Color.lerp(kColor, Colors.black, 0.6)!
-    ];
-
     return Scaffold(
-      body: Container(
-        width: size.width,
-        height: size.height,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: gradientColors,
+      backgroundColor: AppColors.background, // Fond sombre de base
+      body: Stack(
+        children: [
+          // --- COUCHE 1 : Background Ambient (Orbes colorées) ---
+          _buildAmbientBackground(size, primaryColor),
+
+          // --- COUCHE 2 : Effet "Grain" ou Overlay sombre pour le contraste ---
+          Container(
+            color: Colors.black.withOpacity(0.3), // Assombrit légèrement pour faire ressortir le verre
           ),
-        ),
-        child: Stack(
-          children: [
-            _buildAnimatedBackground(),
-            Center(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildAnimatedLogo(kColor),
-                    const SizedBox(height: 48),
-                    _buildShimmeredTitle(),
-                    const SizedBox(height: 16),
-                    _buildAnimatedSlogan(),
-                    const SizedBox(height: 64),
-                    _buildLoadingIndicator(),
-                  ],
-                ),
-              ),
+
+          // --- COUCHE 3 : Contenu Glassmorphism ---
+          Center(
+            child: AnimatedBuilder(
+              animation: _entranceController,
+              builder: (context, child) {
+                final double opacity = CurvedAnimation(
+                  parent: _entranceController,
+                  curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+                ).value;
+
+                final double slide = CurvedAnimation(
+                  parent: _entranceController,
+                  curve: Curves.easeOutCubic,
+                ).value;
+
+                return Opacity(
+                  opacity: opacity,
+                  child: Transform.translate(
+                    offset: Offset(0, 20 * (1 - slide)), // Léger mouvement vers le haut
+                    child: child,
+                  ),
+                );
+              },
+              child: _buildGlassCard(primaryColor),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildAnimatedBackground() {
+  Widget _buildAmbientBackground(Size size, Color primaryColor) {
     return AnimatedBuilder(
-      animation: _backgroundAnimationController,
+      animation: _backgroundController,
       builder: (context, child) {
-        return CustomPaint(
-          size: Size.infinite,
-          painter: BackgroundLinesPainter(
-            animationValue: _backgroundAnimationController.value,
-          ),
+        final progress = _backgroundController.value;
+
+        return Stack(
+          children: [
+            // Orbe Haut-Gauche (Couleur Primaire)
+            Positioned(
+              top: -100 + (progress * 50),
+              left: -100 + (progress * 30),
+              child: _buildOrb(primaryColor, size.width * 0.8),
+            ),
+            // Orbe Bas-Droite (Couleur Secondaire/Complémentaire)
+            Positioned(
+              bottom: -100 + (progress * 60),
+              right: -100 + (progress * 40),
+              child: _buildOrb(
+                HSLColor.fromColor(primaryColor).withHue((HSLColor.fromColor(primaryColor).hue + 30) % 360).toColor(),
+                size.width * 0.9,
+              ),
+            ),
+            // Orbe Centre (Plus subtile)
+            Positioned(
+              top: size.height * 0.3 + (math.sin(progress * math.pi) * 50),
+              left: size.width * 0.2,
+              child: _buildOrb(Colors.white, size.width * 0.4, opacity: 0.05),
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildAnimatedLogo(Color kColor) {
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: 180 * _pulseAnimation.value,
-              height: 180 * _pulseAnimation.value,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
-                  width: 2,
+  Widget _buildOrb(Color color, double diameter, {double opacity = 0.4}) {
+    return Container(
+      width: diameter,
+      height: diameter,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            color.withOpacity(opacity),
+            color.withOpacity(0.0),
+          ],
+          stops: const [0.0, 1.0],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlassCard(Color primaryColor) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
+        child: Container(
+          // --- MODIFICATION ICI ---
+          // On supprime 'width: 320' et on utilise des contraintes
+          constraints: BoxConstraints(
+            minWidth: 300, // Largeur minimale pour l'élégance
+            maxWidth: MediaQuery.of(context).size.width * 0.9, // Max 90% de l'écran
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 30),
+          // -------------------------
+          decoration: BoxDecoration(
+            color: AppColors.surface.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1.5,
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.15),
+                Colors.white.withOpacity(0.05),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 30,
+                spreadRadius: -5,
+                offset: const Offset(0, 20),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildLogo(primaryColor),
+              const SizedBox(height: 40),
+
+              // J'ajoute un FittedBox ici par sécurité pour les petits écrans
+              // afin que le texte réduise sa taille plutôt que de passer à la ligne
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Shimmer.fromColors(
+                  baseColor: Colors.white,
+                  highlightColor: Colors.white.withOpacity(0.5),
+                  period: const Duration(milliseconds: 2500),
+                  child: Text(
+                    'PORTEFEUILLE',
+                    style: AppTypography.h2.copyWith(
+                      fontSize: 24,
+                      letterSpacing: 8,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
-            ),
-            Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.2),
-                    Colors.white.withOpacity(0.05),
-                  ],
-                ),
-              ),
-            ),
-            // Logo central
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 20,
-                    spreadRadius: 5,
+              const SizedBox(height: 16),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min, // Important pour centrer le Row
+                children: [
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withOpacity(0.5)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Flexible( // Permet au texte de ne pas casser la layout si très long
+                    child: Text(
+                      'Initialisation sécurisée',
+                      style: AppTypography.caption.copyWith(
+                        color: Colors.white.withOpacity(0.6),
+                        letterSpacing: 1,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
-              child: Center(
-                child: Text(
-                  'P',
-                  style: TextStyle(
-                    fontSize: 56,
-                    fontWeight: FontWeight.bold,
-                    color: kColor,
-                    letterSpacing: -2,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildShimmeredTitle() {
-    return Shimmer.fromColors(
-      baseColor: Colors.white,
-      highlightColor: Colors.white.withOpacity(0.6),
-      period: const Duration(milliseconds: 1500),
-      child: const Text(
-        'Portefeuille',
-        style: TextStyle(
-          fontSize: 40,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 6,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAnimatedSlogan() {
-    return SizedBox(
-      height: 40,
-      child: DefaultTextStyle(
-        style: const TextStyle(
-          fontSize: 16,
-          color: Colors.white,
-          fontWeight: FontWeight.w300,
-          letterSpacing: 1.5,
-        ),
-        child: AnimatedTextKit(
-          animatedTexts: [
-            TypewriterAnimatedText(
-              'Suivez vos investissements.',
-              speed: const Duration(milliseconds: 80),
-            ),
-          ],
-          repeatForever: false,
-          isRepeatingAnimation: false,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoadingIndicator() {
-    return Column(
-      children: [
-        SizedBox(
-          width: 40,
-          height: 40,
-          child: CircularProgressIndicator(
-            strokeWidth: 3,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              Colors.white.withOpacity(0.8),
-            ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          'Initialisation...',
+      ),
+    );
+  }
+
+  Widget _buildLogo(Color color) {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color,
+            color.withOpacity(0.7),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+      ),
+      child: const Center(
+        child: Text(
+          'P',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 14,
-            letterSpacing: 1,
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontFamily: 'Cinzel', // Si dispo, ou garde défaut
           ),
         ),
-      ],
+      ),
     );
   }
 }
-
-class BackgroundLinesPainter extends CustomPainter {
-  final double animationValue;
-  BackgroundLinesPainter({required this.animationValue});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final linePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    final int numberOfLines = 8;
-
-    for (int i = 0; i < numberOfLines; i++) {
-      final double opacity = 0.05 + (i * 0.02);
-      final double strokeWidth = 1.0 + (i * 0.5);
-      linePaint.color = Colors.white.withOpacity(opacity);
-      linePaint.strokeWidth = strokeWidth;
-      final double offset = (animationValue * (size.width + size.height)) %
-          (size.width + size.height);
-      final double lineSpacing =
-          (size.width + size.height) / (numberOfLines + 2);
-      final double linePosition = offset + (i * lineSpacing);
-      final Offset p1 = Offset(linePosition - size.height, 0);
-      final Offset p2 = Offset(linePosition, size.height);
-
-      canvas.drawLine(p1, p2, linePaint);
-    }
-
-    final fineLinePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = Colors.white.withOpacity(0.015)
-      ..strokeWidth = 0.5;
-    for (int i = 0; i < 20; i++) {
-      final double x = (animationValue * 50 + i * 80) % size.width;
-      final double y = (animationValue * 70 + i * 60) % size.height;
-
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), fineLinePaint);
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), fineLinePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(BackgroundLinesPainter oldDelegate) {
-    return animationValue != oldDelegate.animationValue;
-  }
-}
-
