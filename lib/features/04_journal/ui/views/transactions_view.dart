@@ -5,9 +5,9 @@ import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/widgets/components/app_screen.dart'; // Ajouté
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
 import 'package:portefeuille/core/ui/widgets/transaction_list_item.dart';
 
@@ -35,7 +35,6 @@ class TransactionsView extends StatefulWidget {
 class _TransactionsViewState extends State<TransactionsView> {
   TransactionSortOption _sortOption = TransactionSortOption.dateDesc;
 
-  // ... (Logique de tri inchangée) ...
   List<Transaction> _sortTransactions(List<Transaction> transactions) {
     switch (_sortOption) {
       case TransactionSortOption.dateAsc:
@@ -59,7 +58,6 @@ class _TransactionsViewState extends State<TransactionsView> {
   }
 
   void _confirmDelete(BuildContext context, PortfolioProvider provider, Transaction transaction) {
-    // ... (Garder votre logique de suppression existante ou la refactorer plus tard) ...
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -97,6 +95,9 @@ class _TransactionsViewState extends State<TransactionsView> {
 
   @override
   Widget build(BuildContext context) {
+    // Calcul de l'espace nécessaire en haut
+    final double topPadding = MediaQuery.of(context).padding.top + 90;
+
     return Consumer<PortfolioProvider>(
       builder: (context, provider, child) {
         final portfolio = provider.activePortfolio;
@@ -118,113 +119,120 @@ class _TransactionsViewState extends State<TransactionsView> {
 
         final sortedTransactions = _sortTransactions(allTransactions);
 
-        // ÉTAT VIDE
+        // --- CAS 1 : LISTE VIDE ---
         if (allTransactions.isEmpty) {
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingL),
-                child: Text('Historique', style: AppTypography.h2),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimens.paddingM),
-                  child: AppCard(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AppIcon(
-                          icon: Icons.receipt_long_outlined,
-                          size: 48,
-                          backgroundColor: AppColors.surfaceLight,
-                        ),
-                        const SizedBox(height: AppDimens.paddingM),
-                        Text('Aucune transaction', style: AppTypography.h3),
-                        const SizedBox(height: AppDimens.paddingS),
-                        Text(
-                          'Utilisez le bouton "+" pour commencer.',
-                          style: AppTypography.body,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+          return AppScreen(
+            withSafeArea: false,
+            body: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(top: topPadding, bottom: AppDimens.paddingL),
+                  child: Text('Historique', style: AppTypography.h2),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppDimens.paddingM),
+                    child: AppCard(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AppIcon(
+                            icon: Icons.receipt_long_outlined,
+                            size: 48,
+                            backgroundColor: AppColors.surfaceLight,
+                          ),
+                          const SizedBox(height: AppDimens.paddingM),
+                          Text('Aucune transaction', style: AppTypography.h3),
+                          const SizedBox(height: AppDimens.paddingS),
+                          Text(
+                            'Utilisez le bouton "+" pour commencer.',
+                            style: AppTypography.body,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         }
 
-        // LISTE
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingL),
-              child: Text('Transactions', style: AppTypography.h2),
-            ),
+        // --- CAS 2 : LISTE DES TRANSACTIONS ---
+        return AppScreen(
+          withSafeArea: false,
+          body: Column(
+            children: [
+              // Titre avec padding haut
+              Padding(
+                padding: EdgeInsets.only(top: topPadding, bottom: AppDimens.paddingL),
+                child: Text('Transactions', style: AppTypography.h2),
+              ),
 
-            // Barre de tri
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
-              child: AppCard(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM, vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Trier par', style: AppTypography.body),
-                    DropdownButtonHideUnderline(
-                      child: DropdownButton<TransactionSortOption>(
-                        value: _sortOption,
-                        dropdownColor: AppColors.surfaceLight,
-                        icon: const Icon(Icons.sort, color: AppColors.primary),
-                        style: AppTypography.bodyBold,
-                        items: const [
-                          DropdownMenuItem(value: TransactionSortOption.dateDesc, child: Text('Date (Récent)')),
-                          DropdownMenuItem(value: TransactionSortOption.dateAsc, child: Text('Date (Ancien)')),
-                          DropdownMenuItem(value: TransactionSortOption.amountDesc, child: Text('Montant (Haut)')),
-                          DropdownMenuItem(value: TransactionSortOption.amountAsc, child: Text('Montant (Bas)')),
-                          DropdownMenuItem(value: TransactionSortOption.type, child: Text('Type')),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) setState(() => _sortOption = value);
-                        },
+              // Barre de tri
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+                child: AppCard(
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM, vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Trier par', style: AppTypography.body),
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<TransactionSortOption>(
+                          value: _sortOption,
+                          dropdownColor: AppColors.surfaceLight,
+                          icon: const Icon(Icons.sort, color: AppColors.primary),
+                          style: AppTypography.bodyBold,
+                          items: const [
+                            DropdownMenuItem(value: TransactionSortOption.dateDesc, child: Text('Date (Récent)')),
+                            DropdownMenuItem(value: TransactionSortOption.dateAsc, child: Text('Date (Ancien)')),
+                            DropdownMenuItem(value: TransactionSortOption.amountDesc, child: Text('Montant (Haut)')),
+                            DropdownMenuItem(value: TransactionSortOption.amountAsc, child: Text('Montant (Bas)')),
+                            DropdownMenuItem(value: TransactionSortOption.type, child: Text('Type')),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) setState(() => _sortOption = value);
+                          },
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: AppDimens.paddingM),
+              const SizedBox(height: AppDimens.paddingM),
 
-            // Liste
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(AppDimens.paddingM, 0, AppDimens.paddingM, 80),
-                itemCount: sortedTransactions.length,
-                itemBuilder: (context, index) {
-                  final transaction = sortedTransactions[index];
-                  final account = accountsMap[transaction.accountId];
-                  final accountName = account?.name ?? 'Inconnu';
-                  final accountCurrency = account?.activeCurrency ?? 'EUR';
+              // Liste
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(AppDimens.paddingM, 0, AppDimens.paddingM, 80),
+                  itemCount: sortedTransactions.length,
+                  itemBuilder: (context, index) {
+                    final transaction = sortedTransactions[index];
+                    final account = accountsMap[transaction.accountId];
+                    final accountName = account?.name ?? 'Inconnu';
+                    final accountCurrency = account?.activeCurrency ?? 'EUR';
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: AppDimens.paddingS),
-                    child: FadeInSlide(
-                      delay: index * 0.05, // Cascade animation
-                      child: TransactionListItem(
-                        transaction: transaction,
-                        accountName: accountName,
-                        accountCurrency: accountCurrency,
-                        onDelete: () => _confirmDelete(context, provider, transaction),
-                        onEdit: () => _editTransaction(context, transaction),
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppDimens.paddingS),
+                      child: FadeInSlide(
+                        delay: index * 0.05, // Cascade animation
+                        child: TransactionListItem(
+                          transaction: transaction,
+                          accountName: accountName,
+                          accountCurrency: accountCurrency,
+                          onDelete: () => _confirmDelete(context, provider, transaction),
+                          onEdit: () => _editTransaction(context, transaction),
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

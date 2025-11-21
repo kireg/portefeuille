@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// 1. IMPORTS CORE UI (Centralisation)
+// 1. IMPORTS CORE UI
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart'; // On utilise AppCard pour le style
+import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 
 // 2. IMPORTS DATA & PROVIDERS
 import 'package:portefeuille/core/data/models/portfolio.dart';
@@ -14,6 +14,9 @@ import 'package:portefeuille/features/00_app/models/background_activity.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/06_settings/ui/settings_screen.dart';
+
+// 3. IMPORT NOUVELLE FEATURE
+import 'package:portefeuille/features/07_management/ui/screens/ai_import_config_screen.dart';
 
 class DashboardAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onPressed;
@@ -27,13 +30,12 @@ class DashboardAppBar extends StatefulWidget implements PreferredSizeWidget {
   State<DashboardAppBar> createState() => _DashboardAppBarState();
 
   @override
-  Size get preferredSize => const Size.fromHeight(80); // Hauteur adaptée au style flottant
+  Size get preferredSize => const Size.fromHeight(80);
 }
 
 class _DashboardAppBarState extends State<DashboardAppBar> {
   bool _isSnackBarVisible = false;
 
-  /// Calcule les statistiques de synchronisation
   Map<String, int> _getSyncStats(PortfolioProvider portfolio) {
     final metadata = portfolio.allMetadata;
     int synced = 0;
@@ -64,12 +66,11 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     final settingsProvider = context.read<SettingsProvider>();
     final portfolio = portfolioProvider.activePortfolio;
 
-    // Gestion SnackBar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleSyncMessage(context, portfolioProvider);
     });
 
-    // 1. Cas : Aucun portefeuille sélectionné
+    // 1. Cas : Aucun portefeuille
     if (portfolio == null) {
       return AppBar(
         title: Text('Portefeuille', style: AppTypography.h3),
@@ -85,7 +86,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
       );
     }
 
-    // 2. Cas Normal : Barre Flottante utilisant AppCard
+    // 2. Cas Normal : Barre Flottante
     return SafeArea(
       bottom: false,
       child: Container(
@@ -94,29 +95,40 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
           horizontal: AppDimens.paddingM,
           vertical: AppDimens.paddingS / 2,
         ),
-        // ICI : On utilise AppCard pour déléguer le style au Core UI
         child: AppCard(
-          isGlass: true, // Active le flou géré par core/ui
-          withShadow: true, // Active l'ombre gérée par core/ui
-          backgroundColor: AppColors.surface.withOpacity(0.85), // Respect du thème
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingS), // Padding interne
+          isGlass: true,
+          withShadow: true,
+          backgroundColor: AppColors.surface.withOpacity(0.85),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingS),
           child: Row(
             children: [
-              // Bouton "Ajouter Transaction"
+              // --- Bouton Ajout Manuel ---
               IconButton(
                 icon: const Icon(Icons.add_circle, color: AppColors.primary),
                 tooltip: 'Ajouter une transaction',
                 onPressed: widget.onPressed,
               ),
 
-              // Sélecteur de Portefeuille (Centré)
+              // --- NOUVEAU : Bouton Import IA ---
+              IconButton(
+                icon: const Icon(Icons.auto_awesome, color: AppColors.primary),
+                tooltip: 'Import Intelligent (PDF/Image)',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AiImportConfigScreen()),
+                  );
+                },
+              ),
+
+              // --- Sélecteur de Portefeuille (Centré) ---
               Expanded(
                 child: Center(
                   child: _buildPortfolioSelector(portfolioProvider, portfolio),
                 ),
               ),
 
-              // Indicateur Statut + Paramètres
+              // --- Statut + Settings ---
               _buildStatusIndicator(settingsProvider, portfolioProvider),
               IconButton(
                 icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 22),
@@ -129,9 +141,12 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     );
   }
 
-  // --- WIDGETS INTERNES (Logique conservée) ---
+  // ... (Le reste des méthodes _buildStatusIndicator, _buildPortfolioSelector, etc. reste identique) ...
+  // Je ne répète pas les fonctions privées inchangées pour alléger la réponse,
+  // mais elles doivent rester dans la classe _DashboardAppBarState.
 
   Widget _buildStatusIndicator(SettingsProvider settings, PortfolioProvider portfolio) {
+    // ... (Code existant inchangé)
     final textStyle = AppTypography.caption.copyWith(
       color: AppColors.textPrimary,
       fontWeight: FontWeight.w500,
@@ -200,6 +215,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
   }
 
   Widget _buildPortfolioSelector(PortfolioProvider provider, Portfolio activePortfolio) {
+    // ... (Code existant inchangé)
     return PopupMenuButton<Portfolio>(
       color: AppColors.surfaceLight,
       elevation: 4,
@@ -245,12 +261,15 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      // CORRECTION CRITIQUE ICI :
+      // On met transparent pour laisser le ClipRRect du SettingsScreen faire l'arrondi
+      backgroundColor: Colors.transparent,
       builder: (context) => const SettingsScreen(),
     );
   }
 
   void _handleSyncMessage(BuildContext context, PortfolioProvider provider) {
+    // ... (Code existant inchangé)
     final message = provider.syncMessage;
     if (message != null && !_isSnackBarVisible) {
       setState(() => _isSnackBarVisible = true);
@@ -273,8 +292,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
   }
 
   void _showStatusMenu(BuildContext context, SettingsProvider settings, PortfolioProvider portfolio) {
-    // Logique identique au fichier précédent, mais utilisation de AppColors/AppTypography si besoin
-    // (Omise pour brièveté car purement logique, mais incluse dans le code complet si vous copiez-collez)
+    // ... (Code existant inchangé)
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
@@ -300,6 +318,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
   }
 
   void _confirmToggleOnline(BuildContext context, SettingsProvider settings) {
+    // ... (Code existant inchangé)
     final isOnline = settings.isOnlineMode;
     showDialog(
       context: context,
@@ -320,6 +339,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
   }
 
   void _confirmForceSync(BuildContext context, PortfolioProvider provider) {
+    // ... (Code existant inchangé)
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(

@@ -17,8 +17,9 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
   static const String _kBaseCurrency = 'baseCurrency';
   static const String _kLastPortfolioId = 'lastPortfolioId';
 
-  // Clé sécurisée
+  // Clés sécurisée
   static const String _kFmpApiKey = 'fmpApiKey';
+  static const String _kGeminiApiKey = 'geminiApiKey'; // AJOUT
 
   // Valeurs par défaut
   static const bool _defaultOnlineMode = false;
@@ -35,6 +36,7 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
   Color _appColor = const Color(_defaultAppColorValue);
   String _baseCurrency = _defaultBaseCurrency;
   String? _fmpApiKey;
+  String? _geminiApiKey; // AJOUT
   bool _migrationV1Done = false;
   bool _migrationV2Done = false;
   String? _lastPortfolioId;
@@ -45,10 +47,16 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
   Color get appColor => _appColor;
   @override
   String get baseCurrency => _baseCurrency;
+
   @override
   String? get fmpApiKey => _fmpApiKey;
   @override
   bool get hasFmpApiKey => _fmpApiKey != null && _fmpApiKey!.isNotEmpty;
+
+  // Getters Gemini
+  String? get geminiApiKey => _geminiApiKey; // AJOUT
+  bool get hasGeminiApiKey => _geminiApiKey != null && _geminiApiKey!.isNotEmpty; // AJOUT
+
   bool get migrationV1Done => _migrationV1Done;
   bool get migrationV2Done => _migrationV2Done;
 
@@ -65,6 +73,7 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
     _loadAsyncSettings();
   }
 
+  // Chargement des paramètres simples (HIVE) - Rapide & Synchrone
   void _loadSyncSettings() {
     _isOnlineMode = _settingsRepo.get(_kIsOnlineMode, defaultValue: _defaultOnlineMode);
 
@@ -80,8 +89,10 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
     _lastPortfolioId = _settingsRepo.get(_kLastPortfolioId);
   }
 
+  // Chargement des paramètres sécurisés (SecureStorage) - Lent & Asynchrone
   Future<void> _loadAsyncSettings() async {
     _fmpApiKey = await _secureStorage.read(key: _kFmpApiKey);
+    _geminiApiKey = await _secureStorage.read(key: _kGeminiApiKey); // C'est ICI qu'il faut le mettre
     notifyListeners();
   }
 
@@ -129,13 +140,25 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
     }
     notifyListeners();
   }
+
+  // Nouvelle méthode pour Gemini
+  Future<void> setGeminiApiKey(String? key) async {
+    if (key == null || key.trim().isEmpty) {
+      _geminiApiKey = null;
+      await _secureStorage.delete(key: _kGeminiApiKey);
+    } else {
+      _geminiApiKey = key;
+      await _secureStorage.write(key: _kGeminiApiKey, value: key);
+    }
+    notifyListeners();
+  }
+
   /// Recharge tous les paramètres depuis Hive et SecureStorage.
-  /// Utile après un import de données.
   Future<void> reloadSettings() async {
     debugPrint("🔄 [SettingsProvider] Rechargement des paramètres...");
-    _loadSyncSettings(); // Recharge les valeurs via SettingsRepository
-    await _loadAsyncSettings(); // Recharge la clé API
-    notifyListeners(); // Informe l'UI des nouveaux settings (couleur, devise...)
+    _loadSyncSettings();
+    await _loadAsyncSettings();
+    notifyListeners();
   }
 
   String? get lastPortfolioId => _lastPortfolioId;
@@ -143,7 +166,5 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
   void setLastPortfolioId(String id) {
     _lastPortfolioId = id;
     _settingsRepo.put(_kLastPortfolioId, id);
-    // Pas besoin de notifyListeners() ici car cela n'affecte pas directement l'UI globale
   }
-
 }

@@ -27,70 +27,76 @@ class SettingsScreen extends StatelessWidget {
     context.watch<PortfolioProvider>();
     context.watch<SettingsProvider>();
 
-    return AppScreen(
-      withSafeArea: false, // Géré par le modal ou le parent
-      body: Column(
-        children: [
-          // Header personnalisé avec Stack pour un centrage parfait
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppDimens.paddingL,
-                AppDimens.paddingL,
-                AppDimens.paddingM,
-                AppDimens.paddingM
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // 1. Le titre centré
-                // On utilise SizedBox pour s'assurer qu'il prend toute la largeur
-                // et permettre au texte de se centrer dedans
-                SizedBox(
-                  width: double.infinity,
-                  child: Text(
-                    'Paramètres',
-                    style: AppTypography.h1,
-                    textAlign: TextAlign.center,
+    // CORRECTION : Ajout de ClipRRect pour arrondir les coins supérieurs
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppDimens.radiusL), // Utilise le rayon standard (ex: 24.0)
+      ),
+      child: AppScreen(
+        withSafeArea: false, // Géré par le modal ou le parent
+        body: Column(
+          children: [
+            // Header personnalisé avec Stack pour un centrage parfait
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppDimens.paddingL,
+                  AppDimens.paddingL,
+                  AppDimens.paddingM,
+                  AppDimens.paddingM
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // 1. Le titre centré
+                  // On utilise SizedBox pour s'assurer qu'il prend toute la largeur
+                  // et permettre au texte de se centrer dedans
+                  SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      'Paramètres',
+                      style: AppTypography.h1,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                ),
 
-                // 2. Le bouton fermer aligné à droite
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: AppIcon(
-                    icon: Icons.close,
-                    onTap: () => Navigator.of(context).pop(),
-                    backgroundColor: Colors.transparent,
-                    size: 24,
+                  // 2. Le bouton fermer aligné à droite
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: AppIcon(
+                      icon: Icons.close,
+                      onTap: () => Navigator.of(context).pop(),
+                      backgroundColor: Colors.transparent,
+                      size: 24,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          // Liste des options
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
-              children: const [
-                FadeInSlide(delay: 0.1, child: AppearanceCard()),
-                SizedBox(height: AppDimens.paddingM),
-                FadeInSlide(delay: 0.15, child: GeneralSettingsCard()),
-                SizedBox(height: AppDimens.paddingM),
-                FadeInSlide(delay: 0.2, child: PortfolioCard()),
-                SizedBox(height: AppDimens.paddingM),
-                FadeInSlide(delay: 0.25, child: OnlineModeCard()),
-                SizedBox(height: AppDimens.paddingM),
-                FadeInSlide(delay: 0.3, child: SyncLogsCard()),
-                SizedBox(height: AppDimens.paddingM),
-                FadeInSlide(delay: 0.35, child: BackupCard()),
-                SizedBox(height: AppDimens.paddingM),
-                FadeInSlide(delay: 0.4, child: DangerZoneCard()),
-                SizedBox(height: 40),
-              ],
+            // Liste des options
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+                children: const [
+                  FadeInSlide(delay: 0.1, child: AppearanceCard()),
+                  SizedBox(height: AppDimens.paddingM),
+                  FadeInSlide(delay: 0.15, child: GeneralSettingsCard()),
+                  SizedBox(height: AppDimens.paddingM),
+                  FadeInSlide(delay: 0.2, child: PortfolioCard()),
+                  SizedBox(height: AppDimens.paddingM),
+                  FadeInSlide(delay: 0.25, child: OnlineModeCard()),
+                  SizedBox(height: AppDimens.paddingM),
+                  FadeInSlide(delay: 0.3, child: SyncLogsCard()),
+                  SizedBox(height: AppDimens.paddingM),
+                  FadeInSlide(delay: 0.35, child: BackupCard()),
+                  SizedBox(height: AppDimens.paddingM),
+                  FadeInSlide(delay: 0.4, child: DangerZoneCard()),
+                  SizedBox(height: 40),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

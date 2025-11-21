@@ -3,11 +3,14 @@ import 'package:provider/provider.dart';
 
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
+import 'package:portefeuille/core/data/models/transaction_extraction_result.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/07_management/ui/providers/transaction_form_state.dart';
+import 'package:portefeuille/features/07_management/ui/screens/import_transaction_screen.dart';
 
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_colors.dart'; // Ajout pour styling
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 
 import 'form_sections/_account_selector.dart';
@@ -39,6 +42,9 @@ class TransactionFormBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const FormHeader(),
+
+
+
                 const SizedBox(height: AppDimens.paddingL),
 
                 const AccountSelector(),

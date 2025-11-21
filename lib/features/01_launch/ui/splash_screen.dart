@@ -9,6 +9,7 @@ import 'package:shimmer/shimmer.dart';
 // Design System
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+// ignore: unused_import
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 // Logic

@@ -1,3 +1,5 @@
+// lib/features/06_settings/ui/widgets/sync_logs_card.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -52,7 +54,9 @@ class SyncLogsCard extends StatelessWidget {
                   label: 'CSV',
                   icon: Icons.download,
                   type: AppButtonType.secondary,
-                  onPressed: () => _downloadLogs(context, logs),
+                  onPressed: logs.isEmpty
+                      ? null
+                      : () => _downloadLogs(context, logs),
                 ),
               ),
               const SizedBox(width: AppDimens.paddingM),
@@ -61,7 +65,9 @@ class SyncLogsCard extends StatelessWidget {
                   label: 'Vider',
                   icon: Icons.delete_outline,
                   type: AppButtonType.secondary,
-                  onPressed: () => provider.clearAllSyncLogs(),
+                  onPressed: logs.isEmpty
+                      ? null
+                      : () => provider.clearAllSyncLogs(),
                 ),
               ),
             ],
@@ -82,10 +88,31 @@ class SyncLogsCard extends StatelessWidget {
 
   Future<void> _downloadLogs(BuildContext context, List<dynamic> logs) async {
     if (logs.isEmpty) return;
-    // Cast explicite pour la méthode de service
-    await SyncLogExportService.saveLogsToFile(logs.cast());
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Logs exportés')));
+
+    try {
+      // Appel de la nouvelle méthode unifiée
+      // Note : on cast la liste dynamique en List<SyncLog>
+      await SyncLogExportService.exportLogs(logs.cast());
+
+      // Feedback utilisateur (optionnel car Share ouvre déjà une interface ou télécharge)
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Export lancé'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            )
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur lors de l\'export: $e'),
+              backgroundColor: AppColors.error,
+            )
+        );
+      }
     }
   }
 }

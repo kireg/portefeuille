@@ -112,7 +112,7 @@ class AssetListItem extends StatelessWidget {
   Widget _buildAssetIcon() {
     // Génération d'une couleur unique basée sur le nom pour le placeholder
     final colorSeed = asset.ticker.hashCode;
-    final color = Color((0xFF000000 + (colorSeed & 0xFFFFFF))).withOpacity(1.0);
+    Color((0xFF000000 + (colorSeed & 0xFFFFFF))).withOpacity(1.0);
 
     return Container(
       width: 44,

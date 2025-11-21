@@ -11,20 +11,40 @@ class FormHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<TransactionFormState>();
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          state.isEditing ? 'Modifier' : 'Nouvelle Transaction',
-          style: AppTypography.h2,
-        ),
-        AppIcon(
-          icon: Icons.close,
-          onTap: () => Navigator.of(context).pop(),
-          backgroundColor: Colors.transparent,
-          size: 24,
-        ),
-      ],
+    return SizedBox(
+      height: 40,
+      width: double.infinity, // Force la largeur totale pour permettre le centrage
+      child: Stack(
+        children: [
+          // 1. TITRE (Centré absolument dans le Stack)
+          Center(
+            child: Padding(
+              // Padding horizontal pour éviter que le texte ne touche le bouton croix sur petits écrans
+              padding: const EdgeInsets.symmetric(horizontal: 40.0),
+              child: Text(
+                state.isEditing ? 'Modifier' : 'Nouvelle Transaction',
+                style: AppTypography.h2,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+
+          // 2. BOUTON FERMER (Ancré à Droite)
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: AppIcon(
+                icon: Icons.close,
+                onTap: () => Navigator.of(context).pop(),
+                backgroundColor: Colors.transparent,
+                size: 24,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

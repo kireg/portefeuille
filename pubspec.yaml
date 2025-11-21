@@ -27,6 +27,10 @@ dependencies:
   path_provider: ^2.1.3
   google_fonts: ^6.1.0
   flutter_typeahead: ^5.2.0
+  google_generative_ai: ^0.4.7 # Pour communiquer avec Gemini
+  crop_your_image: ^1.0.0 # Pour l'interface de rognage (crop)
+  pdf: ^3.10.4
+  printing: ^5.11.0
 
 dev_dependencies:
   flutter_test:
