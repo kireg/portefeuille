@@ -57,7 +57,9 @@ class AppCard extends StatelessWidget {
     );
 
     // 2. Application de l'effet de flou (Glassmorphism)
-    if (isGlass && backgroundColor == null) {
+    // On applique le flou si isGlass est vrai, même si une couleur de fond est définie
+    // (sauf si la couleur est totalement opaque, ce qui rendrait le flou inutile, mais on laisse le choix)
+    if (isGlass) {
       // ClipRRect est nécessaire pour que le flou ne dépasse pas les bords arrondis
       content = ClipRRect(
         borderRadius: BorderRadius.circular(AppDimens.radiusM),

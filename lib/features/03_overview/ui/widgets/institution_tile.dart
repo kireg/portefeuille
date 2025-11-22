@@ -45,6 +45,8 @@ class InstitutionTile extends StatelessWidget {
 
     return AppCard(
       padding: EdgeInsets.zero,
+      backgroundColor: Colors.transparent,
+      isGlass: true,
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
