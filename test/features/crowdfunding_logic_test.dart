@@ -6,7 +6,6 @@ import 'package:portefeuille/core/data/models/account_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
-import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/models/repayment_type.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
@@ -144,7 +143,7 @@ void main() {
     // I replaced it with TransactionType.Interest.
     // Let's verify the service logic for CapitalRepayment.
     
-    final capitalProj = projections.where((p) => p.type == TransactionType.CapitalRepayment);
+    // final capitalProj = projections.where((p) => p.type == TransactionType.CapitalRepayment);
     // If the service implements it, it should be there.
     
     // Calculate expected interest

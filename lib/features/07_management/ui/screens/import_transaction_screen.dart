@@ -61,7 +61,7 @@ class _ImportTransactionScreenState extends State<ImportTransactionScreen> {
   Future<void> _pickFile() async {
     setState(() { _isLoading = true; _statusMessage = 'Ouverture du PDF...'; });
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      final FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'jpg', 'png'],
       );
@@ -187,7 +187,7 @@ class _ImportTransactionScreenState extends State<ImportTransactionScreen> {
           // Le baseColor ne sert que visuellement pour le Crop,
           // mais notre image _imageData a maintenant son propre fond blanc "incrusté".
           baseColor: AppColors.background,
-          maskColor: Colors.black.withOpacity(0.6),
+          maskColor: Colors.black.withValues(alpha: 0.6),
           initialSize: 0.7,
           interactive: !_isLoading,
         ),

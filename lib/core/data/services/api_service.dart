@@ -1,6 +1,8 @@
 // lib/core/data/services/api_service.dart
 // REMPLACEZ LE FICHIER COMPLET
 
+// ignore_for_file: constant_identifier_names
+
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -184,9 +186,9 @@ class ApiService {
   Future<PriceResult?> _fetchFromYahoo(String ticker) async {
     const maxRetries = 3;
     final timeouts = [
-      Duration(seconds: 5), // 1ère tentative: 5s
-      Duration(seconds: 8), // 2ème tentative: 8s
-      Duration(seconds: 12), // 3ème tentative: 12s
+      const Duration(seconds: 5), // 1ère tentative: 5s
+      const Duration(seconds: 8), // 2ème tentative: 8s
+      const Duration(seconds: 12), // 3ème tentative: 12s
     ];
 
     for (int attempt = 0; attempt < maxRetries; attempt++) {
@@ -251,7 +253,7 @@ class ApiService {
         return null;
       } on TimeoutException {
         debugPrint(
-            "⏱️ Timeout Yahoo Finance pour $ticker (tentative ${attempt + 1}/${maxRetries}, ${timeout.inSeconds}s)");
+            "⏱️ Timeout Yahoo Finance pour $ticker (tentative ${attempt + 1}/$maxRetries, ${timeout.inSeconds}s)");
 
         if (isLastAttempt) {
           debugPrint("❌ Échec final après $maxRetries tentatives (timeout)");
@@ -262,7 +264,7 @@ class ApiService {
         await Future.delayed(Duration(seconds: attempt + 1));
       } on SocketException catch (e) {
         debugPrint(
-            "🌐 Erreur réseau Yahoo Finance pour $ticker (tentative ${attempt + 1}/${maxRetries})");
+            "🌐 Erreur réseau Yahoo Finance pour $ticker (tentative ${attempt + 1}/$maxRetries)");
         debugPrint("📋 Détails: ${e.message}");
 
         if (isLastAttempt) {
@@ -274,7 +276,7 @@ class ApiService {
         await Future.delayed(Duration(seconds: attempt + 1));
       } catch (e) {
         debugPrint(
-            "❌ Erreur Yahoo Finance pour $ticker (tentative ${attempt + 1}/${maxRetries})");
+            "❌ Erreur Yahoo Finance pour $ticker (tentative ${attempt + 1}/$maxRetries)");
         debugPrint("📋 Détails: $e");
 
         if (isLastAttempt) {

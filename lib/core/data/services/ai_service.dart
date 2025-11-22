@@ -1,7 +1,6 @@
 // lib/core/data/services/ai_service.dart
 
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:portefeuille/core/data/models/transaction_extraction_result.dart';

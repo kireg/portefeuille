@@ -119,7 +119,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                         Expanded(
                           flex: 2,
                           child: DropdownButtonFormField<AccountType>(
-                            value: _type,
+                            initialValue: _type,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Type',

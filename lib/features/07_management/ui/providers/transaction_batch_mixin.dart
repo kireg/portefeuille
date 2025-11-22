@@ -23,7 +23,6 @@ mixin TransactionBatchMixin on ChangeNotifier, TransactionFormControllers {
 
   // État de la file d'attente
   List<TransactionExtractionResult> _pendingExtractions = [];
-  int _totalBatchCount = 0;
 
   bool get hasPendingTransactions => _pendingExtractions.isNotEmpty;
   int get remainingTransactions => _pendingExtractions.length;
@@ -32,7 +31,6 @@ mixin TransactionBatchMixin on ChangeNotifier, TransactionFormControllers {
     if (results.isEmpty) return;
 
     _pendingExtractions = List.from(results);
-    _totalBatchCount = results.length;
 
     loadNextPending();
   }

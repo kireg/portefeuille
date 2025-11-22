@@ -103,7 +103,7 @@ class _AppAnimatedBackgroundState extends State<AppAnimatedBackground>
         // On ajoute un voile très léger pour unifier le tout
         Container(
           decoration: BoxDecoration(
-            color: AppColors.background.withOpacity(0.7), // Réduit l'intensité des couleurs
+            color: AppColors.background.withValues(alpha: 0.7), // Réduit l'intensité des couleurs
           ),
         ),
 
@@ -119,7 +119,7 @@ class _AppAnimatedBackgroundState extends State<AppAnimatedBackground>
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color.withOpacity(0.4), // Transparence de base
+        color: color.withValues(alpha: 0.4), // Transparence de base
       ),
     );
   }

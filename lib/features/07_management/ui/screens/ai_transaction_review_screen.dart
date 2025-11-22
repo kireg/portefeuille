@@ -9,7 +9,6 @@ import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
-import 'package:portefeuille/core/utils/isin_validator.dart';
 
 import 'package:portefeuille/core/data/models/transaction_extraction_result.dart';
 import 'package:portefeuille/core/data/models/transaction.dart' as model;

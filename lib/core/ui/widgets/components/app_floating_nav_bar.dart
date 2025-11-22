@@ -30,12 +30,12 @@ class AppFloatingNavBar extends StatelessWidget {
         ),
         height: 64,
         decoration: BoxDecoration(
-          color: AppColors.surface.withOpacity(0.85),
+          color: AppColors.surface.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(32),
           border: Border.all(color: AppColors.border, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -75,7 +75,7 @@ class AppFloatingNavBar extends StatelessWidget {
         border: Border.all(color: AppColors.border), // Bordure subtile
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -95,8 +95,8 @@ class AppFloatingNavBar extends StatelessWidget {
           // Effet circulaire comme sur l'AppBar
           customBorder: const CircleBorder(),
           // Couleur de survol (hover) subtile
-          hoverColor: AppColors.primary.withOpacity(0.1),
-          splashColor: AppColors.primary.withOpacity(0.2),
+          hoverColor: AppColors.primary.withValues(alpha: 0.1),
+          splashColor: AppColors.primary.withValues(alpha: 0.2),
 
           child: Container(
             width: 60, // Zone de touche large
@@ -107,7 +107,7 @@ class AppFloatingNavBar extends StatelessWidget {
               padding: const EdgeInsets.all(10), // Padding interne de l'icône
               decoration: BoxDecoration(
                 // Si sélectionné : fond subtil. Sinon transparent.
-                color: isSelected ? AppColors.primary.withOpacity(0.15) : Colors.transparent,
+                color: isSelected ? AppColors.primary.withValues(alpha: 0.15) : Colors.transparent,
                 shape: BoxShape.circle,
               ),
               child: Icon(

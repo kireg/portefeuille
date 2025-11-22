@@ -38,7 +38,7 @@ class ProjectionSection extends StatelessWidget {
               // Header
               Row(
                 children: [
-                  AppIcon(
+                  const AppIcon(
                       icon: Icons.show_chart,
                       size: 18,
                       color: AppColors.primary,
@@ -101,8 +101,8 @@ class ProjectionSection extends StatelessWidget {
                   runSpacing: 8,
                   alignment: WrapAlignment.center,
                   children: [
-                    _buildLegend('Capital actuel', AppColors.primary.withOpacity(0.5)),
-                    _buildLegend('Versements', AppColors.accent.withOpacity(0.5)),
+                    _buildLegend('Capital actuel', AppColors.primary.withValues(alpha: 0.5)),
+                    _buildLegend('Versements', AppColors.accent.withValues(alpha: 0.5)),
                     _buildLegend('Intérêts composés', AppColors.success),
                   ],
                 ),
@@ -126,7 +126,7 @@ class ProjectionSection extends StatelessWidget {
                       backgroundColor: WidgetStateProperty.resolveWith<Color>(
                             (Set<WidgetState> states) {
                           if (states.contains(WidgetState.selected)) {
-                            return AppColors.primary.withOpacity(0.2);
+                            return AppColors.primary.withValues(alpha: 0.2);
                           }
                           return Colors.transparent;
                         },

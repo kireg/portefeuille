@@ -17,6 +17,8 @@ import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/services/route_manager.dart';
 
+// ignore_for_file: use_build_context_synchronously
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
   @override
@@ -69,6 +71,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         if (mounted) {
           // Petit délai artificiel pour laisser l'utilisateur apprécier l'animation (optionnel)
           Future.delayed(const Duration(milliseconds: 800), () {
+            if (!mounted) return;
             final bool hasPortfolios = portfolioProvider.portfolios.isNotEmpty;
             final String nextRoute = hasPortfolios ? RouteManager.dashboard : RouteManager.launch;
             Navigator.of(context).pushReplacementNamed(nextRoute);
@@ -86,7 +89,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
           // --- COUCHE 2 : Effet "Grain" ou Overlay sombre pour le contraste ---
           Container(
-            color: Colors.black.withOpacity(0.3), // Assombrit légèrement pour faire ressortir le verre
+            color: Colors.black.withValues(alpha: 0.3), // Assombrit légèrement pour faire ressortir le verre
           ),
 
           // --- COUCHE 3 : Contenu Glassmorphism ---
@@ -163,8 +166,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            color.withOpacity(opacity),
-            color.withOpacity(0.0),
+            color.withValues(alpha: opacity),
+            color.withValues(alpha: 0.0),
           ],
           stops: const [0.0, 1.0],
         ),
@@ -187,23 +190,23 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 30),
           // -------------------------
           decoration: BoxDecoration(
-            color: AppColors.surface.withOpacity(0.1),
+            color: AppColors.surface.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(30),
             border: Border.all(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               width: 1.5,
             ),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withOpacity(0.15),
-                Colors.white.withOpacity(0.05),
+                Colors.white.withValues(alpha: 0.15),
+                Colors.white.withValues(alpha: 0.05),
               ],
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 30,
                 spreadRadius: -5,
                 offset: const Offset(0, 20),
@@ -222,7 +225,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 fit: BoxFit.scaleDown,
                 child: Shimmer.fromColors(
                   baseColor: Colors.white,
-                  highlightColor: Colors.white.withOpacity(0.5),
+                  highlightColor: Colors.white.withValues(alpha: 0.5),
                   period: const Duration(milliseconds: 2500),
                   child: Text(
                     'PORTEFEUILLE',
@@ -246,7 +249,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     height: 12,
                     child: CircularProgressIndicator(
                       strokeWidth: 1.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withOpacity(0.5)),
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withValues(alpha: 0.5)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -254,7 +257,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     child: Text(
                       'Initialisation sécurisée',
                       style: AppTypography.caption.copyWith(
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         letterSpacing: 1,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -280,17 +283,17 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           end: Alignment.bottomRight,
           colors: [
             color,
-            color.withOpacity(0.7),
+            color.withValues(alpha: 0.7),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.4),
+            color: color.withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
         ],
-        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
       ),
       child: const Center(
         child: Text(

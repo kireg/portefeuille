@@ -29,8 +29,8 @@ class AssetAdapter extends TypeAdapter<Asset> {
       expectedYield: fields[14] as double?,
       repaymentType: fields[15] as RepaymentType?,
       riskRating: fields[16] as String?,
-      stale_quantity: fields[2] as double?,
-      stale_averagePrice: fields[3] as double?,
+      staleQuantity: fields[2] as double?,
+      staleAveragePrice: fields[3] as double?,
     )
       ..latitude = fields[17] as double?
       ..longitude = fields[18] as double?;
@@ -45,9 +45,9 @@ class AssetAdapter extends TypeAdapter<Asset> {
       ..writeByte(1)
       ..write(obj.ticker)
       ..writeByte(2)
-      ..write(obj.stale_quantity)
+      ..write(obj.staleQuantity)
       ..writeByte(3)
-      ..write(obj.stale_averagePrice)
+      ..write(obj.staleAveragePrice)
       ..writeByte(6)
       ..write(obj.id)
       ..writeByte(7)

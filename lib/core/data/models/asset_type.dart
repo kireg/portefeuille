@@ -1,3 +1,4 @@
+// ignore_for_file: constant_identifier_names
 // lib/core/data/models/asset_type.dart
 // REMPLACEZ LE FICHIER COMPLET
 

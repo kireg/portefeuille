@@ -61,10 +61,10 @@ class PortfolioHeader extends StatelessWidget {
                 vertical: AppDimens.paddingS
             ),
             decoration: BoxDecoration(
-              color: (isPositive ? AppColors.success : AppColors.error).withOpacity(0.1),
+              color: (isPositive ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppDimens.radiusS),
               border: Border.all(
-                color: (isPositive ? AppColors.success : AppColors.error).withOpacity(0.2),
+                color: (isPositive ? AppColors.success : AppColors.error).withValues(alpha: 0.2),
               ),
             ),
             child: Row(
@@ -85,7 +85,7 @@ class PortfolioHeader extends StatelessWidget {
                 Text(
                   '  (${NumberFormat.percentPattern().format(totalPLPercentage)})',
                   style: AppTypography.body.copyWith(
-                    color: (isPositive ? AppColors.success : AppColors.error).withOpacity(0.8),
+                    color: (isPositive ? AppColors.success : AppColors.error).withValues(alpha: 0.8),
                   ),
                 ),
               ],

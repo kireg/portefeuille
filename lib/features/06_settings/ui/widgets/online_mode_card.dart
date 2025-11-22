@@ -134,7 +134,7 @@ class _OnlineModeCardState extends State<OnlineModeCard> {
               Switch(
                 value: settings.isOnlineMode,
                 onChanged: (val) => settings.toggleOnlineMode(val),
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
               ),
             ],
           ),

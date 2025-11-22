@@ -9,6 +9,8 @@ import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
+// ignore_for_file: use_build_context_synchronously
+
 class InitialSetupWizard extends StatelessWidget {
   final String portfolioName;
 
@@ -41,13 +43,18 @@ class _WizardContentState extends State<_WizardContent> {
   Widget build(BuildContext context) {
     final provider = context.watch<SetupWizardProvider>();
 
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
         if (_currentStep > 0) {
           setState(() => _currentStep--);
-          return false;
+        } else {
+          final shouldPop = await _showExitConfirmation(context);
+          if (shouldPop && context.mounted) {
+            Navigator.of(context).pop();
+          }
         }
-        return await _showExitConfirmation(context);
       },
       child: Scaffold(
         appBar: AppBar(
@@ -98,7 +105,7 @@ class _WizardContentState extends State<_WizardContent> {
         color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -164,13 +171,14 @@ class _WizardContentState extends State<_WizardContent> {
       
       await provider.createPortfolio(portfolioProvider, settingsProvider);
       
-      if (mounted) {
-        Navigator.of(context).pop(true);
-      }
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -433,11 +441,11 @@ class _Step3Summary extends StatelessWidget {
 
   Widget _buildSummaryCard(BuildContext context, String title, String value, IconData icon, {bool isHighlight = false}) {
     return Card(
-      color: isHighlight ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+      color: isHighlight ? Theme.of(context).primaryColor.withValues(alpha: 0.1) : null,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),

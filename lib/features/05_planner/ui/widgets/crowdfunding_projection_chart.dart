@@ -221,7 +221,7 @@ class _CrowdfundingProjectionChartState extends State<CrowdfundingProjectionChar
                       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     ),
                     borderData: FlBorderData(show: false),
-                    gridData: FlGridData(show: false),
+                    gridData: const FlGridData(show: false),
                     barGroups: projections.asMap().entries.map((entry) {
                       final index = entry.key;
                       final data = entry.value;

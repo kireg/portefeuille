@@ -18,7 +18,7 @@ void main() {
 
   testWidgets('Route addInstitution provides Material ancestor and contains TextFormField',
       (WidgetTester tester) async {
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(const MaterialApp(
       onGenerateRoute: RouteManager.onGenerateRoute,
       initialRoute: RouteManager.addInstitution,
     ));

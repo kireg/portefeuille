@@ -484,7 +484,7 @@ class DemoDataService {
     final now = DateTime.now();
 
     // Valeur cible approximative (basée sur le portefeuille de démo)
-    double currentValue = 42000.0;
+    final double currentValue = 42000.0;
 
     // On remonte le temps jour par jour
     for (int i = 90; i >= 0; i--) {
@@ -521,7 +521,7 @@ class DemoDataService {
 
       // Calcul de la valeur du lendemain
       // Volatilité
-      double change = (random.nextDouble() * 0.04) - 0.018; // -1.8% à +2.2%
+      final double change = (random.nextDouble() * 0.04) - 0.018; // -1.8% à +2.2%
       value = value * (1 + change);
     }
 

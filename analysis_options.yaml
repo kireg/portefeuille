@@ -21,8 +21,33 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # --- STYLE & BEST PRACTICES ---
+    prefer_const_constructors: true
+    prefer_const_constructors_in_immutables: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_final_fields: true
+    prefer_final_locals: true
+    unnecessary_const: true
+    unnecessary_new: true
+    
+    # --- TYPES ---
+    always_declare_return_types: true
+    annotate_overrides: true
+    avoid_init_to_null: true
+    
+    # --- ERROR PRONE ---
+    avoid_print: true # Interdire les print en prod (utiliser debugPrint ou Logger)
+    avoid_empty_else: true
+    cancel_subscriptions: true
+    close_sinks: true
+    control_flow_in_finally: true
+    empty_statements: true
+    hash_and_equals: true
+    
+    # --- FLUTTER SPECIFIC ---
+    use_key_in_widget_constructors: true
+    sized_box_for_whitespace: true
+    use_build_context_synchronously: true
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

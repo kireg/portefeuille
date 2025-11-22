@@ -21,8 +21,8 @@ class AccountAdapter extends TypeAdapter<Account> {
       name: fields[0] as String,
       type: fields[1] as AccountType,
       currency: fields[5] as String?,
-      stale_assets: (fields[2] as List?)?.cast<Asset>(),
-      stale_cashBalance: fields[3] as double?,
+      staleAssets: (fields[2] as List?)?.cast<Asset>(),
+      staleCashBalance: fields[3] as double?,
     );
   }
 
@@ -35,9 +35,9 @@ class AccountAdapter extends TypeAdapter<Account> {
       ..writeByte(1)
       ..write(obj.type)
       ..writeByte(2)
-      ..write(obj.stale_assets)
+      ..write(obj.staleAssets)
       ..writeByte(3)
-      ..write(obj.stale_cashBalance)
+      ..write(obj.staleCashBalance)
       ..writeByte(4)
       ..write(obj.id)
       ..writeByte(5)

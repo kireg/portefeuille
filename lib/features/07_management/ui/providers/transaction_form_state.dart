@@ -440,27 +440,31 @@ class TransactionFormState extends ChangeNotifier
 
     if (hasPendingTransactions) {
       final remaining = remainingTransactions;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Enregistré ! Reste $remaining transaction(s)...'),
-          backgroundColor: Colors.blueAccent,
-          duration: const Duration(seconds: 2),
-          showCloseIcon: true,
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Enregistré ! Reste $remaining transaction(s)...'),
+            backgroundColor: Colors.blueAccent,
+            duration: const Duration(seconds: 2),
+            showCloseIcon: true,
+          ),
+        );
+      }
 
       clearFieldsForNextTransaction();
       loadNextPending();
 
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Transaction enregistrée.'),
-          backgroundColor: Colors.green,
-          showCloseIcon: true,
-        ),
-      );
-      if (context.mounted) Navigator.of(context).pop();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Transaction enregistrée.'),
+            backgroundColor: Colors.green,
+            showCloseIcon: true,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
     }
   }
 }

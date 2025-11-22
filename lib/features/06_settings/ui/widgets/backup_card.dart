@@ -1,7 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:convert'; // Pour utf8
-import 'dart:typed_data'; // Pour Uint8List
+// Pour Uint8List
 import 'package:flutter/foundation.dart'; // Pour kIsWeb
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
@@ -84,7 +86,7 @@ class _BackupCardState extends State<BackupCard> {
   }
 
   Future<void> _handleImport(BuildContext context) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
       withData: true, // Important pour le Web
@@ -105,8 +107,10 @@ class _BackupCardState extends State<BackupCard> {
         jsonString = await file.readAsString();
       }
 
+      if (!mounted) return;
       await context.read<PortfolioProvider>().importDataFromJson(jsonString);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Import réussi')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Import réussi')));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur import')));
     } finally {

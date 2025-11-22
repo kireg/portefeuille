@@ -34,7 +34,6 @@ class CrowdfundingSummaryCards extends StatelessWidget {
     final averageYield = totalInvested > 0 ? weightedYieldSum / totalInvested : 0.0;
 
     final currencyFormat = NumberFormat.currency(symbol: '€', decimalDigits: 0);
-    final percentFormat = NumberFormat.decimalPercentPattern(decimalDigits: 1);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),

@@ -62,7 +62,7 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
 
   /// Implémentation de ISettings - Propriété requise par l'interface
   @override
-  int get appColorValue => _appColor.value;
+  int get appColorValue => _appColor.toARGB32();
 
   SettingsProvider({SettingsRepository? settingsRepository}) {
     _settingsRepo = settingsRepository ?? SettingsRepository();
@@ -126,7 +126,7 @@ class SettingsProvider extends ChangeNotifier implements ISettings {
 
   void setAppColor(Color color) {
     _appColor = color;
-    _settingsRepo.put(_kAppColor, color.value);
+    _settingsRepo.put(_kAppColor, color.toARGB32());
     notifyListeners();
   }
 

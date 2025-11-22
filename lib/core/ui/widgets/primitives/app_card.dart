@@ -33,7 +33,7 @@ class AppCard extends StatelessWidget {
 
       // Bordure subtile "Verre" (blanche très transparente)
       border: Border.all(
-          color: Colors.white.withOpacity(0.08),
+          color: Colors.white.withValues(alpha: 0.08),
           width: 1
       ),
 
@@ -41,7 +41,7 @@ class AppCard extends StatelessWidget {
       boxShadow: withShadow
           ? [
         BoxShadow(
-          color: Colors.black.withOpacity(0.3),
+          color: Colors.black.withValues(alpha: 0.3),
           blurRadius: 24,
           offset: const Offset(0, 8),
           spreadRadius: -4, // Ombre plus diffuse

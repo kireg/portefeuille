@@ -104,7 +104,7 @@ class SyntheseView extends StatelessWidget {
               if (isProcessing)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     child: Center(
                       child: AppCard(
                         padding: const EdgeInsets.all(AppDimens.paddingL),

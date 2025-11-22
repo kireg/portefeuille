@@ -58,7 +58,7 @@ class InstitutionTile extends StatelessWidget {
           // Icône de gauche (Banque)
           leading: AppIcon(
             icon: Icons.account_balance,
-            backgroundColor: AppColors.primary.withOpacity(0.1),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
             color: AppColors.primary,
           ),
           // Nom de l'institution
@@ -105,7 +105,7 @@ class InstitutionTile extends StatelessWidget {
                       Text(
                         '(${NumberFormat.decimalPercentPattern(decimalDigits: 1).format(institutionPLPercent)})',
                         style: AppTypography.caption.copyWith(
-                            color: plColor.withOpacity(0.8)
+                            color: plColor.withValues(alpha: 0.8)
                         ),
                       ),
                     ],

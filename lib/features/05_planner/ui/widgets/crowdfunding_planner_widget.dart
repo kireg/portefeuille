@@ -74,7 +74,7 @@ class CrowdfundingPlannerWidget extends StatelessWidget {
                   margin: const EdgeInsets.only(right: AppDimens.paddingS),
                   child: AppCard(
                     padding: const EdgeInsets.all(AppDimens.paddingM),
-                    backgroundColor: isCapital ? AppColors.primary.withOpacity(0.1) : AppColors.surface,
+                    backgroundColor: isCapital ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,

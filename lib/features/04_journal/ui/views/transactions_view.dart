@@ -49,7 +49,6 @@ class _TransactionsViewState extends State<TransactionsView> {
       case TransactionSortOption.type:
         transactions.sort((a, b) => a.type.name.compareTo(b.type.name));
         break;
-      case TransactionSortOption.dateDesc:
       default:
         transactions.sort((a, b) => b.date.compareTo(a.date));
         break;
@@ -136,7 +135,7 @@ class _TransactionsViewState extends State<TransactionsView> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          AppIcon(
+                          const AppIcon(
                             icon: Icons.receipt_long_outlined,
                             size: 48,
                             backgroundColor: AppColors.surfaceLight,

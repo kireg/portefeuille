@@ -1,3 +1,4 @@
+// ignore_for_file: constant_identifier_names
 import 'package:hive/hive.dart';
 
 part 'transaction_type.g.dart';

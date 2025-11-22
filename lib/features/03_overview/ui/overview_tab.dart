@@ -72,17 +72,17 @@ class OverviewTab extends StatelessWidget {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // 1. Header (Total)
-                    FadeInSlide(
+                    const FadeInSlide(
                       delay: 0.1,
-                      child: const PortfolioHeader(),
+                      child: PortfolioHeader(),
                     ),
                     const SizedBox(height: AppDimens.paddingM),
 
                     // 2. Graphique Historique
-                    FadeInSlide(
+                    const FadeInSlide(
                       delay: 0.2,
                       child: AppCard(
-                        child: const PortfolioHistoryChart(),
+                        child: PortfolioHistoryChart(),
                       ),
                     ),
                     const SizedBox(height: AppDimens.paddingM),
@@ -224,7 +224,7 @@ class OverviewTab extends StatelessWidget {
               Text(
                 title.toUpperCase(),
                 style: AppTypography.label.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ],

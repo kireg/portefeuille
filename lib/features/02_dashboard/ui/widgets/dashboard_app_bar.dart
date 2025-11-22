@@ -98,7 +98,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
         child: AppCard(
           isGlass: true,
           withShadow: true,
-          backgroundColor: AppColors.surface.withOpacity(0.85),
+          backgroundColor: AppColors.surface.withValues(alpha: 0.85),
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingS),
           child: Row(
             children: [
@@ -197,7 +197,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
       content = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.cloud_off_outlined, size: 16, color: textStyle.color?.withOpacity(0.6)),
+          Icon(Icons.cloud_off_outlined, size: 16, color: textStyle.color?.withValues(alpha: 0.6)),
           const SizedBox(width: 6),
           Text("Hors ligne", style: textStyle),
         ],

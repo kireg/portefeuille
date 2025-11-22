@@ -39,15 +39,15 @@ class AppColors {
   // MODIFIÉ : Plus de transparence pour l'effet Glassmorphism
   static LinearGradient surfaceGradient = LinearGradient(
     colors: [
-      surface.withOpacity(0.70), // 70% d'opacité (Haut gauche)
-      surface.withOpacity(0.40), // 40% d'opacité (Bas droite)
+      surface.withValues(alpha: 0.70), // 70% d'opacité (Haut gauche)
+      surface.withValues(alpha: 0.40), // 40% d'opacité (Bas droite)
     ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   // --- BORDURES (Effet verre) ---
-  static Color border = Colors.white.withOpacity(0.08);
+  static Color border = Colors.white.withValues(alpha: 0.08);
 
   // --- CHART PALETTE (Néons) ---
   static const List<Color> charts = [

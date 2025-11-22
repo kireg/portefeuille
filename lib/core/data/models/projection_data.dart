@@ -26,7 +26,7 @@ class ProjectionCalculator {
     required double totalMonthlyInvestment,
     required double averagePlansYield,
   }) {
-    List<ProjectionData> data = [];
+    final List<ProjectionData> data = [];
 
     for (int year = 1; year <= duration; year++) {
       // 1. Future value of current capital (Compound interest)

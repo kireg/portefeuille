@@ -104,7 +104,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
                 Expanded(
                   flex: 3,
                   child: DropdownButtonFormField<TransactionType>(
-                    value: widget.draft.type,
+                    initialValue: widget.draft.type,
                     decoration: _getInputDecoration('Type'),
                     dropdownColor: AppColors.surfaceLight,
                     style: AppTypography.bodyBold,
@@ -125,7 +125,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
                 Expanded(
                   flex: 2,
                   child: DropdownButtonFormField<AssetType>(
-                    value: widget.draft.assetType,
+                    initialValue: widget.draft.assetType,
                     decoration: _getInputDecoration('Actif'),
                     dropdownColor: AppColors.surfaceLight,
                     style: AppTypography.body,

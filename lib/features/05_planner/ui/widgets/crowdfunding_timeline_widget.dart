@@ -180,12 +180,12 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: _isExpanded ? AppColors.primary.withOpacity(0.5) : Colors.white.withOpacity(0.05),
+            color: _isExpanded ? AppColors.primary.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.05),
           ),
           boxShadow: _isExpanded
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   )

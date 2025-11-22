@@ -1,5 +1,7 @@
 // lib/features/01_launch/ui/launch_screen.dart
 
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../00_app/providers/portfolio_provider.dart';
@@ -44,9 +46,10 @@ class _LaunchScreenState extends State<LaunchScreen> {
                 try {
                   // Mode démo : créer directement et attendre la completion
                   final demo = await portfolioProvider.addDemoPortfolio();
+                  if (!mounted) return;
                   
                   // Vérifier que le portefeuille a bien été créé avant de naviguer
-                  if (demo != null && mounted) {
+                  if (demo != null) {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                           builder: (context) => const DashboardScreen()),
@@ -55,13 +58,12 @@ class _LaunchScreenState extends State<LaunchScreen> {
                 } catch (e) {
                   // Gérer l'erreur si la création échoue
                   debugPrint('Erreur lors de la création du portefeuille de démo: $e');
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Erreur lors de la création du portefeuille de démo'),
                       ),
                     );
-                  }
                 } finally {
                   if (mounted) {
                     setState(() {

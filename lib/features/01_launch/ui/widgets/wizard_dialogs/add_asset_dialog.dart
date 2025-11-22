@@ -87,7 +87,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
       
       if (priceResult.price != null) {
         double price = priceResult.price!;
-        String currency = priceResult.currency;
+        final String currency = priceResult.currency;
 
         // Conversion si nécessaire
         if (currency != targetCurrency) {
@@ -212,7 +212,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                     Expanded(
                       flex: 2,
                       child: DropdownButtonFormField<AssetType>(
-                        value: _type,
+                        initialValue: _type,
                         isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'Type',

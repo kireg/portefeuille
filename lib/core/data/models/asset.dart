@@ -9,6 +9,8 @@ import 'repayment_type.dart';
 
 part 'asset.g.dart';
 
+// ignore_for_file: deprecated_member_use_from_same_package
+
 @HiveType(typeId: 3)
 class Asset {
   @HiveField(0)
@@ -19,12 +21,12 @@ class Asset {
 
   // --- CHAMPS PERIMES (GARDÉS POUR LA MIGRATION) ---
   @HiveField(2)
-  @deprecated
-  double? stale_quantity;
+  @Deprecated('Use transactions instead')
+  double? staleQuantity;
 
   @HiveField(3)
-  @deprecated
-  double? stale_averagePrice;
+  @Deprecated('Use transactions instead')
+  double? staleAveragePrice;
   // --- FIN CHAMPS PERIMES ---
 
   // --- REFRACTORING ---
@@ -150,8 +152,8 @@ class Asset {
     // --- FIN CROWDFUNDING ---
 
     // Champs de migration
-    this.stale_quantity,
-    this.stale_averagePrice,
+    this.staleQuantity,
+    this.staleAveragePrice,
   }) : type = type ?? AssetType.Other;
 
   // MODIFIÉ : Valeur totale en devise de COMPTE
@@ -247,8 +249,8 @@ class Asset {
       // --- FIN CROWDFUNDING ---
 
       // Champs de migration
-      stale_quantity: stale_quantity,
-      stale_averagePrice: stale_averagePrice,
+      staleQuantity: staleQuantity,
+      staleAveragePrice: staleAveragePrice,
     );
   }
 }

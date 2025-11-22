@@ -79,7 +79,7 @@ class SavingsPlansSection extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      AppIcon(
+                      const AppIcon(
                           icon: Icons.savings_outlined,
                           size: 18,
                           color: AppColors.primary,
@@ -145,7 +145,7 @@ class SavingsPlansSection extends StatelessWidget {
                         icon: Icons.rocket_launch,
                         color: plan.isActive ? AppColors.success : AppColors.textSecondary,
                         backgroundColor: (plan.isActive ? AppColors.success : AppColors.textSecondary)
-                            .withOpacity(0.1),
+                            .withValues(alpha: 0.1),
                       ),
                       onTap: () => _openPlanForm(context, existingPlan: plan),
                       trailing: IconButton(

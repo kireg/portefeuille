@@ -113,7 +113,7 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
           borderRadius: BorderRadius.circular(AppDimens.radiusS),
           boxShadow: [
             BoxShadow(
-              color: primaryColor.withOpacity(0.4), // Ombre colorée
+              color: primaryColor.withValues(alpha: 0.4), // Ombre colorée
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),

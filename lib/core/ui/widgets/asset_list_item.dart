@@ -37,7 +37,7 @@ class AssetListItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface, // Carte sombre
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.03)), // Bordure subtile
+        border: Border.all(color: Colors.white.withValues(alpha: 0.03)), // Bordure subtile
       ),
       child: Row(
         children: [
@@ -101,7 +101,7 @@ class AssetListItem extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: (isPositive ? AppColors.success : AppColors.error).withOpacity(0.1),
+                    color: (isPositive ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -123,7 +123,7 @@ class AssetListItem extends StatelessWidget {
   Widget _buildAssetIcon() {
     // Génération d'une couleur unique basée sur le nom pour le placeholder
     final colorSeed = asset.ticker.hashCode;
-    Color((0xFF000000 + (colorSeed & 0xFFFFFF))).withOpacity(1.0);
+    Color((0xFF000000 + (colorSeed & 0xFFFFFF))).withValues(alpha: 1.0);
 
     return Container(
       width: 44,

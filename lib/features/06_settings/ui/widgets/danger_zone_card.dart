@@ -13,10 +13,10 @@ class DangerZoneCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       elevation: 0,
-      color: theme.colorScheme.errorContainer.withAlpha(26),
+      color: theme.colorScheme.errorContainer.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: theme.colorScheme.error.withAlpha(77)),
+        side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.3)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),

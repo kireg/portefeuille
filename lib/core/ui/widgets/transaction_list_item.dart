@@ -36,7 +36,7 @@ class TransactionListItem extends StatelessWidget {
       leading: AppIcon(
         icon: typeInfo.icon,
         color: typeInfo.color,
-        backgroundColor: typeInfo.color.withOpacity(0.1),
+        backgroundColor: typeInfo.color.withValues(alpha: 0.1),
       ),
 
       // 2. Titre et sous-titre

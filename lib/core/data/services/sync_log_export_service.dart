@@ -2,7 +2,7 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data'; // Pour Uint8List
+// Pour Uint8List
 import 'package:flutter/foundation.dart'; // Pour kIsWeb
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart'; // Pour l'export cross-platform

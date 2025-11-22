@@ -1,5 +1,7 @@
 // lib/features/07_management/ui/screens/ai_import_config_screen.dart
 
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
@@ -94,8 +96,8 @@ class _AiImportConfigScreenState extends State<AiImportConfigScreen> {
             Container(
               padding: const EdgeInsets.all(AppDimens.paddingM),
               decoration: BoxDecoration(
-                color: AppColors.warning.withOpacity(0.1),
-                border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+                color: AppColors.warning.withValues(alpha: 0.1),
+                border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
                 borderRadius: BorderRadius.circular(AppDimens.radiusM),
               ),
               child: Column(
@@ -166,8 +168,10 @@ class _AiImportConfigScreenState extends State<AiImportConfigScreen> {
       MaterialPageRoute(builder: (_) => const ImportTransactionScreen()),
     );
 
-    if (results != null && results.isNotEmpty && mounted) {
-      Navigator.pushReplacement(
+    if (results == null || results.isEmpty) return;
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => AiTransactionReviewScreen(
@@ -176,6 +180,5 @@ class _AiImportConfigScreenState extends State<AiImportConfigScreen> {
           ),
         ),
       );
-    }
   }
 }

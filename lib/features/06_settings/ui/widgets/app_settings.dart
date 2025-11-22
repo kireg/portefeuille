@@ -40,6 +40,7 @@ class _AppSettingsState extends State<AppSettings> {
     FocusScope.of(context).unfocus();
     try {
       await provider.setFmpApiKey(key);
+      if (!mounted) return;
       setState(() {
         _isKeyCurrentlySaved = provider.hasFmpApiKey;
         _fmpKeyController.clear();
@@ -54,6 +55,7 @@ class _AppSettingsState extends State<AppSettings> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Erreur lors de la sauvegarde de la clé : $e"),

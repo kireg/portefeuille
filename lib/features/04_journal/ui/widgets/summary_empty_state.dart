@@ -31,7 +31,7 @@ class SummaryEmptyState extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  AppIcon(
+                  const AppIcon(
                     icon: Icons.pie_chart_outline,
                     size: 48,
                     backgroundColor: AppColors.surfaceLight,

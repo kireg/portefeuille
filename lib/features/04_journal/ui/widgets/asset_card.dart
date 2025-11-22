@@ -189,7 +189,7 @@ class AssetCard extends StatelessWidget {
 
   Widget _buildAssetIcon() {
     final colorSeed = asset.ticker.hashCode;
-    final color = Color((0xFF000000 + (colorSeed & 0xFFFFFF))).withOpacity(1.0);
+    final color = Color((0xFF000000 + (colorSeed & 0xFFFFFF))).withValues(alpha: 1.0);
 
     return Container(
       width: 40,

@@ -184,7 +184,7 @@ class AccountTile extends StatelessWidget {
           accountCurrency: accountCurrency,
           baseCurrency: baseCurrency,
         ))
-            .toList(),
+            ,
       ],
     );
   }

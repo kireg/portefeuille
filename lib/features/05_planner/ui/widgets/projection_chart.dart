@@ -131,7 +131,7 @@ class ProjectionChart extends StatelessWidget {
             showTitles: true,
             getTitlesWidget: (value, meta) {
               final year = value.toInt();
-              int step = duration > 10 ? 5 : 2;
+              final int step = duration > 10 ? 5 : 2;
               if (year % step != 0 && year != 1 && year != duration) {
                 return const SizedBox();
               }
@@ -158,7 +158,7 @@ class ProjectionChart extends StatelessWidget {
         ),
       ),
       borderData: FlBorderData(show: false),
-      gridData: FlGridData(show: false),
+      gridData: const FlGridData(show: false),
       barGroups: data.map((d) {
         return BarChartGroupData(
           x: d.year,
@@ -171,12 +171,12 @@ class ProjectionChart extends StatelessWidget {
                 BarChartRodStackItem(
                     0,
                     d.currentCapital,
-                    AppColors.primary.withOpacity(0.5)
+                    AppColors.primary.withValues(alpha: 0.5)
                 ),
                 BarChartRodStackItem(
                     d.currentCapital,
                     d.currentCapital + d.cumulativeContributions,
-                    AppColors.accent.withOpacity(0.5)
+                    AppColors.accent.withValues(alpha: 0.5)
                 ),
                 BarChartRodStackItem(
                     d.currentCapital + d.cumulativeContributions,

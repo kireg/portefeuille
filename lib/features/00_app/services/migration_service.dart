@@ -1,5 +1,7 @@
 // lib/features/00_app/services/migration_service.dart
 
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
@@ -23,8 +25,8 @@ class MigrationService {
   Future<bool> runMigrationV1(List<Portfolio> portfolios) async {
     final needsMigration = portfolios.any((p) => p.institutions.any((i) =>
         i.accounts.any((a) =>
-        a.stale_cashBalance != null ||
-            (a.stale_assets?.isNotEmpty ?? false))));
+        a.staleCashBalance != null ||
+            (a.staleAssets?.isNotEmpty ?? false))));
 
     if (!needsMigration) {
       debugPrint("Migration V1 : Aucune donnée périmée trouvée.");
@@ -42,10 +44,10 @@ class MigrationService {
           final migrationDate = DateTime(2020, 1, 1);
           double totalCashFromAssets = 0.0;
 
-          if (acc.stale_assets != null && acc.stale_assets!.isNotEmpty) {
-            for (final asset in acc.stale_assets!) {
-              final qty = asset.stale_quantity;
-              final pru = asset.stale_averagePrice;
+          if (acc.staleAssets != null && acc.staleAssets!.isNotEmpty) {
+            for (final asset in acc.staleAssets!) {
+              final qty = asset.staleQuantity;
+              final pru = asset.staleAveragePrice;
               if (qty != null && pru != null && qty > 0) {
                 totalCashFromAssets += (qty * pru);
               }
@@ -53,7 +55,7 @@ class MigrationService {
           }
 
           final totalCashNeeded =
-              (acc.stale_cashBalance ?? 0.0) + totalCashFromAssets;
+              (acc.staleCashBalance ?? 0.0) + totalCashFromAssets;
 
           if (totalCashNeeded > 0) {
             debugPrint(
@@ -65,18 +67,18 @@ class MigrationService {
               date: migrationDate,
               amount: totalCashNeeded,
               notes:
-              "Migration v1 - Dépôt initial (Solde: ${acc.stale_cashBalance?.toStringAsFixed(2) ?? '0.00'}€)",
+              "Migration v1 - Dépôt initial (Solde: ${acc.staleCashBalance?.toStringAsFixed(2) ?? '0.00'}€)",
             ));
-            acc.stale_cashBalance = null;
+            acc.staleCashBalance = null;
             portfolioNeedsSave = true;
           }
 
-          if (acc.stale_assets != null && acc.stale_assets!.isNotEmpty) {
+          if (acc.staleAssets != null && acc.staleAssets!.isNotEmpty) {
             debugPrint(
-                "Migration : ${acc.stale_assets!.length} actifs pour ${acc.name}");
-            for (final asset in acc.stale_assets!) {
-              final qty = asset.stale_quantity;
-              final pru = asset.stale_averagePrice;
+                "Migration : ${acc.staleAssets!.length} actifs pour ${acc.name}");
+            for (final asset in acc.staleAssets!) {
+              final qty = asset.staleQuantity;
+              final pru = asset.staleAveragePrice;
 
               if (qty != null && pru != null && qty > 0) {
                 final totalCost = qty * pru;
@@ -98,7 +100,7 @@ class MigrationService {
                 ));
               }
             }
-            acc.stale_assets = null;
+            acc.staleAssets = null;
             portfolioNeedsSave = true;
           }
         }
@@ -145,8 +147,8 @@ class MigrationService {
               type: acc.type,
               currency: 'EUR',
               transactions: acc.transactions,
-              stale_assets: acc.stale_assets,
-              stale_cashBalance: acc.stale_cashBalance,
+              staleAssets: acc.staleAssets,
+              staleCashBalance: acc.staleCashBalance,
             );
             updatedAccounts.add(updatedAccount);
             institutionNeedsUpdate = true;

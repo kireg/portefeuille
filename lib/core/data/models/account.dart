@@ -19,12 +19,12 @@ class Account {
   final AccountType type;
 
   @HiveField(2)
-  @deprecated
-  List<Asset>? stale_assets;
+  @Deprecated('Use assets instead')
+  List<Asset>? staleAssets;
 
   @HiveField(3)
-  @deprecated
-  double? stale_cashBalance;
+  @Deprecated('Use transactions instead')
+  double? staleCashBalance;
 
   @HiveField(4)
   final String id;
@@ -85,8 +85,8 @@ class Account {
     this.currency = 'EUR',
     this.transactions = const [],
     // Migration
-    this.stale_assets,
-    this.stale_cashBalance,
+    this.staleAssets,
+    this.staleCashBalance,
   }) {
     // Hydrate automatiquement les assets à partir des transactions
     assets = generateAssetsFromTransactions(transactions);
@@ -127,8 +127,8 @@ class Account {
       type: type,
       currency: currency,
       transactions: List.from(transactions),
-      stale_assets: stale_assets?.map((e) => e.deepCopy()).toList(),
-      stale_cashBalance: stale_cashBalance,
+      staleAssets: staleAssets?.map((e) => e.deepCopy()).toList(),
+      staleCashBalance: staleCashBalance,
     )
       ..assets = assets.map((e) => e.deepCopy()).toList();
   }
@@ -160,3 +160,5 @@ class Account {
   }
 // --- FIN NOUVELLES MÉTHODES JSON ---
 }
+
+// ignore_for_file: deprecated_member_use_from_same_package

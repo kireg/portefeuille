@@ -108,7 +108,7 @@ class _AssetTypeAllocationChartState extends State<AssetTypeAllocationChart> {
       if (entry.value <= 0) return PieChartSectionData(value: 0);
 
       return PieChartSectionData(
-        color: AppColors.charts[i % AppColors.charts.length].withOpacity(opacity),
+        color: AppColors.charts[i % AppColors.charts.length].withValues(alpha: opacity),
         value: entry.value,
         title: '',
         radius: radius,
@@ -131,7 +131,7 @@ class _AssetTypeAllocationChartState extends State<AssetTypeAllocationChart> {
         border: Border.all(color: color),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 4,
             offset: const Offset(0, 2),
           )
@@ -188,7 +188,7 @@ class _AssetTypeAllocationChartState extends State<AssetTypeAllocationChart> {
                 decoration: BoxDecoration(
                   color: color,
                   shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4)],
+                  boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 4)],
                 ),
               ),
               const SizedBox(width: 12),

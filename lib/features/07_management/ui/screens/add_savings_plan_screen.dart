@@ -42,7 +42,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
   late bool _isActive;
 
   Asset? _selectedAsset;
-  List<_GroupedAsset> _groupedAssets = [];
+  final List<_GroupedAsset> _groupedAssets = [];
 
   @override
   void initState() {
@@ -235,7 +235,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                 )
               else
                 DropdownButtonFormField<Asset>(
-                  value: _selectedAsset,
+                  initialValue: _selectedAsset,
                   decoration: const InputDecoration(
                     labelText: 'Actif cible *',
                     border: OutlineInputBorder(),
@@ -262,7 +262,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
               if (_selectedAsset != null) ...[
                 const SizedBox(height: 16),
                 Card(
-                  color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
@@ -461,7 +461,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                           Text(
                             '${(asset.estimatedAnnualYield * 100).toStringAsFixed(1)}%${isin != null && isin.isNotEmpty ? ' • ISIN: $isin' : ''}',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
