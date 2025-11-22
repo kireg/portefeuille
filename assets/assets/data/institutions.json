@@ -1,0 +1,52 @@
+[
+  {
+    "id": "boursorama",
+    "name": "Boursorama Banque",
+    "type": "Bank",
+    "country": "FR",
+    "logoAsset": "assets/logos/boursorama.png",
+    "primaryColor": "#D40055",
+    "website": "https://www.boursorama.com",
+    "defaultAccountTypes": ["PEA", "CTO", "AssuranceVie", "LivretA"]
+  },
+  {
+    "id": "fortuneo",
+    "name": "Fortuneo",
+    "type": "Bank",
+    "country": "FR",
+    "logoAsset": "assets/logos/fortuneo.png",
+    "primaryColor": "#00A550",
+    "website": "https://www.fortuneo.fr",
+    "defaultAccountTypes": ["PEA", "CTO", "AssuranceVie"]
+  },
+  {
+    "id": "trade_republic",
+    "name": "Trade Republic",
+    "type": "Broker",
+    "country": "DE",
+    "logoAsset": "assets/logos/trade_republic.png",
+    "primaryColor": "#000000",
+    "website": "https://traderepublic.com",
+    "defaultAccountTypes": ["CTO"]
+  },
+  {
+    "id": "binance",
+    "name": "Binance",
+    "type": "CryptoExchange",
+    "country": "Global",
+    "logoAsset": "assets/logos/binance.png",
+    "primaryColor": "#F3BA2F",
+    "website": "https://www.binance.com",
+    "defaultAccountTypes": ["CryptoWallet", "Staking"]
+  },
+  {
+    "id": "credit_agricole",
+    "name": "Crédit Agricole",
+    "type": "Bank",
+    "country": "FR",
+    "logoAsset": "assets/logos/credit_agricole.png",
+    "primaryColor": "#00665E",
+    "website": "https://www.credit-agricole.fr",
+    "defaultAccountTypes": ["PEA", "CTO", "LivretA", "CompteCourant"]
+  }
+]
