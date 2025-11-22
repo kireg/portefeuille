@@ -45,89 +45,86 @@ class CrowdfundingTrackingTab extends StatelessWidget {
                 ),
               ),
 
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    // 1. Résumé / KPI (VRAI RÉSUMÉ)
-                    FadeInSlide(
-                      delay: 0.05,
-                      child: CrowdfundingSummaryCards(
-                        assets: portfolio.institutions
-                            .expand((i) => i.accounts)
-                            .expand((a) => a.assets)
-                            .toList(),
-                      ),
+              SliverList(
+                delegate: SliverChildListDelegate([
+                  // 1. Résumé / KPI (VRAI RÉSUMÉ)
+                  FadeInSlide(
+                    delay: 0.05,
+                    child: CrowdfundingSummaryCards(
+                      assets: portfolio.institutions
+                          .expand((i) => i.accounts)
+                          .expand((a) => a.assets)
+                          .toList(),
                     ),
+                  ),
 
-                    const SizedBox(height: AppDimens.paddingM),
+                  const SizedBox(height: AppDimens.paddingM),
 
-                    // 2. Prochains Paiements (Anciennement Résumé)
-                    FadeInSlide(
-                      delay: 0.1,
-                      child: CrowdfundingPlannerWidget(
-                        assets: portfolio.institutions
-                            .expand((i) => i.accounts)
-                            .expand((a) => a.assets)
-                            .toList(),
-                        transactions: portfolio.institutions
-                            .expand((i) => i.accounts)
-                            .expand((a) => a.transactions)
-                            .toList(),
-                      ),
+                  // 2. Prochains Paiements (Anciennement Résumé)
+                  FadeInSlide(
+                    delay: 0.1,
+                    child: CrowdfundingPlannerWidget(
+                      assets: portfolio.institutions
+                          .expand((i) => i.accounts)
+                          .expand((a) => a.assets)
+                          .toList(),
+                      transactions: portfolio.institutions
+                          .expand((i) => i.accounts)
+                          .expand((a) => a.transactions)
+                          .toList(),
                     ),
+                  ),
 
-                    const SizedBox(height: AppDimens.paddingM),
+                  const SizedBox(height: AppDimens.paddingM),
 
-                    // 3. Timeline des remboursements
-                    FadeInSlide(
-                      delay: 0.15,
-                      child: CrowdfundingTimelineWidget(
-                        assets: portfolio.institutions
-                            .expand((i) => i.accounts)
-                            .expand((a) => a.assets)
-                            .where((a) => a.type == AssetType.RealEstateCrowdfunding)
-                            .toList(),
-                      ),
+                  // 3. Timeline des remboursements
+                  FadeInSlide(
+                    delay: 0.15,
+                    child: CrowdfundingTimelineWidget(
+                      assets: portfolio.institutions
+                          .expand((i) => i.accounts)
+                          .expand((a) => a.assets)
+                          .where((a) => a.type == AssetType.RealEstateCrowdfunding)
+                          .toList(),
                     ),
+                  ),
 
-                    const SizedBox(height: AppDimens.paddingM),
+                  const SizedBox(height: AppDimens.paddingM),
 
-                    // 3. Projection (Graphique)
-                    FadeInSlide(
-                      delay: 0.2,
-                      child: CrowdfundingProjectionChart(
-                        assets: portfolio.institutions
-                            .expand((i) => i.accounts)
-                            .expand((a) => a.assets)
-                            .toList(),
-                        transactions: portfolio.institutions
-                            .expand((i) => i.accounts)
-                            .expand((a) => a.transactions)
-                            .toList(),
-                        accounts: portfolio.institutions
-                            .expand((i) => i.accounts)
-                            .toList(),
-                      ),
+                  // 3. Projection (Graphique)
+                  FadeInSlide(
+                    delay: 0.2,
+                    child: CrowdfundingProjectionChart(
+                      assets: portfolio.institutions
+                          .expand((i) => i.accounts)
+                          .expand((a) => a.assets)
+                          .toList(),
+                      transactions: portfolio.institutions
+                          .expand((i) => i.accounts)
+                          .expand((a) => a.transactions)
+                          .toList(),
+                      accounts: portfolio.institutions
+                          .expand((i) => i.accounts)
+                          .toList(),
                     ),
+                  ),
 
-                    const SizedBox(height: AppDimens.paddingM),
+                  const SizedBox(height: AppDimens.paddingM),
 
-                    // 4. Carte
-                    FadeInSlide(
-                      delay: 0.25,
-                      child: CrowdfundingMapWidget(
-                        assets: portfolio.institutions
-                            .expand((i) => i.accounts)
-                            .expand((a) => a.assets)
-                            .where((a) => a.type == AssetType.RealEstateCrowdfunding)
-                            .toList(),
-                      ),
+                  // 4. Carte
+                  FadeInSlide(
+                    delay: 0.25,
+                    child: CrowdfundingMapWidget(
+                      assets: portfolio.institutions
+                          .expand((i) => i.accounts)
+                          .expand((a) => a.assets)
+                          .where((a) => a.type == AssetType.RealEstateCrowdfunding)
+                          .toList(),
                     ),
+                  ),
 
-                    const SizedBox(height: 100), // Padding pour la BottomNavBar
-                  ]),
-                ),
+                  const SizedBox(height: 100), // Padding pour la BottomNavBar
+                ]),
               ),
             ],
           ),

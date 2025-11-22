@@ -89,6 +89,7 @@ class OverviewTab extends StatelessWidget {
                     const FadeInSlide(
                       delay: 0.2,
                       child: AppCard(
+                        backgroundColor: Colors.transparent,
                         child: PortfolioHistoryChart(),
                       ),
                     ),
@@ -205,12 +206,14 @@ class OverviewTab extends StatelessWidget {
 
   Widget _buildAllocationCard(dynamic portfolio) {
     return AppCard(
+      backgroundColor: Colors.transparent,
       child: AllocationChart(portfolio: portfolio),
     );
   }
 
   Widget _buildAssetTypeCard(Map<AssetType, double> allocation, double totalValue) {
     return AppCard(
+      backgroundColor: Colors.transparent,
       child: AssetTypeAllocationChart(
         allocationData: allocation,
         totalValue: totalValue,

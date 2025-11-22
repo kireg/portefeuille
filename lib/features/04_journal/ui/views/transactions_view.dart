@@ -6,25 +6,26 @@ import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/components/app_screen.dart'; // Ajouté
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
 import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
-import 'package:portefeuille/core/ui/widgets/transaction_list_item.dart';
 
 // Data & Logic
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
+import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/07_management/ui/screens/edit_transaction_screen.dart';
+import 'package:portefeuille/features/07_management/ui/screens/add_transaction_screen.dart';
+import 'package:portefeuille/features/07_management/ui/screens/pdf_import_screen.dart';
+import 'package:portefeuille/features/07_management/ui/screens/ai_import_config_screen.dart';
+import 'package:portefeuille/features/07_management/ui/screens/crowdfunding_import_screen.dart';
 
-enum TransactionSortOption {
-  dateDesc,
-  dateAsc,
-  amountDesc,
-  amountAsc,
-  type,
-}
+// New Widgets & Models
+import 'package:portefeuille/features/04_journal/ui/models/transaction_group.dart';
+import 'package:portefeuille/features/04_journal/ui/models/transaction_sort_option.dart';
+import 'package:portefeuille/features/04_journal/ui/widgets/empty_transactions_widget.dart';
+import 'package:portefeuille/features/04_journal/ui/widgets/transaction_filter_bar.dart';
+import 'package:portefeuille/features/04_journal/ui/widgets/transaction_group_widget.dart';
 
 class TransactionsView extends StatefulWidget {
   const TransactionsView({super.key});
@@ -35,26 +36,145 @@ class TransactionsView extends StatefulWidget {
 
 class _TransactionsViewState extends State<TransactionsView> {
   TransactionSortOption _sortOption = TransactionSortOption.dateDesc;
+  final Set<String> _selectedIds = {};
 
-  List<Transaction> _sortTransactions(List<Transaction> transactions) {
-    switch (_sortOption) {
-      case TransactionSortOption.dateAsc:
-        transactions.sort((a, b) => a.date.compareTo(b.date));
-        break;
-      case TransactionSortOption.amountDesc:
-        transactions.sort((a, b) => b.totalAmount.compareTo(b.totalAmount));
-        break;
-      case TransactionSortOption.amountAsc:
-        transactions.sort((a, b) => a.totalAmount.compareTo(b.totalAmount));
-        break;
-      case TransactionSortOption.type:
-        transactions.sort((a, b) => a.type.name.compareTo(b.type.name));
-        break;
-      default:
-        transactions.sort((a, b) => b.date.compareTo(a.date));
-        break;
+  bool get _isSelectionMode => _selectedIds.isNotEmpty;
+
+  void _toggleSelection(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  void _selectAll(List<Transaction> transactions) {
+    setState(() {
+      if (_selectedIds.length == transactions.length) {
+        _selectedIds.clear();
+      } else {
+        _selectedIds.addAll(transactions.map((t) => t.id));
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedTransactions(PortfolioProvider provider) async {
+    final count = _selectedIds.length;
+    if (count == 0) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceLight,
+        title: Text('Supprimer $count transactions ?', style: AppTypography.h3),
+        content: Text(
+          'Cette action est irréversible.',
+          style: AppTypography.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Annuler', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('Supprimer', style: AppTypography.label.copyWith(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final idsToDelete = _selectedIds.toList();
+      setState(() {
+        _selectedIds.clear();
+      });
+      
+      final futures = idsToDelete.map((id) => provider.deleteTransaction(id));
+      await Future.wait(futures);
     }
-    return transactions;
+  }
+
+  Map<String, TransactionGroup> _groupTransactions(
+      List<Transaction> transactions,
+      Map<String, Account> accountsMap,
+      Map<String, String> accountIdToInstitutionName
+  ) {
+    final groups = <String, TransactionGroup>{};
+
+    for (var transaction in transactions) {
+      String key;
+      String title;
+      String? subtitle;
+
+      switch (_sortOption) {
+        case TransactionSortOption.dateDesc:
+        case TransactionSortOption.dateAsc:
+          final now = DateTime.now();
+          final date = transaction.date;
+          final diff = now.difference(date).inDays;
+
+          if (diff == 0) {
+            key = 'Aujourd\'hui';
+          } else if (diff == 1) {
+            key = 'Hier';
+          } else if (diff < 7) {
+            key = 'Cette semaine';
+          } else if (diff < 30) {
+            key = 'Ce mois-ci';
+          } else if (diff < 60) {
+            key = 'Mois dernier';
+          } else {
+            key = 'Plus ancien';
+          }
+          title = key;
+          break;
+
+        case TransactionSortOption.institution:
+          final institutionName = accountIdToInstitutionName[transaction.accountId] ?? 'Inconnu';
+          key = institutionName;
+          title = institutionName;
+          break;
+
+        case TransactionSortOption.account:
+          final account = accountsMap[transaction.accountId];
+          final accountName = account?.name ?? 'Inconnu';
+          final institutionName = accountIdToInstitutionName[transaction.accountId] ?? '';
+          key = accountName;
+          title = accountName;
+          subtitle = institutionName;
+          break;
+
+        case TransactionSortOption.type:
+          key = transaction.type.displayName;
+          title = key;
+          break;
+
+        default:
+          key = 'Autres';
+          title = 'Autres';
+          break;
+      }
+
+      if (!groups.containsKey(key)) {
+        groups[key] = TransactionGroup(
+          title: title,
+          subtitle: subtitle,
+          transactions: [],
+          totalAmount: 0,
+        );
+      }
+
+      groups[key]!.transactions.add(transaction);
+    }
+
+    for (var group in groups.values) {
+      group.transactions.sort((a, b) => b.date.compareTo(a.date));
+    }
+
+    return groups;
   }
 
   void _confirmDelete(BuildContext context, PortfolioProvider provider, Transaction transaction) {
@@ -93,9 +213,37 @@ class _TransactionsViewState extends State<TransactionsView> {
     );
   }
 
+  void _openAddTransactionModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => const AddTransactionScreen(),
+    );
+  }
+
+  void _openPdfImport() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PdfImportScreen()),
+    );
+  }
+
+  void _openAiImport() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AiImportConfigScreen()),
+    );
+  }
+
+  void _openCrowdfundingImport() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CrowdfundingImportScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Calcul de l'espace nécessaire en haut
     final double topPadding = MediaQuery.of(context).padding.top + 90;
 
     return Selector<PortfolioProvider, Portfolio?>(
@@ -106,10 +254,12 @@ class _TransactionsViewState extends State<TransactionsView> {
         }
 
         final accountsMap = <String, Account>{};
+        final accountIdToInstitutionName = <String, String>{};
         final provider = Provider.of<PortfolioProvider>(context, listen: false);
         for (var inst in portfolio.institutions) {
           for (var acc in inst.accounts) {
             accountsMap[acc.id] = acc;
+            accountIdToInstitutionName[acc.id] = inst.name;
           }
         }
 
@@ -118,9 +268,9 @@ class _TransactionsViewState extends State<TransactionsView> {
             .expand((acc) => acc.transactions)
             .toList();
 
-        final sortedTransactions = _sortTransactions(allTransactions);
+        final groupedTransactions = _groupTransactions(allTransactions, accountsMap, accountIdToInstitutionName);
+        final sortedGroupKeys = groupedTransactions.keys.toList();
 
-        // --- CAS 1 : LISTE VIDE ---
         if (allTransactions.isEmpty) {
           return AppScreen(
             withSafeArea: false,
@@ -129,32 +279,17 @@ class _TransactionsViewState extends State<TransactionsView> {
                 Padding(
                   padding: EdgeInsets.only(top: topPadding, bottom: AppDimens.paddingL),
                   child: Center(
-                    child: Text('Historique', style: AppTypography.h2),
+                    child: FadeInSlide(
+                      duration: 0.6,
+                      child: Text('Historique', style: AppTypography.h2),
+                    ),
                   ),
                 ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimens.paddingM),
-                    child: AppCard(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const AppIcon(
-                            icon: Icons.receipt_long_outlined,
-                            size: 48,
-                            backgroundColor: AppColors.surfaceLight,
-                          ),
-                          const SizedBox(height: AppDimens.paddingM),
-                          Text('Aucune transaction', style: AppTypography.h3),
-                          const SizedBox(height: AppDimens.paddingS),
-                          Text(
-                            'Utilisez le bouton "+" pour commencer.',
-                            style: AppTypography.body,
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
+                const Expanded(
+                  child: FadeInSlide(
+                    delay: 0.2,
+                    duration: 0.6,
+                    child: EmptyTransactionsWidget(),
                   ),
                 ),
               ],
@@ -162,75 +297,59 @@ class _TransactionsViewState extends State<TransactionsView> {
           );
         }
 
-        // --- CAS 2 : LISTE DES TRANSACTIONS ---
         return AppScreen(
           withSafeArea: false,
           body: Column(
             children: [
-              // Titre avec padding haut
               Padding(
                 padding: EdgeInsets.only(top: topPadding, bottom: AppDimens.paddingL),
                 child: Center(
-                  child: Text('Transactions', style: AppTypography.h2),
+                  child: FadeInSlide(
+                    duration: 0.6,
+                    child: Text('Transactions', style: AppTypography.h2),
+                  ),
                 ),
               ),
 
-              // Barre de tri
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
-                child: AppCard(
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM, vertical: 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Trier par', style: AppTypography.body),
-                      DropdownButtonHideUnderline(
-                        child: DropdownButton<TransactionSortOption>(
-                          value: _sortOption,
-                          dropdownColor: AppColors.surfaceLight,
-                          icon: const Icon(Icons.sort, color: AppColors.primary),
-                          style: AppTypography.bodyBold,
-                          items: const [
-                            DropdownMenuItem(value: TransactionSortOption.dateDesc, child: Text('Date (Récent)')),
-                            DropdownMenuItem(value: TransactionSortOption.dateAsc, child: Text('Date (Ancien)')),
-                            DropdownMenuItem(value: TransactionSortOption.amountDesc, child: Text('Montant (Haut)')),
-                            DropdownMenuItem(value: TransactionSortOption.amountAsc, child: Text('Montant (Bas)')),
-                            DropdownMenuItem(value: TransactionSortOption.type, child: Text('Type')),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) setState(() => _sortOption = value);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+              FadeInSlide(
+                delay: 0.1,
+                duration: 0.6,
+                child: TransactionFilterBar(
+                  sortOption: _sortOption,
+                  onSortChanged: (val) => setState(() => _sortOption = val),
+                  isSelectionMode: _isSelectionMode,
+                  selectedCount: _selectedIds.length,
+                  onSelectAll: () => _selectAll(allTransactions),
+                  onDeleteSelected: () => _deleteSelectedTransactions(provider),
+                  onCancelSelection: () => setState(() => _selectedIds.clear()),
+                  onAddTransaction: _openAddTransactionModal,
+                  onImportPdf: _openPdfImport,
+                  onImportAi: _openAiImport,
+                  onImportCrowdfunding: _openCrowdfundingImport,
                 ),
               ),
 
               const SizedBox(height: AppDimens.paddingM),
 
-              // Liste
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.fromLTRB(AppDimens.paddingM, 0, AppDimens.paddingM, 80),
-                  itemCount: sortedTransactions.length,
-                  itemBuilder: (context, index) {
-                    final transaction = sortedTransactions[index];
-                    final account = accountsMap[transaction.accountId];
-                    final accountName = account?.name ?? 'Inconnu';
-                    final accountCurrency = account?.activeCurrency ?? 'EUR';
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: AppDimens.paddingS),
-                      child: FadeInSlide(
-                        delay: index * 0.05, // Cascade animation
-                        child: TransactionListItem(
-                          transaction: transaction,
-                          accountName: accountName,
-                          accountCurrency: accountCurrency,
-                          onDelete: () => _confirmDelete(context, provider, transaction),
-                          onEdit: () => _editTransaction(context, transaction),
-                        ),
+                  itemCount: sortedGroupKeys.length,
+                  itemBuilder: (context, groupIndex) {
+                    final key = sortedGroupKeys[groupIndex];
+                    final group = groupedTransactions[key]!;
+                    
+                    return FadeInSlide(
+                      delay: 0.2 + (groupIndex * 0.05), // Staggered animation
+                      duration: 0.5,
+                      child: TransactionGroupWidget(
+                        group: group,
+                        accountsMap: accountsMap,
+                        selectedIds: _selectedIds,
+                        isSelectionMode: _isSelectionMode,
+                        onToggleSelection: _toggleSelection,
+                        onDelete: (t) => _confirmDelete(context, provider, t),
+                        onEdit: (t) => _editTransaction(context, t),
                       ),
                     );
                   },

@@ -83,7 +83,8 @@ class AccountTile extends StatelessWidget {
     (convertedInvested == 0) ? 0.0 : convertedPL / convertedInvested;
 
     return ExpansionTile(
-      backgroundColor: theme.scaffoldBackgroundColor.withAlpha(20),
+      backgroundColor: Colors.transparent,
+      collapsedBackgroundColor: Colors.transparent,
       controlAffinity: ListTileControlAffinity.leading,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

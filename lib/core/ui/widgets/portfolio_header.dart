@@ -53,42 +53,124 @@ class PortfolioHeader extends StatelessWidget {
               ),
             ),
 
-          const SizedBox(height: AppDimens.paddingM),
+          const SizedBox(height: AppDimens.paddingL),
 
-          Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.paddingM,
-                vertical: AppDimens.paddingS
-            ),
-            decoration: BoxDecoration(
-              color: (isPositive ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppDimens.radiusS),
-              border: Border.all(
-                color: (isPositive ? AppColors.success : AppColors.error).withValues(alpha: 0.2),
+          // --- GRILLE DE SYNTHÈSE (4 CARDS) ---
+          Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryCard(
+                      context,
+                      label: 'Capital Investi',
+                      value: provider.activePortfolioTotalInvested,
+                      currency: baseCurrency,
+                      color: AppColors.primary,
+                      icon: Icons.account_balance_wallet,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimens.paddingM),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      context,
+                      label: 'Intérêts Latents',
+                      value: totalPL,
+                      currency: baseCurrency,
+                      color: isPositive ? AppColors.success : AppColors.error,
+                      icon: isPositive ? Icons.trending_up : Icons.trending_down,
+                      showSign: true,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isPositive ? Icons.trending_up : Icons.trending_down,
-                  color: isPositive ? AppColors.success : AppColors.error,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${isPositive ? '+' : ''}${CurrencyFormatter.format(totalPL, baseCurrency)}',
-                  style: AppTypography.bodyBold.copyWith(
-                    color: isPositive ? AppColors.success : AppColors.error,
+              const SizedBox(height: AppDimens.paddingM),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryCard(
+                      context,
+                      label: 'Liquidités',
+                      value: provider.activePortfolioCashValue,
+                      currency: baseCurrency,
+                      color: Colors.orange,
+                      icon: Icons.savings,
+                    ),
                   ),
-                ),
-                Text(
-                  '  (${NumberFormat.percentPattern().format(totalPLPercentage)})',
-                  style: AppTypography.body.copyWith(
-                    color: (isPositive ? AppColors.success : AppColors.error).withValues(alpha: 0.8),
+                  const SizedBox(width: AppDimens.paddingM),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      context,
+                      label: 'Performance',
+                      value: totalPLPercentage,
+                      currency: null, // Pourcentage
+                      isPercentage: true,
+                      color: isPositive ? AppColors.success : AppColors.error,
+                      icon: Icons.percent,
+                      showSign: true,
+                    ),
                   ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(
+    BuildContext context, {
+    required String label,
+    required double value,
+    String? currency,
+    required Color color,
+    required IconData icon,
+    bool isPercentage = false,
+    bool showSign = false,
+  }) {
+    final formattedValue = isPercentage
+        ? NumberFormat.percentPattern().format(value)
+        : CurrencyFormatter.format(value, currency ?? 'EUR');
+    
+    final displayValue = (showSign && value > 0 && !isPercentage) 
+        ? '+$formattedValue' 
+        : formattedValue;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.paddingM),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppDimens.radiusM),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            displayValue,
+            style: AppTypography.h3.copyWith(
+              color: color,
+              fontSize: 18,
             ),
           ),
         ],

@@ -13,8 +13,13 @@ import 'package:portefeuille/core/ui/widgets/inputs/app_text_field.dart';
 
 class AddInstitutionScreen extends StatefulWidget {
   final void Function(Institution)? onInstitutionCreated;
+  final Institution? institutionToEdit;
 
-  const AddInstitutionScreen({super.key, this.onInstitutionCreated});
+  const AddInstitutionScreen({
+    super.key, 
+    this.onInstitutionCreated,
+    this.institutionToEdit,
+  });
 
   @override
   State<AddInstitutionScreen> createState() => _AddInstitutionScreenState();
@@ -22,7 +27,8 @@ class AddInstitutionScreen extends StatefulWidget {
 
 class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  late final TextEditingController _nameController;
+  final _searchFocusNode = FocusNode();
   final _uuid = const Uuid();
   
   List<InstitutionMetadata> _filteredInstitutions = [];
@@ -30,6 +36,7 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
   @override
   void initState() {
     super.initState();
+    _nameController = TextEditingController(text: widget.institutionToEdit?.name ?? '');
     // Initial load of suggestions
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateSuggestions('');
@@ -46,22 +53,33 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      final newInstitution = Institution(
-        id: _uuid.v4(),
-        name: _nameController.text,
-        accounts: [],
-      );
-
-      if (widget.onInstitutionCreated != null) {
-        widget.onInstitutionCreated!(newInstitution);
-      } else {
+      if (widget.institutionToEdit != null) {
+        // Mode Édition
+        final updatedInstitution = widget.institutionToEdit!.copyWith(
+          name: _nameController.text,
+        );
         Provider.of<PortfolioProvider>(context, listen: false)
-            .addInstitution(newInstitution);
+            .updateInstitution(updatedInstitution);
+      } else {
+        // Mode Création
+        final newInstitution = Institution(
+          id: _uuid.v4(),
+          name: _nameController.text,
+          accounts: [],
+        );
+
+        if (widget.onInstitutionCreated != null) {
+          widget.onInstitutionCreated!(newInstitution);
+        } else {
+          Provider.of<PortfolioProvider>(context, listen: false)
+              .addInstitution(newInstitution);
+        }
       }
       Navigator.of(context).pop();
     }
@@ -90,13 +108,14 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Ajouter une banque',
+              widget.institutionToEdit != null ? 'Modifier la banque' : 'Ajouter une banque',
               style: AppTypography.h2,
             ),
             const SizedBox(height: AppDimens.paddingL),
 
             AppTextField(
               controller: _nameController,
+              focusNode: _searchFocusNode,
               label: 'Nom de l\'établissement',
               hint: 'Rechercher ou saisir...',
               prefixIcon: Icons.search,
@@ -126,43 +145,109 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
                       childAspectRatio: 0.9,
-                      crossAxisSpacing: AppDimens.paddingS,
-                      mainAxisSpacing: AppDimens.paddingS,
+                      crossAxisSpacing: AppDimens.paddingM,
+                      mainAxisSpacing: AppDimens.paddingM,
                     ),
-                    itemCount: _filteredInstitutions.length,
+                    itemCount: _filteredInstitutions.length + 1,
                     itemBuilder: (context, index) {
+                      if (index == _filteredInstitutions.length) {
+                        return InkWell(
+                          onTap: () {
+                            FocusScope.of(context).requestFocus(_searchFocusNode);
+                          },
+                          borderRadius: BorderRadius.circular(AppDimens.radiusM),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(AppDimens.radiusM),
+                              border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+                            ),
+                            padding: const EdgeInsets.all(AppDimens.paddingS),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: Colors.grey.shade100,
+                                  child: const Icon(Icons.add, color: Colors.black54),
+                                ),
+                                const SizedBox(height: AppDimens.paddingS),
+                                Text(
+                                  "Autre banque",
+                                  textAlign: TextAlign.center,
+                                  style: AppTypography.caption.copyWith(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey[800],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
                       final inst = _filteredInstitutions[index];
                       return InkWell(
                         onTap: () => _selectInstitution(inst),
                         borderRadius: BorderRadius.circular(AppDimens.radiusM),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(AppDimens.radiusM),
-                            border: Border.all(color: Colors.grey.shade300),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                            border: Border.all(color: Colors.grey.shade200),
                           ),
+                          padding: const EdgeInsets.all(AppDimens.paddingS),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundColor: inst.primaryColor,
-                                foregroundColor: Colors.white,
-                                child: Text(
-                                  inst.name.isNotEmpty ? inst.name[0].toUpperCase() : '?',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
+                              Expanded(
+                                child: inst.logoAsset.isNotEmpty
+                                    ? Padding(
+                                        padding: const EdgeInsets.all(AppDimens.paddingS),
+                                        child: Image.asset(
+                                          inst.logoAsset,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return CircleAvatar(
+                                              backgroundColor: inst.primaryColor,
+                                              foregroundColor: Colors.white,
+                                              child: Text(
+                                                inst.name.isNotEmpty ? inst.name[0].toUpperCase() : '?',
+                                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      )
+                                    : CircleAvatar(
+                                        radius: 24,
+                                        backgroundColor: inst.primaryColor,
+                                        foregroundColor: Colors.white,
+                                        child: Text(
+                                          inst.name.isNotEmpty ? inst.name[0].toUpperCase() : '?',
+                                          style: const TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
                               ),
-                              const SizedBox(height: AppDimens.paddingS),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                child: Text(
-                                  inst.name,
-                                  textAlign: TextAlign.center,
-                                  style: AppTypography.caption.copyWith(fontSize: 11),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                              const SizedBox(height: AppDimens.paddingXS),
+                              Text(
+                                inst.name,
+                                textAlign: TextAlign.center,
+                                style: AppTypography.caption.copyWith(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[800],
                                 ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),

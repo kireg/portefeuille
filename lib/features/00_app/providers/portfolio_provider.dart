@@ -72,6 +72,8 @@ class PortfolioProvider extends ChangeNotifier {
   // Getters - Données calculées
   String get currentBaseCurrency => _aggregatedData.baseCurrency;
   double get activePortfolioTotalValue => _aggregatedData.totalValue;
+  double get activePortfolioTotalInvested => _aggregatedData.totalInvested; // AJOUT
+  double get activePortfolioCashValue => _aggregatedData.valueByAssetType[AssetType.Cash] ?? 0.0; // AJOUT
   double get activePortfolioTotalPL => _aggregatedData.totalPL;
   double get activePortfolioTotalPLPercentage {
     if (_aggregatedData.totalInvested == 0.0) return 0.0;
@@ -557,6 +559,53 @@ class PortfolioProvider extends ChangeNotifier {
     debugPrint("🔄 [Provider] addInstitution");
     final updatedPortfolio = _activePortfolio!.deepCopy();
     updatedPortfolio.institutions.add(newInstitution);
+    savePortfolio(updatedPortfolio);
+  }
+
+  void updateInstitution(Institution updatedInstitution) {
+    if (_activePortfolio == null) return;
+    debugPrint("🔄 [Provider] updateInstitution");
+    final updatedPortfolio = _activePortfolio!.deepCopy();
+    final index = updatedPortfolio.institutions.indexWhere((i) => i.id == updatedInstitution.id);
+    if (index != -1) {
+      updatedPortfolio.institutions[index] = updatedInstitution;
+      savePortfolio(updatedPortfolio);
+    } else {
+      debugPrint("Institution non trouvée : ${updatedInstitution.id}");
+    }
+  }
+
+  Future<void> deleteInstitution(String institutionId) async {
+    if (_activePortfolio == null) return;
+    debugPrint("🔄 [Provider] deleteInstitution");
+
+    final updatedPortfolio = _activePortfolio!.deepCopy();
+    
+    // 1. Trouver l'institution à supprimer
+    Institution? institutionToDelete;
+    try {
+      institutionToDelete = updatedPortfolio.institutions.firstWhere((i) => i.id == institutionId);
+    } catch (e) {
+      debugPrint("Institution non trouvée : $institutionId");
+      return;
+    }
+
+    // 2. Supprimer toutes les transactions associées à tous les comptes de cette institution
+    final deleteFutures = <Future<void>>[];
+    for (final acc in institutionToDelete.accounts) {
+      for (final tx in acc.transactions) {
+        deleteFutures.add(_transactionService.delete(tx.id));
+      }
+    }
+    
+    if (deleteFutures.isNotEmpty) {
+      await Future.wait(deleteFutures);
+    }
+
+    // 3. Supprimer l'institution
+    updatedPortfolio.institutions.removeWhere((i) => i.id == institutionId);
+
+    // 4. Sauvegarder
     savePortfolio(updatedPortfolio);
   }
 

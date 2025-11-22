@@ -15,16 +15,9 @@ import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/06_settings/ui/settings_screen.dart';
 
-// 3. IMPORT NOUVELLE FEATURE
-import 'package:portefeuille/features/07_management/ui/screens/ai_import_config_screen.dart';
-import 'package:portefeuille/features/07_management/ui/screens/pdf_import_screen.dart';
-
 class DashboardAppBar extends StatefulWidget implements PreferredSizeWidget {
-  final VoidCallback onPressed;
-
   const DashboardAppBar({
     super.key,
-    required this.onPressed,
   });
 
   @override
@@ -101,51 +94,25 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
           withShadow: true,
           backgroundColor: AppColors.surface.withValues(alpha: 0.85),
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingS),
-          child: Row(
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              // --- Bouton Ajout Manuel ---
-              IconButton(
-                icon: const Icon(Icons.add_circle, color: AppColors.primary),
-                tooltip: 'Ajouter une transaction',
-                onPressed: widget.onPressed,
-              ),
-
-              // --- Bouton Import PDF ---
-              IconButton(
-                icon: const Icon(Icons.upload_file, color: AppColors.primary),
-                tooltip: 'Import PDF',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const PdfImportScreen()),
-                  );
-                },
-              ),
-
-              // --- NOUVEAU : Bouton Import IA ---
-              IconButton(
-                icon: const Icon(Icons.auto_awesome, color: AppColors.primary),
-                tooltip: 'Import Intelligent (PDF/Image)',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AiImportConfigScreen()),
-                  );
-                },
-              ),
-
               // --- Sélecteur de Portefeuille (Centré) ---
-              Expanded(
-                child: Center(
-                  child: _buildPortfolioSelector(portfolioProvider, portfolio),
-                ),
-              ),
+              _buildPortfolioSelector(portfolioProvider, portfolio),
 
-              // --- Statut + Settings ---
-              _buildStatusIndicator(settingsProvider, portfolioProvider),
-              IconButton(
-                icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 22),
-                onPressed: () => _openSettings(context),
+              // --- Statut + Settings (Aligné à droite) ---
+              Positioned(
+                right: 0,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildStatusIndicator(settingsProvider, portfolioProvider),
+                    IconButton(
+                      icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 22),
+                      onPressed: () => _openSettings(context),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

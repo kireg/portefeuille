@@ -95,9 +95,11 @@ class _CrowdfundingMapWidgetState extends State<CrowdfundingMapWidget> {
       return asset.latitude != null && asset.longitude != null;
     }).toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingL),
           child: Row(
@@ -201,7 +203,8 @@ class _CrowdfundingMapWidgetState extends State<CrowdfundingMapWidget> {
           ),
         ),
       ],
-    );
+    ),
+  );
   }
 
   void _toggleLock() {

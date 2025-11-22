@@ -21,8 +21,11 @@ class ModalService {
     );
   }
 
-  static Future<void> showAddInstitution(BuildContext context, {void Function(Institution)? onInstitutionCreated}) async {
-    await _show<void>(context, AddInstitutionScreen(onInstitutionCreated: onInstitutionCreated));
+  static Future<void> showAddInstitution(BuildContext context, {void Function(Institution)? onInstitutionCreated, Institution? institutionToEdit}) async {
+    await _show<void>(context, AddInstitutionScreen(
+      onInstitutionCreated: onInstitutionCreated,
+      institutionToEdit: institutionToEdit,
+    ));
   }
 
   static Future<void> showAddAccount(BuildContext context, {required String institutionId, Account? accountToEdit, void Function(Account)? onAccountCreated}) async {

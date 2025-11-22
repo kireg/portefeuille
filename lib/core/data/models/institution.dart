@@ -83,4 +83,16 @@ class Institution {
     );
   }
 // --- FIN NOUVELLES MÉTHODES JSON ---
+
+  Institution copyWith({
+    String? id,
+    String? name,
+    List<Account>? accounts,
+  }) {
+    return Institution(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      accounts: accounts ?? this.accounts,
+    );
+  }
 }

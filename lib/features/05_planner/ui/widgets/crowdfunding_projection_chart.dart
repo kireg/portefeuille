@@ -95,9 +95,11 @@ class _CrowdfundingProjectionChartState extends State<CrowdfundingProjectionChar
         // Largeur dynamique : 16px par mois pour les barres + padding
         final double chartWidth = (projections.length * 16.0 + 32.0).clamp(MediaQuery.of(context).size.width - 64, 5000.0);
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingL),
               child: Row(
@@ -260,7 +262,8 @@ class _CrowdfundingProjectionChartState extends State<CrowdfundingProjectionChar
               ),
             ),
           ],
-        );
+        ),
+      );
       },
     );
   }

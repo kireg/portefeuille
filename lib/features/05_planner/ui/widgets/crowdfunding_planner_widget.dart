@@ -40,7 +40,7 @@ class CrowdfundingPlannerWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingL),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
           child: Text(
             "Prochains Paiements",
             style: AppTypography.h3,
@@ -71,7 +71,9 @@ class CrowdfundingPlannerWidget extends StatelessWidget {
 
                 return Container(
                   width: 140,
-                  margin: const EdgeInsets.only(right: AppDimens.paddingS),
+                  margin: EdgeInsets.only(
+                    right: index == futureEvents.length - 1 ? 0 : AppDimens.paddingS
+                  ),
                   child: AppCard(
                     padding: const EdgeInsets.all(AppDimens.paddingM),
                     backgroundColor: isCapital ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,

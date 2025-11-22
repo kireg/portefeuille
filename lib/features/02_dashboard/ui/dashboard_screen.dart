@@ -10,7 +10,6 @@ import '../../05_planner/ui/crowdfunding_tracking_tab.dart'; // NOUVEL ONGLET
 import 'package:portefeuille/features/04_journal/ui/views/synthese_view.dart';
 import 'package:portefeuille/features/04_journal/ui/views/transactions_view.dart';
 import '../../06_settings/ui/settings_screen.dart';
-import '../../07_management/ui/screens/add_transaction_screen.dart';
 
 // UI Components
 import 'package:portefeuille/core/ui/theme/app_colors.dart'; // Pour le fond par défaut
@@ -33,14 +32,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  void _openAddTransactionModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => const AddTransactionScreen(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final portfolio = context.select<PortfolioProvider, Portfolio?>((p) => p.activePortfolio);
@@ -50,7 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (portfolio == null) {
       return AppScreen(
         // Ici on garde l'AppBar classique car l'écran est vide
-        appBar: DashboardAppBar(onPressed: _openAddTransactionModal),
+        appBar: const DashboardAppBar(),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -134,13 +125,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
 
           // 2. La Barre Supérieure (Flottante)
-          Positioned(
+          const Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: DashboardAppBar(
-              onPressed: _openAddTransactionModal,
-            ),
+            child: DashboardAppBar(),
           ),
 
           // 3. La Barre de Navigation (Flottante en bas)

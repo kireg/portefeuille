@@ -38,27 +38,38 @@ class CrowdfundingSummaryCards extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppDimens.paddingM),
+            child: Text("Synthèse Crowdfunding", style: AppTypography.h3),
+          ),
           Row(
             children: [
               Expanded(
-                child: _buildSummaryCard(
-                  context,
-                  title: "Capital Investi",
-                  value: currencyFormat.format(totalInvested),
-                  icon: Icons.account_balance_wallet,
-                  color: AppColors.primary,
+                child: SizedBox(
+                  height: 117, // Hauteur fixe pour alignement
+                  child: _buildSummaryCard(
+                    context,
+                    title: "Capital Investi",
+                    value: currencyFormat.format(totalInvested),
+                    icon: Icons.account_balance_wallet,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
               const SizedBox(width: AppDimens.paddingM),
               Expanded(
-                child: _buildSummaryCard(
-                  context,
-                  title: "Valeur Actuelle",
-                  value: currencyFormat.format(totalCurrentValue),
-                  subtitle: "+${currencyFormat.format(totalInterests)} (Intérêts)",
-                  icon: Icons.trending_up,
-                  color: AppColors.success,
+                child: SizedBox(
+                  height: 117, // Hauteur fixe pour alignement
+                  child: _buildSummaryCard(
+                    context,
+                    title: "Valeur Actuelle",
+                    value: currencyFormat.format(totalCurrentValue),
+                    subtitle: "+${currencyFormat.format(totalInterests)} (Intérêts)",
+                    icon: Icons.trending_up,
+                    color: AppColors.success,
+                  ),
                 ),
               ),
             ],
@@ -67,22 +78,28 @@ class CrowdfundingSummaryCards extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _buildSummaryCard(
-                  context,
-                  title: "Rendement Moyen",
-                  value: "${averageYield.toStringAsFixed(1)}%",
-                  icon: Icons.percent,
-                  color: AppColors.accent,
+                child: SizedBox(
+                  height: 117, // Hauteur fixe pour alignement
+                  child: _buildSummaryCard(
+                    context,
+                    title: "Rendement Moyen",
+                    value: "${averageYield.toStringAsFixed(1)}%",
+                    icon: Icons.percent,
+                    color: AppColors.accent,
+                  ),
                 ),
               ),
               const SizedBox(width: AppDimens.paddingM),
               Expanded(
-                child: _buildSummaryCard(
-                  context,
-                  title: "Projets Actifs",
-                  value: crowdfundingAssets.length.toString(),
-                  icon: Icons.apartment,
-                  color: Colors.orange,
+                child: SizedBox(
+                  height: 117, // Hauteur fixe pour alignement
+                  child: _buildSummaryCard(
+                    context,
+                    title: "Projets Actifs",
+                    value: crowdfundingAssets.length.toString(),
+                    icon: Icons.apartment,
+                    color: Colors.orange,
+                  ),
                 ),
               ),
             ],

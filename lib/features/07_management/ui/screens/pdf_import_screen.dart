@@ -177,9 +177,77 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
 
     final provider = Provider.of<PortfolioProvider>(context, listen: false);
     
-    // Filter out duplicates if user wants to (for now we just import what is in the list)
-    // But we should probably warn or filter before calling this.
-    // Assuming the user has reviewed the list.
+    // Get existing transactions for duplicate check
+    final existingTransactions = provider.activePortfolio?.institutions
+            .expand((inst) => inst.accounts)
+            .where((acc) => acc.id == _selectedAccount!.id)
+            .expand((acc) => acc.transactions)
+            .toList() ?? [];
+
+    // Identify issues
+    final duplicates = <ParsedTransaction>[];
+    final invalid = <ParsedTransaction>[];
+    final valid = <ParsedTransaction>[];
+
+    for (final tx in _extractedTransactions) {
+      final isDuplicate = _isDuplicate(tx, existingTransactions);
+      final hasTicker = tx.ticker != null && tx.ticker!.isNotEmpty;
+      final hasIsin = tx.isin != null && IsinValidator.isValidIsinFormat(tx.isin!);
+      final isReady = (hasTicker || hasIsin) && tx.assetName.isNotEmpty;
+
+      if (isDuplicate) {
+        duplicates.add(tx);
+      } else if (!isReady) {
+        invalid.add(tx);
+      } else {
+        valid.add(tx);
+      }
+    }
+
+    if (duplicates.isNotEmpty || invalid.isNotEmpty) {
+      final shouldContinue = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surfaceLight,
+          title: Text('Attention', style: AppTypography.h3),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (duplicates.isNotEmpty)
+                Text('• ${duplicates.length} doublons détectés', style: AppTypography.body.copyWith(color: AppColors.error)),
+              if (invalid.isNotEmpty)
+                Text('• ${invalid.length} transactions incomplètes (ISIN/Ticker)', style: AppTypography.body.copyWith(color: AppColors.warning)),
+              const SizedBox(height: AppDimens.paddingM),
+              Text('Que voulez-vous faire ?', style: AppTypography.bodyBold),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false), // Cancel
+              child: Text('Annuler', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
+            ),
+            if (valid.isNotEmpty)
+              TextButton(
+                onPressed: () {
+                  // Filter list to keep only valid
+                  setState(() {
+                    _extractedTransactions = valid;
+                  });
+                  Navigator.pop(ctx, true); // Continue with filtered list
+                },
+                child: Text('Importer valides (${valid.length})', style: AppTypography.label.copyWith(color: AppColors.primary)),
+              ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true), // Continue with all
+              child: Text('Tout importer', style: AppTypography.label.copyWith(color: AppColors.error)),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldContinue != true) return;
+    }
 
     int count = 0;
 
@@ -290,12 +358,45 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             ),
                             value: _selectedAccount,
-                            items: accounts.map((account) {
-                              return DropdownMenuItem(
-                                value: account,
-                                child: Text(account.name, style: AppTypography.body),
-                              );
-                            }).toList(),
+                            isExpanded: true,
+                            items: () {
+                              // Group accounts by institution
+                              final groupedAccounts = <String, List<Account>>{};
+                              for (var acc in accounts) {
+                                // Find institution name for this account
+                                final inst = provider.activePortfolio?.institutions.firstWhere(
+                                  (i) => i.accounts.any((a) => a.id == acc.id),
+                                );
+                                final instName = inst?.name ?? "Autre";
+                                groupedAccounts.putIfAbsent(instName, () => []).add(acc);
+                              }
+
+                              final items = <DropdownMenuItem<Account>>[];
+                              groupedAccounts.forEach((instName, accs) {
+                                // Add Institution Header (disabled)
+                                items.add(DropdownMenuItem<Account>(
+                                  enabled: false,
+                                  child: Text(
+                                    instName.toUpperCase(),
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ));
+                                // Add Accounts
+                                for (var acc in accs) {
+                                  items.add(DropdownMenuItem<Account>(
+                                    value: acc,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 16.0),
+                                      child: Text(acc.name, style: AppTypography.body),
+                                    ),
+                                  ));
+                                }
+                              });
+                              return items;
+                            }(),
                             onChanged: (value) {
                               setState(() {
                                 _selectedAccount = value;

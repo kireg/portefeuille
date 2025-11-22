@@ -21,6 +21,7 @@ class AppTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final TextCapitalization textCapitalization;
   final String? errorText;
+  final FocusNode? focusNode;
 
   const AppTextField({
     super.key,
@@ -40,6 +41,7 @@ class AppTextField extends StatelessWidget {
     this.onChanged,
     this.textCapitalization = TextCapitalization.none,
     this.errorText,
+    this.focusNode,
   });
 
   @override
@@ -56,6 +58,7 @@ class AppTextField extends StatelessWidget {
 
         TextFormField(
           controller: controller,
+          focusNode: focusNode,
           style: AppTypography.body.copyWith(color: AppColors.textPrimary),
           cursorColor: AppColors.primary,
           keyboardType: keyboardType,
