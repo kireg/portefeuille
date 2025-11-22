@@ -2,7 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
-import 'package:portefeuille/core/data/models/transaction_type.dart';
+import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
@@ -10,10 +10,12 @@ import 'package:portefeuille/features/00_app/services/crowdfunding_service.dart'
 
 class CrowdfundingProjectionChart extends StatelessWidget {
   final List<Asset> assets;
+  final List<Transaction> transactions;
 
   const CrowdfundingProjectionChart({
     super.key,
     required this.assets,
+    required this.transactions,
   });
 
   @override
@@ -27,22 +29,19 @@ class CrowdfundingProjectionChart extends StatelessWidget {
       );
     }
 
-    // Limiter à 5 ans (60 mois) pour la lisibilité
-    final displayProjections = projections; // On affiche tout, car on va scroller
-    
     // Trouver le max pour l'échelle Y
     double maxY = 0;
-    for (var p in displayProjections) {
+    for (var p in projections) {
       if (p.investedCapital > maxY) maxY = p.investedCapital;
-      if (p.cumulativeInterest > maxY) maxY = p.cumulativeInterest;
-      if (p.availableLiquidity > maxY) maxY = p.availableLiquidity; // Nouveau max
+      if (p.cumulativeInterests > maxY) maxY = p.cumulativeInterests;
+      if (p.liquidity > maxY) maxY = p.liquidity;
     }
     maxY = maxY * 1.1; // Marge de 10%
     if (maxY == 0) maxY = 100;
 
     // Largeur dynamique : 30px par mois pour une meilleure lisibilité et scroll
     // Minimum la largeur de l'écran
-    final double chartWidth = (displayProjections.length * 30.0).clamp(MediaQuery.of(context).size.width - 64, 5000.0);
+    final double chartWidth = (projections.length * 30.0).clamp(MediaQuery.of(context).size.width - 64, 5000.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +68,7 @@ class CrowdfundingProjectionChart extends StatelessWidget {
             child: LineChart(
               LineChartData(
                 minX: 0,
-                maxX: displayProjections.length.toDouble() - 1,
+                maxX: projections.length.toDouble() - 1,
                 minY: 0,
                 maxY: maxY,
                 gridData: const FlGridData(show: false),
@@ -79,8 +78,8 @@ class CrowdfundingProjectionChart extends StatelessWidget {
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
-                        if (index >= 0 && index < displayProjections.length && index % 12 == 0) {
-                          final date = displayProjections[index].date;
+                        if (index >= 0 && index < projections.length && index % 12 == 0) {
+                          final date = projections[index].date;
                           return Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(DateFormat('yyyy').format(date), style: const TextStyle(fontSize: 10)),
@@ -111,7 +110,7 @@ class CrowdfundingProjectionChart extends StatelessWidget {
                 lineBarsData: [
                   // Ligne Capital Investi
                   LineChartBarData(
-                    spots: displayProjections.asMap().entries.map((e) {
+                    spots: projections.asMap().entries.map((e) {
                       return FlSpot(e.key.toDouble(), e.value.investedCapital);
                     }).toList(),
                     isCurved: true,
@@ -125,8 +124,8 @@ class CrowdfundingProjectionChart extends StatelessWidget {
                   ),
                   // Ligne Intérêts Cumulés
                   LineChartBarData(
-                    spots: displayProjections.asMap().entries.map((e) {
-                      return FlSpot(e.key.toDouble(), e.value.cumulativeInterest);
+                    spots: projections.asMap().entries.map((e) {
+                      return FlSpot(e.key.toDouble(), e.value.cumulativeInterests);
                     }).toList(),
                     isCurved: true,
                     color: Colors.green,
@@ -137,10 +136,10 @@ class CrowdfundingProjectionChart extends StatelessWidget {
                       color: Colors.green.withValues(alpha: 0.1),
                     ),
                   ),
-                  // Ligne Liquidités Disponibles (Capital remboursé + Intérêts)
+                  // Ligne Liquidités Disponibles
                   LineChartBarData(
-                    spots: displayProjections.asMap().entries.map((e) {
-                      return FlSpot(e.key.toDouble(), e.value.availableLiquidity);
+                    spots: projections.asMap().entries.map((e) {
+                      return FlSpot(e.key.toDouble(), e.value.liquidity);
                     }).toList(),
                     isCurved: true,
                     color: Colors.orange,
@@ -157,8 +156,8 @@ class CrowdfundingProjectionChart extends StatelessWidget {
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
                         final index = spot.x.toInt();
-                        if (index < 0 || index >= displayProjections.length) return null;
-                        final data = displayProjections[index];
+                        if (index < 0 || index >= projections.length) return null;
+                        final data = projections[index];
                         final dateStr = DateFormat('MMM yyyy').format(data.date);
                         
                         String label;
@@ -210,106 +209,50 @@ class CrowdfundingProjectionChart extends StatelessWidget {
     );
   }
 
-  List<_MonthlyData> _calculateProjections() {
+  List<CrowdfundingSimulationState> _calculateProjections() {
     final service = CrowdfundingService();
-    final allProjections = service.generateProjections(assets);
-
-    if (allProjections.isEmpty) return [];
-
-    // Calculer le capital initial total (somme des investissements actuels)
-    // Note: C'est une approximation. Idéalement on remonterait dans le temps.
-    // Ici on part de "Maintenant" comme T0.
+    final rawHistory = service.simulateCrowdfundingEvolution(
+      assets: assets,
+      transactions: transactions,
+      projectionYears: 5,
+    );
     
-    double currentTotalCapital = 0;
-    // On filtre d'abord pour ne garder que les actifs Crowdfunding
-    final cfAssets = assets.where((a) => 
-      a.repaymentType != null && 
-      a.expectedYield != null && 
-      a.quantity > 0
-    ).toList();
-
-    for (var asset in cfAssets) {
-       // On ne compte que les assets qui ont généré des projections (donc valides)
-       // Mais generateProjections filtre déjà.
-       // On va sommer le capital de tous les assets crowdfunding actifs
-       if (asset.quantity > 0 && asset.currentPrice > 0) { // Simplification
-         currentTotalCapital += asset.quantity * asset.currentPrice;
-       }
-    }
-
-    // Map date -> données agrégées
-    final Map<DateTime, _MonthlyData> monthlyDataMap = {};
+    if (rawHistory.isEmpty) return [];
     
-    // Date de début (aujourd'hui)
-    final now = DateTime.now();
-    final startDate = DateTime(now.year, now.month, 1);
+    // Aggregate by month to avoid chart clutter
+    final start = rawHistory.first.date;
+    final end = rawHistory.last.date;
+    final filledList = <CrowdfundingSimulationState>[];
     
-    // Initialiser les mois futurs (ex: 5 ans)
-    for (int i = 0; i < 60; i++) {
-      final date = DateTime(startDate.year, startDate.month + i, 1);
-      monthlyDataMap[date] = _MonthlyData(
-        date: date, 
-        investedCapital: currentTotalCapital, 
-        cumulativeInterest: 0,
-        availableLiquidity: 0,
+    // Start from the first month
+    var currentMonth = DateTime(start.year, start.month, 1);
+    // Go up to the last month
+    final endMonth = DateTime(end.year, end.month, 1);
+    
+    CrowdfundingSimulationState lastKnownState = rawHistory.first;
+    
+    while (!currentMonth.isAfter(endMonth)) {
+      final nextMonth = DateTime(currentMonth.year, currentMonth.month + 1, 1);
+      
+      // Find the last state that happened BEFORE the start of the next month
+      final stateInMonth = rawHistory.lastWhere(
+        (s) => s.date.isBefore(nextMonth),
+        orElse: () => lastKnownState,
       );
+      
+      lastKnownState = stateInMonth;
+      
+      filledList.add(CrowdfundingSimulationState(
+        date: currentMonth,
+        liquidity: lastKnownState.liquidity,
+        investedCapital: lastKnownState.investedCapital,
+        cumulativeInterests: lastKnownState.cumulativeInterests,
+        isProjected: lastKnownState.isProjected,
+      ));
+      
+      currentMonth = nextMonth;
     }
-
-    // Appliquer les flux futurs
-    // Trier les projections par date
-    allProjections.sort((a, b) => a.date.compareTo(b.date));
-
-    double cumulativeInterest = 0;
-    double repaidCapital = 0;
-    double availableLiquidity = 0; // Cumul des retours (Capital + Intérêts)
-
-    // Pour chaque mois, on regarde ce qui s'est passé AVANT ou PENDANT ce mois
-    // Mais attention, 'currentTotalCapital' est le capital AUJOURD'HUI.
-    // Les projections sont FUTURES.
-    // Donc quand un remboursement de capital arrive, le capital diminue.
-    // Quand un intérêt arrive, le cumul augmente.
-
-    for (var entry in monthlyDataMap.entries) {
-      final monthDate = entry.key;
-      final nextMonthDate = DateTime(monthDate.year, monthDate.month + 1, 1);
-
-      // Trouver tous les flux qui ont lieu ce mois-ci
-      final monthFlows = allProjections.where((p) => 
-        (p.date.isAtSameMomentAs(monthDate) || p.date.isAfter(monthDate)) && 
-        p.date.isBefore(nextMonthDate)
-      );
-
-      for (var flow in monthFlows) {
-        if (flow.type == TransactionType.CapitalRepayment) {
-          repaidCapital += flow.amount;
-          availableLiquidity += flow.amount; // Le capital remboursé devient dispo
-        } else if (flow.type == TransactionType.Interest) {
-          cumulativeInterest += flow.amount;
-          availableLiquidity += flow.amount; // Les intérêts payés deviennent dispo
-        }
-      }
-
-      // Mettre à jour les données du mois
-      // Le capital restant est le capital initial MOINS ce qui a été remboursé DEPUIS LE DÉBUT DE LA PROJECTION
-      entry.value.investedCapital = currentTotalCapital - repaidCapital;
-      entry.value.cumulativeInterest = cumulativeInterest;
-      entry.value.availableLiquidity = availableLiquidity;
-    }
-
-    return monthlyDataMap.values.toList()..sort((a, b) => a.date.compareTo(b.date));
+    
+    return filledList;
   }
-}
-
-class _MonthlyData {
-  final DateTime date;
-  double investedCapital;
-  double cumulativeInterest;
-  double availableLiquidity; // Nouveau champ
-
-  _MonthlyData({
-    required this.date,
-    required this.investedCapital,
-    required this.cumulativeInterest,
-    this.availableLiquidity = 0.0,
-  });
 }

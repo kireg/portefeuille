@@ -69,6 +69,10 @@ class CrowdfundingTrackingTab extends StatelessWidget {
                             .expand((i) => i.accounts)
                             .expand((a) => a.assets)
                             .toList(),
+                        transactions: portfolio.institutions
+                            .expand((i) => i.accounts)
+                            .expand((a) => a.transactions)
+                            .toList(),
                       ),
                     ),
 
