@@ -39,6 +39,14 @@ class TradeRepublicParser implements StatementParser {
       r'Dividende\s+pour\s+([\d,]+)\s+titres\s+([\s\S]*?)\s+Montant',
       caseSensitive: false,
     );
+
+    // Pattern 3 : Relevé de positions (Portfolio)
+    // "22,00 titre(s) ... ISIN : FR... ... 19,28 21/11/2025 424,25"
+    // Capture: 1=Qty, 2=Name, 3=ISIN, 4=Price, 5=Date, 6=Total
+    final regexPosition = RegExp(
+      r'([\d,]+)\s+titre\(s\)\s+([\s\S]*?)\s+ISIN\s*:\s*([A-Z0-9]+)[\s\S]*?([\d,]+)\s+(\d{2}/\d{2}/\d{4})\s+([\d,]+)',
+      caseSensitive: false,
+    );
     
     // Extraction des dates (souvent en haut du document : "Date : 12.05.2023")
     final regexDate = RegExp(r'Date\s*[:.]?\s*(\d{2})[./](\d{2})[./](\d{4})');
@@ -52,7 +60,19 @@ class TradeRepublicParser implements StatementParser {
       );
       debugPrint("TradeRepublicParser: Date found: $docDate");
     } else {
-      debugPrint("TradeRepublicParser: No date found");
+      // Fallback pour le relevé de positions qui a la date dans le titre "au 21/11/2025"
+      final regexDateTitle = RegExp(r'au\s+(\d{2})/(\d{2})/(\d{4})');
+      final dateTitleMatch = regexDateTitle.firstMatch(rawText);
+      if (dateTitleMatch != null) {
+        docDate = DateTime(
+          int.parse(dateTitleMatch.group(3)!),
+          int.parse(dateTitleMatch.group(2)!),
+          int.parse(dateTitleMatch.group(1)!),
+        );
+        debugPrint("TradeRepublicParser: Date found in title: $docDate");
+      } else {
+        debugPrint("TradeRepublicParser: No date found");
+      }
     }
 
     // Recherche des correspondances pour les ordres
@@ -81,6 +101,39 @@ class TradeRepublicParser implements StatementParser {
         currency: currency,
       ));
       debugPrint("TradeRepublicParser: Added transaction: $typeStr $quantity $assetName @ $price $currency");
+    }
+
+    // Recherche des positions (Import initial)
+    final positionMatches = regexPosition.allMatches(rawText);
+    debugPrint("TradeRepublicParser: Found ${positionMatches.length} position matches");
+
+    for (final match in positionMatches) {
+      final qtyStr = match.group(1)!.replaceAll(',', '.');
+      final assetNameRaw = match.group(2)!.trim();
+      // Nettoyage du nom (enlève les sauts de ligne excessifs)
+      final assetName = assetNameRaw.replaceAll(RegExp(r'\s+'), ' ');
+      
+      final isin = match.group(3)!;
+      final priceStr = match.group(4)!.replaceAll(',', '.');
+      // Group 5 is date, we can use it or docDate
+      final totalStr = match.group(6)!.replaceAll(',', '.');
+
+      final quantity = double.tryParse(qtyStr) ?? 0.0;
+      final price = double.tryParse(priceStr) ?? 0.0;
+      final total = double.tryParse(totalStr) ?? 0.0;
+
+      transactions.add(ParsedTransaction(
+        date: docDate ?? DateTime.now(),
+        type: TransactionType.Buy, // On considère ça comme un achat pour l'import initial
+        assetName: assetName,
+        isin: isin,
+        quantity: quantity,
+        price: price,
+        amount: total,
+        fees: 0.0,
+        currency: "EUR", // Par défaut EUR sur ce relevé
+      ));
+      debugPrint("TradeRepublicParser: Added position: $quantity $assetName ($isin) @ $price");
     }
 
     // Recherche des dividendes
