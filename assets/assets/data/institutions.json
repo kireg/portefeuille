@@ -30,6 +30,36 @@
     "defaultAccountTypes": ["CTO"]
   },
   {
+    "id": "revolut",
+    "name": "Revolut",
+    "type": "Bank",
+    "country": "UK",
+    "logoAsset": "assets/logos/revolut.png",
+    "primaryColor": "#0075EB",
+    "website": "https://www.revolut.com",
+    "defaultAccountTypes": ["CompteCourant", "CTO", "CryptoWallet"]
+  },
+  {
+    "id": "degiro",
+    "name": "Degiro",
+    "type": "Broker",
+    "country": "NL",
+    "logoAsset": "assets/logos/degiro.png",
+    "primaryColor": "#00A1E4",
+    "website": "https://www.degiro.fr",
+    "defaultAccountTypes": ["CTO"]
+  },
+  {
+    "id": "interactive_brokers",
+    "name": "Interactive Brokers",
+    "type": "Broker",
+    "country": "US",
+    "logoAsset": "assets/logos/interactive_brokers.png",
+    "primaryColor": "#D6001C",
+    "website": "https://www.interactivebrokers.com",
+    "defaultAccountTypes": ["CTO"]
+  },
+  {
     "id": "binance",
     "name": "Binance",
     "type": "CryptoExchange",
@@ -40,6 +70,26 @@
     "defaultAccountTypes": ["CryptoWallet", "Staking"]
   },
   {
+    "id": "coinbase",
+    "name": "Coinbase",
+    "type": "CryptoExchange",
+    "country": "US",
+    "logoAsset": "assets/logos/coinbase.png",
+    "primaryColor": "#0052FF",
+    "website": "https://www.coinbase.com",
+    "defaultAccountTypes": ["CryptoWallet"]
+  },
+  {
+    "id": "kraken",
+    "name": "Kraken",
+    "type": "CryptoExchange",
+    "country": "US",
+    "logoAsset": "assets/logos/kraken.png",
+    "primaryColor": "#5741D9",
+    "website": "https://www.kraken.com",
+    "defaultAccountTypes": ["CryptoWallet"]
+  },
+  {
     "id": "credit_agricole",
     "name": "Crédit Agricole",
     "type": "Bank",
@@ -47,6 +97,26 @@
     "logoAsset": "assets/logos/credit_agricole.png",
     "primaryColor": "#00665E",
     "website": "https://www.credit-agricole.fr",
+    "defaultAccountTypes": ["PEA", "CTO", "LivretA", "CompteCourant"]
+  },
+  {
+    "id": "bnp_paribas",
+    "name": "BNP Paribas",
+    "type": "Bank",
+    "country": "FR",
+    "logoAsset": "assets/logos/bnp_paribas.png",
+    "primaryColor": "#00915E",
+    "website": "https://mabanque.bnpparibas",
+    "defaultAccountTypes": ["PEA", "CTO", "LivretA", "CompteCourant"]
+  },
+  {
+    "id": "societe_generale",
+    "name": "Société Générale",
+    "type": "Bank",
+    "country": "FR",
+    "logoAsset": "assets/logos/societe_generale.png",
+    "primaryColor": "#E9041E",
+    "website": "https://particuliers.societegenerale.fr",
     "defaultAccountTypes": ["PEA", "CTO", "LivretA", "CompteCourant"]
   }
 ]
