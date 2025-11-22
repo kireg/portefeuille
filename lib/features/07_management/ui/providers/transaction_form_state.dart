@@ -11,6 +11,7 @@ import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/repayment_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
+import 'package:portefeuille/core/data/services/geocoding_service.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
@@ -225,7 +226,7 @@ class TransactionFormState extends ChangeNotifier
     return items;
   }
 
-  void submitForm(BuildContext context) {
+  Future<void> submitForm(BuildContext context) async {
     if (!formKey.currentState!.validate() || _selectedAccount == null) {
       if (_selectedAccount == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -342,10 +343,30 @@ class TransactionFormState extends ChangeNotifier
        // Fetch existing or create new
        var metadata = _portfolioProvider.allMetadata[assetTicker] ?? AssetMetadata(ticker: assetTicker);
        
+       // Geocoding automatique si la localisation est renseignée
+       final location = locationController.text.trim();
+       double? lat, lon;
+       
+       if (location.isNotEmpty) {
+         // On ne refait le géocodage que si la localisation a changé ou si les coordonnées sont manquantes
+         if (metadata.location != location || metadata.latitude == null) {
+            final geocodingService = GeocodingService();
+            final coords = await geocodingService.getCoordinates(location);
+            if (coords != null) {
+              lat = coords['lat'];
+              lon = coords['lon'];
+            }
+         } else {
+            // Conserver les anciennes coordonnées si la ville n'a pas changé
+            lat = metadata.latitude;
+            lon = metadata.longitude;
+         }
+       }
+
        // Update fields
        metadata = metadata.copyWith(
          // platform: platformController.text.trim().isEmpty ? null : platformController.text.trim(), // SUPPRIMÉ
-         location: locationController.text.trim().isEmpty ? null : locationController.text.trim(),
+         location: location.isEmpty ? null : location,
          minDuration: int.tryParse(minDurationController.text),
          targetDuration: int.tryParse(targetDurationController.text),
          maxDuration: int.tryParse(maxDurationController.text),
@@ -353,6 +374,8 @@ class TransactionFormState extends ChangeNotifier
          riskRating: riskRatingController.text.trim().isEmpty ? null : riskRatingController.text.trim(),
          repaymentType: _selectedRepaymentType,
          assetTypeDetailed: 'RealEstateCrowdfunding',
+         latitude: lat,
+         longitude: lon,
        );
        
        _portfolioProvider.updateAssetMetadata(metadata);

@@ -28,7 +28,7 @@ class CrowdfundingProjectionChart extends StatelessWidget {
     }
 
     // Limiter à 5 ans (60 mois) pour la lisibilité
-    final displayProjections = projections.take(60).toList();
+    final displayProjections = projections; // On affiche tout, car on va scroller
     
     // Trouver le max pour l'échelle Y
     double maxY = 0;
@@ -38,6 +38,10 @@ class CrowdfundingProjectionChart extends StatelessWidget {
     }
     maxY = maxY * 1.1; // Marge de 10%
     if (maxY == 0) maxY = 100;
+
+    // Largeur dynamique : 50px par année (environ 4px par mois)
+    // Minimum la largeur de l'écran
+    final double chartWidth = (displayProjections.length * 10.0).clamp(MediaQuery.of(context).size.width - 64, 2000.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,98 +54,106 @@ class CrowdfundingProjectionChart extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppDimens.paddingM),
-        Container(
-          height: 300,
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: LineChart(
-            LineChartData(
-              gridData: const FlGridData(show: false),
-              titlesData: FlTitlesData(
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      final index = value.toInt();
-                      if (index >= 0 && index < displayProjections.length && index % 12 == 0) {
-                        final date = displayProjections[index].date;
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(DateFormat('yyyy').format(date), style: const TextStyle(fontSize: 10)),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+          child: Container(
+            height: 300,
+            width: chartWidth,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: LineChart(
+              LineChartData(
+                minX: 0,
+                maxX: displayProjections.length.toDouble() - 1,
+                minY: 0,
+                maxY: maxY,
+                gridData: const FlGridData(show: false),
+                titlesData: FlTitlesData(
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index >= 0 && index < displayProjections.length && index % 12 == 0) {
+                          final date = displayProjections[index].date;
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(DateFormat('yyyy').format(date), style: const TextStyle(fontSize: 10)),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                      interval: 1,
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      getTitlesWidget: (value, meta) {
+                        if (value == 0) return const SizedBox.shrink();
+                        return Text(
+                          NumberFormat.compactCurrency(symbol: '').format(value),
+                          style: const TextStyle(fontSize: 10),
                         );
-                      }
-                      return const SizedBox.shrink();
+                      },
+                    ),
+                  ),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  // Ligne Capital Investi
+                  LineChartBarData(
+                    spots: displayProjections.asMap().entries.map((e) {
+                      return FlSpot(e.key.toDouble(), e.value.investedCapital);
+                    }).toList(),
+                    isCurved: true,
+                    color: Colors.blue,
+                    barWidth: 3,
+                    dotData: const FlDotData(show: false),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: Colors.blue.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  // Ligne Intérêts Cumulés
+                  LineChartBarData(
+                    spots: displayProjections.asMap().entries.map((e) {
+                      return FlSpot(e.key.toDouble(), e.value.cumulativeInterest);
+                    }).toList(),
+                    isCurved: true,
+                    color: Colors.green,
+                    barWidth: 3,
+                    dotData: const FlDotData(show: false),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: Colors.green.withValues(alpha: 0.1),
+                    ),
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        final index = spot.x.toInt();
+                        if (index < 0 || index >= displayProjections.length) return null;
+                        final data = displayProjections[index];
+                        final dateStr = DateFormat('MMM yyyy').format(data.date);
+                        
+                        String label = spot.barIndex == 0 ? "Capital" : "Intérêts";
+                        return LineTooltipItem(
+                          "$dateStr\n$label: ${NumberFormat.currency(symbol: '€').format(spot.y)}",
+                          const TextStyle(color: Colors.white),
+                        );
+                      }).toList();
                     },
-                    interval: 1,
                   ),
-                ),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 40,
-                    getTitlesWidget: (value, meta) {
-                      if (value == 0) return const SizedBox.shrink();
-                      return Text(
-                        NumberFormat.compactCurrency(symbol: '').format(value),
-                        style: const TextStyle(fontSize: 10),
-                      );
-                    },
-                  ),
-                ),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              ),
-              borderData: FlBorderData(show: false),
-              lineBarsData: [
-                // Ligne Capital Investi
-                LineChartBarData(
-                  spots: displayProjections.asMap().entries.map((e) {
-                    return FlSpot(e.key.toDouble(), e.value.investedCapital);
-                  }).toList(),
-                  isCurved: true,
-                  color: Colors.blue,
-                  barWidth: 3,
-                  dotData: const FlDotData(show: false),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: Colors.blue.withOpacity(0.1),
-                  ),
-                ),
-                // Ligne Intérêts Cumulés
-                LineChartBarData(
-                  spots: displayProjections.asMap().entries.map((e) {
-                    return FlSpot(e.key.toDouble(), e.value.cumulativeInterest);
-                  }).toList(),
-                  isCurved: true,
-                  color: Colors.green,
-                  barWidth: 3,
-                  dotData: const FlDotData(show: false),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: Colors.green.withOpacity(0.1),
-                  ),
-                ),
-              ],
-              lineTouchData: LineTouchData(
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipItems: (touchedSpots) {
-                    return touchedSpots.map((spot) {
-                      final index = spot.x.toInt();
-                      if (index < 0 || index >= displayProjections.length) return null;
-                      final data = displayProjections[index];
-                      final dateStr = DateFormat('MMM yyyy').format(data.date);
-                      
-                      String label = spot.barIndex == 0 ? "Capital" : "Intérêts";
-                      return LineTooltipItem(
-                        "$dateStr\n$label: ${NumberFormat.currency(symbol: '€').format(spot.y)}",
-                        const TextStyle(color: Colors.white),
-                      );
-                    }).toList();
-                  },
                 ),
               ),
             ),
@@ -188,7 +200,14 @@ class CrowdfundingProjectionChart extends StatelessWidget {
     // Ici on part de "Maintenant" comme T0.
     
     double currentTotalCapital = 0;
-    for (var asset in assets) {
+    // On filtre d'abord pour ne garder que les actifs Crowdfunding
+    final cfAssets = assets.where((a) => 
+      a.repaymentType != null && 
+      a.expectedYield != null && 
+      a.quantity > 0
+    ).toList();
+
+    for (var asset in cfAssets) {
        // On ne compte que les assets qui ont généré des projections (donc valides)
        // Mais generateProjections filtre déjà.
        // On va sommer le capital de tous les assets crowdfunding actifs

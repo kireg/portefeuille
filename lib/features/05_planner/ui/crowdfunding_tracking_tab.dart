@@ -11,19 +11,13 @@ import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 
 // Widgets
-import 'widgets/savings_plans_section.dart';
-import 'widgets/projection_section.dart';
+import 'widgets/crowdfunding_planner_widget.dart';
+import 'widgets/crowdfunding_timeline_widget.dart';
+import 'widgets/crowdfunding_map_widget.dart';
+import 'widgets/crowdfunding_projection_chart.dart';
 
-class PlannerTab extends StatefulWidget {
-  const PlannerTab({super.key});
-
-  @override
-  State<PlannerTab> createState() => _PlannerTabState();
-}
-
-class _PlannerTabState extends State<PlannerTab> {
-  // L'état de la durée reste ici car il influence la section Projection
-  int _selectedDuration = 10;
+class CrowdfundingTrackingTab extends StatelessWidget {
+  const CrowdfundingTrackingTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +37,7 @@ class _PlannerTabState extends State<PlannerTab> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingL),
-                  child: Center(child: Text('Planification', style: AppTypography.h2)),
+                  child: Center(child: Text('Suivi Crowdfunding', style: AppTypography.h2)),
                 ),
               ),
 
@@ -51,26 +45,47 @@ class _PlannerTabState extends State<PlannerTab> {
                 padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    // 1. Section Plans d'Épargne
+                    // 1. Résumé / KPI
                     const FadeInSlide(
                       delay: 0.1,
-                      child: SavingsPlansSection(),
+                      child: CrowdfundingPlannerWidget(),
                     ),
 
                     const SizedBox(height: AppDimens.paddingM),
 
-                    // 2. Section Projection (Graphique + Stats)
+                    // 2. Timeline des remboursements
+                    const FadeInSlide(
+                      delay: 0.15,
+                      child: CrowdfundingTimelineWidget(),
+                    ),
+
+                    const SizedBox(height: AppDimens.paddingM),
+
+                    // 3. Projection (Graphique)
                     FadeInSlide(
                       delay: 0.2,
-                      child: ProjectionSection(
-                        selectedDuration: _selectedDuration,
-                        onDurationChanged: (duration) {
-                          setState(() => _selectedDuration = duration);
-                        },
+                      child: CrowdfundingProjectionChart(
+                        assets: portfolio.institutions
+                            .expand((i) => i.accounts)
+                            .expand((a) => a.assets)
+                            .toList(),
                       ),
                     ),
 
-                    const SizedBox(height: 100), // Padding pour éviter le chevauchement avec la BottomNavBar
+                    const SizedBox(height: AppDimens.paddingM),
+
+                    // 4. Carte
+                    FadeInSlide(
+                      delay: 0.25,
+                      child: CrowdfundingMapWidget(
+                        assets: portfolio.institutions
+                            .expand((i) => i.accounts)
+                            .expand((a) => a.assets)
+                            .toList(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 100), // Padding pour la BottomNavBar
                   ]),
                 ),
               ),

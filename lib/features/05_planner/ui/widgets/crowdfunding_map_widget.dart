@@ -20,18 +20,29 @@ class CrowdfundingMapWidget extends StatelessWidget {
       return asset.latitude != null && asset.longitude != null;
     }).toList();
 
-    if (validAssets.isEmpty) {
-      return const SizedBox.shrink(); // Ne rien afficher s'il n'y a pas de projets géolocalisés
-    }
+    // On affiche la carte même vide pour montrer la fonctionnalité
+    // if (validAssets.isEmpty) {
+    //   return const SizedBox.shrink(); 
+    // }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingL),
-          child: Text(
-            "Carte des Projets",
-            style: AppTypography.h3,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Carte des Projets",
+                style: AppTypography.h3,
+              ),
+              if (validAssets.isEmpty)
+                Text(
+                  "(Aucun projet localisé)",
+                  style: AppTypography.caption.copyWith(fontStyle: FontStyle.italic),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: AppDimens.paddingM),
