@@ -46,7 +46,10 @@ class SavingsPlansSection extends StatelessWidget {
               provider.deleteSavingsPlan(planId);
               Navigator.of(ctx).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Plan d\'épargne supprimé')),
+                const SnackBar(
+                  content: Text('Plan d\'épargne supprimé'),
+                  showCloseIcon: true,
+                ),
               );
             },
             child: Text('Supprimer', style: AppTypography.label.copyWith(color: AppColors.error)),

@@ -25,6 +25,10 @@ enum AccountType {
   @HiveField(4)
   crypto("Crypto", "Un portefeuille de crypto-monnaies permet de détenir, d'envoyer et de recevoir des devises numériques comme le Bitcoin ou l'Ethereum."),
 
+  /// Crowdfunding Immobilier
+  @HiveField(6)
+  crowdfunding("Crowdfunding Immo", "Compte dédié aux investissements participatifs dans l'immobilier (financement de projets de promotion ou de marchands de biens)."),
+
   /// Autre type de compte
   @HiveField(5)
   autre("Autre", "Tout autre type de compte d'investissement qui ne correspond pas aux catégories précédentes.");

@@ -31,6 +31,8 @@ dependencies:
   crop_your_image: ^1.0.0 # Pour l'interface de rognage (crop)
   pdf: ^3.10.4
   printing: ^5.11.0
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:

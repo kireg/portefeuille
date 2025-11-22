@@ -18,6 +18,16 @@ mixin TransactionFormControllers {
   late final TextEditingController priceCurrencyController;
   late final TextEditingController exchangeRateController;
 
+  // --- CROWDFUNDING ---
+  late final TextEditingController platformController;
+  late final TextEditingController locationController;
+  late final TextEditingController minDurationController;
+  late final TextEditingController targetDurationController;
+  late final TextEditingController maxDurationController;
+  late final TextEditingController expectedYieldController;
+  late final TextEditingController riskRatingController;
+  // --- FIN CROWDFUNDING ---
+
   void initControllers() {
     amountController = TextEditingController();
     tickerController = TextEditingController();
@@ -29,6 +39,16 @@ mixin TransactionFormControllers {
     dateController = TextEditingController();
     priceCurrencyController = TextEditingController();
     exchangeRateController = TextEditingController();
+
+    // --- CROWDFUNDING ---
+    platformController = TextEditingController();
+    locationController = TextEditingController();
+    minDurationController = TextEditingController();
+    targetDurationController = TextEditingController();
+    maxDurationController = TextEditingController();
+    expectedYieldController = TextEditingController();
+    riskRatingController = TextEditingController();
+    // --- FIN CROWDFUNDING ---
   }
 
   void disposeControllers() {
@@ -42,12 +62,34 @@ mixin TransactionFormControllers {
     dateController.dispose();
     priceCurrencyController.dispose();
     exchangeRateController.dispose();
+
+    // --- CROWDFUNDING ---
+    platformController.dispose();
+    locationController.dispose();
+    minDurationController.dispose();
+    targetDurationController.dispose();
+    maxDurationController.dispose();
+    expectedYieldController.dispose();
+    riskRatingController.dispose();
+    // --- FIN CROWDFUNDING ---
   }
 
   /// Vide les champs pour une nouvelle saisie (utile pour le mode Batch)
   void clearFieldsForNextTransaction() {
     amountController.clear();
     tickerController.clear();
+    // ... (existing clear calls)
+    // Note: Crowdfunding fields might not need clearing if we are in batch mode for same asset?
+    // But usually batch is for different assets.
+    // Let's clear them too.
+    platformController.clear();
+    locationController.clear();
+    minDurationController.clear();
+    targetDurationController.clear();
+    maxDurationController.clear();
+    expectedYieldController.clear();
+    riskRatingController.clear();
+
     nameController.clear();
     quantityController.clear();
     priceController.clear();

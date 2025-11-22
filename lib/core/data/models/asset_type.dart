@@ -25,6 +25,9 @@ enum AssetType {
   // --- NOUVEAU ---
   @HiveField(5)
   Cash, // Liquidités
+
+  @HiveField(6)
+  RealEstateCrowdfunding, // Crowdfunding Immobilier
   // --- FIN NOUVEAU ---
 }
 
@@ -42,6 +45,8 @@ extension AssetTypeExtension on AssetType {
         return 'Obligation';
       case AssetType.Cash:
         return 'Liquidités';
+      case AssetType.RealEstateCrowdfunding:
+        return 'Crowdfunding Immo';
       case AssetType.Other:
         return 'Autre';
     }

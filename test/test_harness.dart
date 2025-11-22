@@ -13,6 +13,7 @@ import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
+import 'package:portefeuille/core/data/models/repayment_type.dart';
 import 'package:portefeuille/core/data/models/price_history_point.dart';
 import 'package:portefeuille/core/data/models/exchange_rate_history.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
@@ -34,19 +35,20 @@ Future<Directory> initTestHive() async {
   Hive.registerAdapter(TransactionAdapter());
   Hive.registerAdapter(AssetTypeAdapter());
   Hive.registerAdapter(AssetMetadataAdapter());
+  Hive.registerAdapter(RepaymentTypeAdapter());
   Hive.registerAdapter(PriceHistoryPointAdapter());
   Hive.registerAdapter(ExchangeRateHistoryAdapter());
   Hive.registerAdapter(SyncStatusAdapter());
   Hive.registerAdapter(SyncLogAdapter());
 
-  // open minimal boxes
+  // open minimal boxes with types
+  await Hive.openBox<Portfolio>(AppConstants.kPortfolioBoxName);
   await Hive.openBox(AppConstants.kSettingsBoxName);
-  await Hive.openBox(AppConstants.kPortfolioBoxName);
-  await Hive.openBox(AppConstants.kTransactionBoxName);
-  await Hive.openBox(AppConstants.kAssetMetadataBoxName);
-  await Hive.openBox(AppConstants.kPriceHistoryBoxName);
-  await Hive.openBox(AppConstants.kExchangeRateHistoryBoxName);
-  await Hive.openBox(AppConstants.kSyncLogsBoxName);
+  await Hive.openBox<Transaction>(AppConstants.kTransactionBoxName);
+  await Hive.openBox<AssetMetadata>(AppConstants.kAssetMetadataBoxName);
+  await Hive.openBox<PriceHistoryPoint>(AppConstants.kPriceHistoryBoxName);
+  await Hive.openBox<ExchangeRateHistory>(AppConstants.kExchangeRateHistoryBoxName);
+  await Hive.openBox<SyncLog>(AppConstants.kSyncLogsBoxName);
 
   return dir;
 }

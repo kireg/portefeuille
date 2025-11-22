@@ -23,6 +23,8 @@ class AccountTypeAdapter extends TypeAdapter<AccountType> {
         return AccountType.per;
       case 4:
         return AccountType.crypto;
+      case 6:
+        return AccountType.crowdfunding;
       case 5:
         return AccountType.autre;
       default:
@@ -47,6 +49,9 @@ class AccountTypeAdapter extends TypeAdapter<AccountType> {
         break;
       case AccountType.crypto:
         writer.writeByte(4);
+        break;
+      case AccountType.crowdfunding:
+        writer.writeByte(6);
         break;
       case AccountType.autre:
         writer.writeByte(5);

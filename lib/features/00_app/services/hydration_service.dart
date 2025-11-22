@@ -68,6 +68,18 @@ class HydrationService {
     asset.currentPrice = metadata.currentPrice;
     asset.priceCurrency = metadata.activeCurrency;
     asset.estimatedAnnualYield = metadata.estimatedAnnualYield;
+    
+    // Injection des données Crowdfunding
+    asset.projectName = metadata.projectName;
+    asset.location = metadata.location;
+    asset.minDuration = metadata.minDuration;
+    asset.targetDuration = metadata.targetDuration;
+    asset.maxDuration = metadata.maxDuration;
+    asset.expectedYield = metadata.expectedYield;
+    asset.repaymentType = metadata.repaymentType;
+    asset.riskRating = metadata.riskRating;
+    asset.latitude = metadata.latitude;
+    asset.longitude = metadata.longitude;
 
     asset.currentExchangeRate = await _apiService.getExchangeRate(
       metadata.activeCurrency,

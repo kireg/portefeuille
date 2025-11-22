@@ -8,7 +8,10 @@ import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
+import 'package:portefeuille/core/data/models/repayment_type.dart';
+import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
+import 'package:portefeuille/core/data/services/geocoding_service.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
@@ -32,6 +35,7 @@ class TransactionFormState extends ChangeNotifier
   TransactionType _selectedType;
   DateTime _selectedDate;
   AssetType _selectedAssetType;
+  RepaymentType? _selectedRepaymentType;
   List<Account> _availableAccounts = [];
 
   bool get isEditing => existingTransaction != null;
@@ -39,7 +43,11 @@ class TransactionFormState extends ChangeNotifier
   TransactionType get selectedType => _selectedType;
   DateTime get selectedDate => _selectedDate;
   AssetType get selectedAssetType => _selectedAssetType;
+  RepaymentType? get selectedRepaymentType => _selectedRepaymentType;
   List<Account> get availableAccounts => _availableAccounts;
+
+  String? _locationError;
+  String? get locationError => _locationError;
 
   @override
   String get accountCurrency {
@@ -67,6 +75,14 @@ class TransactionFormState extends ChangeNotifier
 
     // Correction : Appel sans paramètre (géré par le mixin)
     tickerController.addListener(onTickerChanged);
+    
+    // Clear location error on typing
+    locationController.addListener(() {
+      if (_locationError != null) {
+        _locationError = null;
+        notifyListeners();
+      }
+    });
   }
 
   void _initializeValues() {
@@ -94,6 +110,21 @@ class TransactionFormState extends ChangeNotifier
       amountController.text = tx.amount.abs().toStringAsFixed(2);
       priceCurrencyController.text = tx.priceCurrency ?? accountCurrency;
       exchangeRateController.text = tx.exchangeRate?.toString() ?? '1.0';
+
+      // --- CROWDFUNDING ---
+      if (tx.assetType == AssetType.RealEstateCrowdfunding && tx.assetTicker != null) {
+        final metadata = _portfolioProvider.allMetadata[tx.assetTicker];
+        if (metadata != null) {
+          locationController.text = metadata.location ?? '';
+          minDurationController.text = metadata.minDuration?.toString() ?? '';
+          targetDurationController.text = metadata.targetDuration?.toString() ?? '';
+          maxDurationController.text = metadata.maxDuration?.toString() ?? '';
+          expectedYieldController.text = metadata.expectedYield?.toString() ?? '';
+          riskRatingController.text = metadata.riskRating ?? '';
+          _selectedRepaymentType = metadata.repaymentType;
+        }
+      }
+      // --- FIN CROWDFUNDING ---
     } else {
       feesController.text = '0.0';
       exchangeRateController.text = '1.0';
@@ -133,6 +164,11 @@ class TransactionFormState extends ChangeNotifier
   @override
   void setDate(DateTime date) {
     _selectedDate = date;
+    notifyListeners();
+  }
+
+  void setRepaymentType(RepaymentType? type) {
+    _selectedRepaymentType = type;
     notifyListeners();
   }
 
@@ -201,11 +237,15 @@ class TransactionFormState extends ChangeNotifier
     return items;
   }
 
-  void submitForm(BuildContext context) {
+  Future<void> submitForm(BuildContext context) async {
     if (!formKey.currentState!.validate() || _selectedAccount == null) {
       if (_selectedAccount == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veuillez sélectionner un compte.'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Veuillez sélectionner un compte.'),
+            backgroundColor: Colors.red,
+            showCloseIcon: true,
+          ),
         );
       }
       return;
@@ -213,7 +253,13 @@ class TransactionFormState extends ChangeNotifier
 
     final double amount = double.tryParse(amountController.text.replaceAll(',', '.')) ?? 0.0;
     final double? quantity = double.tryParse(quantityController.text.replaceAll(',', '.'));
-    final double? price = double.tryParse(priceController.text.replaceAll(',', '.'));
+    
+    // Pour le Crowdfunding, le prix est implicitement 1.0 si non renseigné
+    double? price = double.tryParse(priceController.text.replaceAll(',', '.'));
+    if (_selectedAssetType == AssetType.RealEstateCrowdfunding && price == null) {
+      price = 1.0;
+    }
+
     final double fees = double.tryParse(feesController.text.replaceAll(',', '.')) ?? 0.0;
     final String? priceCurrency = priceCurrencyController.text.trim().isEmpty
         ? null
@@ -223,10 +269,25 @@ class TransactionFormState extends ChangeNotifier
     double finalAmount = 0.0;
     String? assetTicker, assetName;
 
+    // Helper pour générer un ticker si absent (Crowdfunding)
+    String getOrGenerateTicker() {
+      String t = tickerController.text.trim().toUpperCase();
+      if (t.isEmpty && _selectedAssetType == AssetType.RealEstateCrowdfunding) {
+        // Génère un ticker basé sur le nom (ex: "RESIDENCE LES PINS" -> "RESIDENCELESPINS")
+        t = nameController.text.trim().toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+        if (t.isEmpty) t = "CROWD_${DateTime.now().millisecondsSinceEpoch}";
+      }
+      return t;
+    }
+
     switch (_selectedType) {
       case TransactionType.Deposit:
       case TransactionType.Interest:
         finalAmount = amount;
+        if (tickerController.text.isNotEmpty || nameController.text.isNotEmpty) {
+           assetTicker = getOrGenerateTicker();
+           assetName = nameController.text;
+        }
         break;
       case TransactionType.Withdrawal:
       case TransactionType.Fees:
@@ -234,20 +295,76 @@ class TransactionFormState extends ChangeNotifier
         break;
       case TransactionType.Dividend:
         finalAmount = amount;
-        assetTicker = tickerController.text.toUpperCase();
+        assetTicker = getOrGenerateTicker();
         assetName = nameController.text;
         break;
       case TransactionType.Buy:
-        finalAmount = -(quantity! * price! * (exchangeRate ?? 1.0));
-        assetTicker = tickerController.text.toUpperCase();
+        // Validation spécifique
+        if (quantity == null || price == null) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Quantité ou Prix manquant.'),
+              backgroundColor: Colors.red,
+              showCloseIcon: true,
+            ),
+          );
+          return;
+        }
+        finalAmount = -(quantity * price * (exchangeRate ?? 1.0));
+        assetTicker = getOrGenerateTicker();
         assetName = nameController.text;
         break;
       case TransactionType.Sell:
-        finalAmount = (quantity! * price! * (exchangeRate ?? 1.0));
-        assetTicker = tickerController.text.toUpperCase();
+      case TransactionType.CapitalRepayment:
+      case TransactionType.EarlyRepayment:
+         if (quantity == null || price == null) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Quantité ou Prix manquant.'),
+              backgroundColor: Colors.red,
+              showCloseIcon: true,
+            ),
+          );
+          return;
+        }
+        finalAmount = (quantity * price * (exchangeRate ?? 1.0));
+        assetTicker = getOrGenerateTicker();
         assetName = nameController.text;
         break;
     }
+
+    // --- VALIDATION CROWDFUNDING (GEOLOCALISATION) ---
+    if ((_selectedType == TransactionType.Buy || _selectedType == TransactionType.Sell) && 
+        _selectedAssetType == AssetType.RealEstateCrowdfunding && 
+        locationController.text.trim().isNotEmpty) {
+        
+        final location = locationController.text.trim();
+        debugPrint("🔍 [TransactionForm] Validation de la localisation Crowdfunding : $location");
+        
+        final geocodingService = GeocodingService();
+        final coords = await geocodingService.getCoordinates(location);
+        
+        if (coords == null) {
+            debugPrint("❌ [TransactionForm] Localisation invalide : $location");
+            _locationError = "Ville introuvable. Vérifiez l'orthographe.";
+            notifyListeners();
+            
+            if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text("La ville '$location' est introuvable."),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                    ),
+                );
+            }
+            return; // Bloquer la soumission
+        } else {
+            debugPrint("✅ [TransactionForm] Localisation valide : $location (${coords['lat']}, ${coords['lon']})");
+            _locationError = null; // Clear error if valid
+        }
+    }
+    // --- FIN VALIDATION ---
 
     AssetType? finalAssetType;
     if (_selectedType == TransactionType.Buy || _selectedType == TransactionType.Sell) {
@@ -277,6 +394,50 @@ class TransactionFormState extends ChangeNotifier
       _portfolioProvider.addTransaction(transaction);
     }
 
+    // --- CROWDFUNDING METADATA ---
+    if (finalAssetType == AssetType.RealEstateCrowdfunding && assetTicker != null) {
+       // Fetch existing or create new
+       var metadata = _portfolioProvider.allMetadata[assetTicker] ?? AssetMetadata(ticker: assetTicker);
+       
+       // Geocoding automatique si la localisation est renseignée
+       final location = locationController.text.trim();
+       double? lat, lon;
+       
+       if (location.isNotEmpty) {
+         // On ne refait le géocodage que si la localisation a changé ou si les coordonnées sont manquantes
+         if (metadata.location != location || metadata.latitude == null) {
+            final geocodingService = GeocodingService();
+            final coords = await geocodingService.getCoordinates(location);
+            if (coords != null) {
+              lat = coords['lat'];
+              lon = coords['lon'];
+            }
+         } else {
+            // Conserver les anciennes coordonnées si la ville n'a pas changé
+            lat = metadata.latitude;
+            lon = metadata.longitude;
+         }
+       }
+
+       // Update fields
+       metadata = metadata.copyWith(
+         // platform: platformController.text.trim().isEmpty ? null : platformController.text.trim(), // SUPPRIMÉ
+         location: location.isEmpty ? null : location,
+         minDuration: int.tryParse(minDurationController.text),
+         targetDuration: int.tryParse(targetDurationController.text),
+         maxDuration: int.tryParse(maxDurationController.text),
+         expectedYield: double.tryParse(expectedYieldController.text.replaceAll(',', '.')),
+         riskRating: riskRatingController.text.trim().isEmpty ? null : riskRatingController.text.trim(),
+         repaymentType: _selectedRepaymentType,
+         assetTypeDetailed: 'RealEstateCrowdfunding',
+         latitude: lat,
+         longitude: lon,
+       );
+       
+       _portfolioProvider.updateAssetMetadata(metadata);
+    }
+    // --- FIN CROWDFUNDING METADATA ---
+
     if (hasPendingTransactions) {
       final remaining = remainingTransactions;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -284,6 +445,7 @@ class TransactionFormState extends ChangeNotifier
           content: Text('Enregistré ! Reste $remaining transaction(s)...'),
           backgroundColor: Colors.blueAccent,
           duration: const Duration(seconds: 2),
+          showCloseIcon: true,
         ),
       );
 
@@ -292,7 +454,11 @@ class TransactionFormState extends ChangeNotifier
 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Transaction enregistrée.'), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text('Transaction enregistrée.'),
+          backgroundColor: Colors.green,
+          showCloseIcon: true,
+        ),
       );
       if (context.mounted) Navigator.of(context).pop();
     }

@@ -25,6 +25,8 @@ class AssetTypeAdapter extends TypeAdapter<AssetType> {
         return AssetType.Other;
       case 5:
         return AssetType.Cash;
+      case 6:
+        return AssetType.RealEstateCrowdfunding;
       default:
         return AssetType.Stock;
     }
@@ -50,6 +52,9 @@ class AssetTypeAdapter extends TypeAdapter<AssetType> {
         break;
       case AssetType.Cash:
         writer.writeByte(5);
+        break;
+      case AssetType.RealEstateCrowdfunding:
+        writer.writeByte(6);
         break;
     }
   }

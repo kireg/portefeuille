@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/portfolio_value_history_point.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
+import 'package:portefeuille/core/data/models/asset.dart'; // AJOUT
 
 part 'portfolio.g.dart';
 
@@ -103,6 +104,14 @@ class Portfolio {
       savingsPlans: savingsPlans.map((plan) => plan.deepCopy()).toList(),
       valueHistory: valueHistory.map((e) => PortfolioValueHistoryPoint(date: e.date, value: e.value)).toList(),
     );
+  }
+
+  // Helper pour récupérer tous les actifs de tous les comptes
+  List<Asset> get assets {
+    return institutions
+        .expand((inst) => inst.accounts)
+        .expand((acc) => acc.assets)
+        .toList();
   }
 
   // ... (Méthodes JSON existantes) ...

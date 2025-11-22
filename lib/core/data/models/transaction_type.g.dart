@@ -27,6 +27,10 @@ class TransactionTypeAdapter extends TypeAdapter<TransactionType> {
         return TransactionType.Interest;
       case 6:
         return TransactionType.Fees;
+      case 8:
+        return TransactionType.CapitalRepayment;
+      case 9:
+        return TransactionType.EarlyRepayment;
       default:
         return TransactionType.Deposit;
     }
@@ -55,6 +59,12 @@ class TransactionTypeAdapter extends TypeAdapter<TransactionType> {
         break;
       case TransactionType.Fees:
         writer.writeByte(6);
+        break;
+      case TransactionType.CapitalRepayment:
+        writer.writeByte(8);
+        break;
+      case TransactionType.EarlyRepayment:
+        writer.writeByte(9);
         break;
     }
   }

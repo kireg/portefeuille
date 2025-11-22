@@ -5,6 +5,7 @@ import '../../00_app/providers/portfolio_provider.dart';
 // Ecrans des onglets
 import '../../03_overview/ui/overview_tab.dart';
 import '../../05_planner/ui/planner_tab.dart';
+import '../../05_planner/ui/crowdfunding_tracking_tab.dart'; // NOUVEL ONGLET
 import 'package:portefeuille/features/04_journal/ui/views/synthese_view.dart';
 import 'package:portefeuille/features/04_journal/ui/views/transactions_view.dart';
 import '../../06_settings/ui/settings_screen.dart';
@@ -28,6 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   static const List<Widget> _widgetOptions = <Widget>[
     OverviewTab(),
     PlannerTab(),
+    CrowdfundingTrackingTab(), // NOUVEL ONGLET
     SyntheseView(),
     TransactionsView(),
   ];
@@ -117,6 +119,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 icon: Icons.calendar_today_outlined,
                 selectedIcon: Icons.calendar_today,
                 label: 'Plan',
+              ),
+              AppNavItem(
+                icon: Icons.rocket_launch_outlined,
+                selectedIcon: Icons.rocket_launch,
+                label: 'Crowd',
               ),
               AppNavItem(
                 icon: Icons.pie_chart_outline,

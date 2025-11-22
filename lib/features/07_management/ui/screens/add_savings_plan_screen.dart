@@ -94,7 +94,10 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
     if (_formKey.currentState!.validate()) {
       if (_selectedAsset == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veuillez sélectionner un actif cible')),
+          const SnackBar(
+            content: Text('Veuillez sélectionner un actif cible'),
+            showCloseIcon: true,
+          ),
         );
         return;
       }

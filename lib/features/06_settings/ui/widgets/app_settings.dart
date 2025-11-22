@@ -50,6 +50,7 @@ class _AppSettingsState extends State<AppSettings> {
               ? "Clé API supprimée."
               : "Clé API sauvegardée en toute sécurité !"),
           backgroundColor: key.isEmpty ? Colors.orange[800] : Colors.green[600],
+          showCloseIcon: true,
         ),
       );
     } catch (e) {
@@ -57,6 +58,7 @@ class _AppSettingsState extends State<AppSettings> {
         SnackBar(
           content: Text("Erreur lors de la sauvegarde de la clé : $e"),
           backgroundColor: Theme.of(context).colorScheme.error,
+          showCloseIcon: true,
         ),
       );
     }

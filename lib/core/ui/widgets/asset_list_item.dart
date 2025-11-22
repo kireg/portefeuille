@@ -1,6 +1,8 @@
 // lib/core/ui/widgets/asset_list_item.dart
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
+import 'package:portefeuille/core/data/models/repayment_type.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart'; // IMPORTANT
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
@@ -59,13 +61,22 @@ class AssetListItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '${CurrencyFormatter.formatQuantity(asset.quantity)} ${asset.ticker}',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
+                if (asset.type == AssetType.RealEstateCrowdfunding)
+                  Text(
+                    '${asset.ticker} • ${asset.expectedYield?.toStringAsFixed(1) ?? '?'}%${asset.repaymentType != null ? ' • ${asset.repaymentType!.displayName}' : ''}',
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  )
+                else
+                  Text(
+                    '${CurrencyFormatter.formatQuantity(asset.quantity)} ${asset.ticker}',
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

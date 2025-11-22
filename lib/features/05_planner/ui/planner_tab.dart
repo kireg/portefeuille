@@ -70,7 +70,7 @@ class _PlannerTabState extends State<PlannerTab> {
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 100), // Padding pour éviter le chevauchement avec la BottomNavBar
                   ]),
                 ),
               ),

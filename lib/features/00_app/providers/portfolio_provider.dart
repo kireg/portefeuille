@@ -696,6 +696,16 @@ class PortfolioProvider extends ChangeNotifier {
   }
 
   // ============================================================
+  // ASSET METADATA
+  // ============================================================
+
+  Future<void> updateAssetMetadata(AssetMetadata metadata) async {
+    await _repository.saveAssetMetadata(metadata);
+    // Recharger les données pour que les actifs (Assets) soient mis à jour avec les nouvelles métadonnées (lat/lon, etc.)
+    await _refreshDataFromSource();
+  }
+
+  // ============================================================
   // PROJECTIONS
   // ============================================================
 

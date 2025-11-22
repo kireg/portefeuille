@@ -3,6 +3,7 @@
 import 'package:hive/hive.dart';
 import 'package:portefeuille/core/utils/enum_helpers.dart'; // NOUVEL IMPORT
 import 'sync_status.dart';
+import 'repayment_type.dart';
 
 part 'asset_metadata.g.dart';
 
@@ -44,6 +45,40 @@ class AssetMetadata {
   @HiveField(11)
   String? lastSyncSource;
 
+  // --- CROWDFUNDING ---
+  // Note: 'platform' supprimé car redondant avec l'Institution du compte
+
+  @HiveField(13)
+  String? projectName;
+
+  @HiveField(14)
+  String? location;
+
+  @HiveField(15)
+  int? minDuration;
+
+  @HiveField(16)
+  int? targetDuration;
+
+  @HiveField(17)
+  int? maxDuration;
+
+  @HiveField(18)
+  double? expectedYield;
+
+  @HiveField(19)
+  RepaymentType? repaymentType;
+
+  @HiveField(20)
+  String? riskRating;
+
+  @HiveField(21)
+  double? latitude;
+
+  @HiveField(22)
+  double? longitude;
+  // --- FIN CROWDFUNDING ---
+
   String get activeCurrency => priceCurrency ?? 'EUR';
   SyncStatus get activeStatus => syncStatus ?? SyncStatus.never;
 
@@ -60,6 +95,18 @@ class AssetMetadata {
     this.isin,
     this.assetTypeDetailed,
     this.lastSyncSource,
+    // --- CROWDFUNDING ---
+    this.projectName,
+    this.location,
+    this.minDuration,
+    this.targetDuration,
+    this.maxDuration,
+    this.expectedYield,
+    this.repaymentType,
+    this.riskRating,
+    this.latitude,
+    this.longitude,
+    // --- FIN CROWDFUNDING ---
   }) : lastUpdated = lastUpdated ?? DateTime.now();
 
   // ... (toutes vos méthodes existantes : updatePrice, markSyncError, etc. restent inchangées) ...
@@ -105,6 +152,19 @@ class AssetMetadata {
     String? isin,
     String? assetTypeDetailed,
     String? lastSyncSource,
+    // --- CROWDFUNDING ---
+    String? platform,
+    String? projectName,
+    String? location,
+    int? minDuration,
+    int? targetDuration,
+    int? maxDuration,
+    double? expectedYield,
+    RepaymentType? repaymentType,
+    String? riskRating,
+    double? latitude,
+    double? longitude,
+    // --- FIN CROWDFUNDING ---
   }) {
     return AssetMetadata(
       ticker: ticker ?? this.ticker,
@@ -119,6 +179,18 @@ class AssetMetadata {
       isin: isin ?? this.isin,
       assetTypeDetailed: assetTypeDetailed ?? this.assetTypeDetailed,
       lastSyncSource: lastSyncSource ?? this.lastSyncSource,
+      // --- CROWDFUNDING ---
+      projectName: projectName ?? this.projectName,
+      location: location ?? this.location,
+      minDuration: minDuration ?? this.minDuration,
+      targetDuration: targetDuration ?? this.targetDuration,
+      maxDuration: maxDuration ?? this.maxDuration,
+      expectedYield: expectedYield ?? this.expectedYield,
+      repaymentType: repaymentType ?? this.repaymentType,
+      riskRating: riskRating ?? this.riskRating,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      // --- FIN CROWDFUNDING ---
     );
   }
 
@@ -137,6 +209,18 @@ class AssetMetadata {
       'isin': isin,
       'assetTypeDetailed': assetTypeDetailed,
       'lastSyncSource': lastSyncSource,
+      // --- CROWDFUNDING ---
+      'projectName': projectName,
+      'location': location,
+      'minDuration': minDuration,
+      'targetDuration': targetDuration,
+      'maxDuration': maxDuration,
+      'expectedYield': expectedYield,
+      'repaymentType': enumToString(repaymentType),
+      'riskRating': riskRating,
+      'latitude': latitude,
+      'longitude': longitude,
+      // --- FIN CROWDFUNDING ---
     };
   }
 
@@ -163,6 +247,22 @@ class AssetMetadata {
       isin: json['isin'] as String?,
       assetTypeDetailed: json['assetTypeDetailed'] as String?,
       lastSyncSource: json['lastSyncSource'] as String?,
+      // --- CROWDFUNDING ---
+      projectName: json['projectName'] as String?,
+      location: json['location'] as String?,
+      minDuration: json['minDuration'] as int?,
+      targetDuration: json['targetDuration'] as int?,
+      maxDuration: json['maxDuration'] as int?,
+      expectedYield: (json['expectedYield'] as num?)?.toDouble(),
+      repaymentType: enumFromString(
+        RepaymentType.values,
+        json['repaymentType'],
+        fallback: null,
+      ),
+      riskRating: json['riskRating'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      // --- FIN CROWDFUNDING ---
     );
   }
 // --- FIN NOUVELLES MÉTHODES JSON ---
