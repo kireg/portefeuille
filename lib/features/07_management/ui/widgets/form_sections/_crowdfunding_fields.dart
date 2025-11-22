@@ -29,6 +29,7 @@ class CrowdfundingFields extends StatelessWidget {
           controller: state.locationController,
           label: 'Localisation',
           hint: 'Ex: Paris, France',
+          errorText: state.locationError,
         ),
         const SizedBox(height: AppDimens.paddingM),
 

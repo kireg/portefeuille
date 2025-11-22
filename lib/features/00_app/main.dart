@@ -1,6 +1,7 @@
 // lib/features/00_app/main.dart
 // REMPLACEZ LE FICHIER COMPLET
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -66,17 +67,117 @@ void main() async {
   Hive.registerAdapter(SyncLogAdapter());
   // --- FIN NOUVEAUX ADAPTERS ---
 
-  // 3. Ouvrir les boîtes
-  await Hive.openBox<Portfolio>(AppConstants.kPortfolioBoxName);
-  await Hive.openBox(AppConstants.kSettingsBoxName);
-  await Hive.openBox<Transaction>(AppConstants.kTransactionBoxName);
-  await Hive.openBox<AssetMetadata>(AppConstants.kAssetMetadataBoxName);
-  // --- NOUVELLES BOXES ---
-  await Hive.openBox<PriceHistoryPoint>(AppConstants.kPriceHistoryBoxName);
-  await Hive.openBox<ExchangeRateHistory>(
-      AppConstants.kExchangeRateHistoryBoxName);
-  await Hive.openBox<SyncLog>(AppConstants.kSyncLogsBoxName);
-  // --- FIN NOUVELLES BOXES ---
+  // 3. Ouvrir les boîtes (avec gestion d'erreur de verrouillage)
+  try {
+    await Hive.openBox<Portfolio>(AppConstants.kPortfolioBoxName);
+    await Hive.openBox(AppConstants.kSettingsBoxName);
+    await Hive.openBox<Transaction>(AppConstants.kTransactionBoxName);
+    await Hive.openBox<AssetMetadata>(AppConstants.kAssetMetadataBoxName);
+    // --- NOUVELLES BOXES ---
+    await Hive.openBox<PriceHistoryPoint>(AppConstants.kPriceHistoryBoxName);
+    await Hive.openBox<ExchangeRateHistory>(
+        AppConstants.kExchangeRateHistoryBoxName);
+    await Hive.openBox<SyncLog>(AppConstants.kSyncLogsBoxName);
+    // --- FIN NOUVELLES BOXES ---
+  } catch (e) {
+    debugPrint("❌ Erreur critique lors de l'ouverture de Hive : $e");
+    
+    // Extraction du chemin du fichier lock si possible
+    String? lockFilePath;
+    if (e.toString().contains("path = '")) {
+      final match = RegExp(r"path = '(.*?)'").firstMatch(e.toString());
+      if (match != null) {
+        lockFilePath = match.group(1);
+      }
+    }
+
+    runApp(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "Erreur de démarrage",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "La base de données est verrouillée par un autre processus.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                  ),
+                  if (lockFilePath != null) ...[
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Column(
+                        children: [
+                          const Text("Fichier bloquant :", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          const SizedBox(height: 4),
+                          Text(
+                            lockFilePath,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        try {
+                          final file = File(lockFilePath!);
+                          if (await file.exists()) {
+                            await file.delete();
+                            debugPrint("✅ Fichier lock supprimé avec succès.");
+                          }
+                          // Redémarrer l'app (nécessite un hot restart en dev, ou relance par l'utilisateur)
+                          // Ici on affiche juste un message de succès
+                        } catch (deleteError) {
+                          debugPrint("❌ Impossible de supprimer le fichier : $deleteError");
+                        }
+                      },
+                      icon: const Icon(Icons.delete_forever),
+                      label: const Text("Tenter de débloquer (Supprimer .lock)"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Après avoir cliqué, redémarrez l'application.",
+                      style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
+                    ),
+                  ],
+                  const SizedBox(height: 32),
+                  Text(
+                    "Détail technique : $e",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    return;
+  }
 
   // 4. Instancier le Repository
   final portfolioRepository = PortfolioRepository();

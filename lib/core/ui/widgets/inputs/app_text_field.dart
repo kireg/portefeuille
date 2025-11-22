@@ -20,6 +20,7 @@ class AppTextField extends StatelessWidget {
   final bool readOnly;
   final ValueChanged<String>? onChanged;
   final TextCapitalization textCapitalization;
+  final String? errorText;
 
   const AppTextField({
     super.key,
@@ -38,6 +39,7 @@ class AppTextField extends StatelessWidget {
     this.readOnly = false,
     this.onChanged,
     this.textCapitalization = TextCapitalization.none,
+    this.errorText,
   });
 
   @override
@@ -67,6 +69,7 @@ class AppTextField extends StatelessWidget {
           textCapitalization: textCapitalization,
           decoration: InputDecoration(
             hintText: hint,
+            errorText: errorText,
             hintStyle: AppTypography.body.copyWith(color: AppColors.textTertiary),
             filled: true,
             fillColor: AppColors.surfaceLight,

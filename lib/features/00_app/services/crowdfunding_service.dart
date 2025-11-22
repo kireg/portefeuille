@@ -55,6 +55,124 @@ class CrowdfundingProjection {
 }
 
 class CrowdfundingService {
+  /// Generates future events (Interest, CapitalRepayment) based on current active projects
+  /// and their remaining capital, derived from transaction history.
+  List<CrowdfundingEvent> generateFutureEvents({
+    required List<Asset> assets,
+    required List<Transaction> transactions,
+    int projectionYears = 5,
+  }) {
+    final now = DateTime.now();
+    final futureEvents = <CrowdfundingEvent>[];
+    
+    // 1. Calculate Active Capital per Project based on History
+    final Map<String, double> activeProjects = {}; // AssetID -> Invested Amount
+    
+    final relevantTransactions = transactions.where((t) {
+      if (t.assetType == AssetType.RealEstateCrowdfunding) return true;
+      if (t.assetTicker != null) {
+        final asset = assets.where((a) => a.ticker == t.assetTicker || a.id == t.assetTicker).firstOrNull;
+        if (asset != null && asset.type == AssetType.RealEstateCrowdfunding) return true;
+      }
+      return false;
+    }).toList();
+
+    for (final tx in relevantTransactions) {
+      final amount = tx.amount;
+      final assetId = tx.assetTicker;
+      
+      if (assetId != null) {
+        if (tx.type == TransactionType.Buy) {
+          activeProjects[assetId] = (activeProjects[assetId] ?? 0) + amount;
+        } else if (tx.type == TransactionType.CapitalRepayment) {
+          activeProjects[assetId] = (activeProjects[assetId] ?? 0) - amount;
+          if (activeProjects[assetId]! < 0.01) activeProjects[assetId] = 0;
+        }
+      }
+    }
+
+    // 2. Generate Future Events
+    for (final entry in activeProjects.entries) {
+      final assetId = entry.key;
+      final remainingCapital = entry.value;
+      
+      if (remainingCapital <= 0.01) continue;
+      
+      final asset = assets.where((a) => a.ticker == assetId || a.id == assetId).firstOrNull;
+      if (asset == null) continue;
+      
+      // Determine start date (first buy)
+      final buyTransactions = transactions
+          .where((t) => (t.assetTicker == assetId || t.assetTicker == asset.ticker) && t.type == TransactionType.Buy)
+          .toList();
+          
+      if (buyTransactions.isEmpty) continue;
+      buyTransactions.sort((a, b) => a.date.compareTo(b.date));
+      final startDate = buyTransactions.first.date;
+      
+      final durationMonths = asset.targetDuration ?? 0;
+      if (durationMonths <= 0) continue;
+      
+      final endDate = startDate.add(Duration(days: durationMonths * 30));
+      final yieldRate = (asset.expectedYield ?? 0.0) / 100.0;
+      
+      if (asset.repaymentType == RepaymentType.MonthlyInterest) {
+         var currentDate = startDate;
+         
+         while (currentDate.isBefore(endDate)) {
+           currentDate = DateTime(currentDate.year, currentDate.month + 1, currentDate.day);
+           if (currentDate.isAfter(endDate)) break;
+           
+           if (currentDate.isAfter(now)) {
+             final monthlyInterest = (remainingCapital * yieldRate) / 12;
+             
+             futureEvents.add(CrowdfundingEvent(
+               date: currentDate,
+               type: TransactionType.Interest,
+               amount: monthlyInterest,
+               assetId: assetId,
+               isProjected: true,
+             ));
+           }
+         }
+         
+         if (endDate.isAfter(now)) {
+           futureEvents.add(CrowdfundingEvent(
+             date: endDate,
+             type: TransactionType.CapitalRepayment,
+             amount: remainingCapital,
+             assetId: assetId,
+             isProjected: true,
+           ));
+         }
+         
+      } else if (asset.repaymentType == RepaymentType.InFine) {
+         if (endDate.isAfter(now)) {
+           final totalInterest = remainingCapital * yieldRate * (durationMonths / 12.0);
+           
+           futureEvents.add(CrowdfundingEvent(
+             date: endDate,
+             type: TransactionType.Interest,
+             amount: totalInterest,
+             assetId: assetId,
+             isProjected: true,
+           ));
+           
+           futureEvents.add(CrowdfundingEvent(
+             date: endDate,
+             type: TransactionType.CapitalRepayment,
+             amount: remainingCapital,
+             assetId: assetId,
+             isProjected: true,
+           ));
+         }
+      }
+    }
+    
+    futureEvents.sort((a, b) => a.date.compareTo(b.date));
+    return futureEvents;
+  }
+
   /// Simulates the evolution of the crowdfunding portfolio from the first transaction
   /// up to [projectionYears] into the future.
   List<CrowdfundingSimulationState> simulateCrowdfundingEvolution({
@@ -142,93 +260,19 @@ class CrowdfundingService {
     // 4. Future Projections
     if (projectionYears > 0) {
       final now = DateTime.now();
-      final futureEvents = <CrowdfundingEvent>[];
       
-      for (final entry in activeProjects.entries) {
-        final assetId = entry.key;
-        final remainingCapital = entry.value;
-        
-        if (remainingCapital <= 0.01) continue;
-        
-        final asset = assets.where((a) => a.ticker == assetId || a.id == assetId).firstOrNull;
-        if (asset == null) continue;
-        
-        // Determine start date (first buy)
-        final buyTransactions = transactions
-            .where((t) => (t.assetTicker == assetId || t.assetTicker == asset.ticker) && t.type == TransactionType.Buy)
-            .toList();
-            
-        if (buyTransactions.isEmpty) continue;
-        buyTransactions.sort((a, b) => a.date.compareTo(b.date));
-        final startDate = buyTransactions.first.date;
-        
-        final durationMonths = asset.targetDuration ?? 0;
-        if (durationMonths <= 0) continue;
-        
-        final endDate = startDate.add(Duration(days: durationMonths * 30));
-        final yieldRate = (asset.expectedYield ?? 0.0) / 100.0;
-        
-        if (asset.repaymentType == RepaymentType.MonthlyInterest) {
-           var currentDate = startDate;
-           
-           while (currentDate.isBefore(endDate)) {
-             currentDate = DateTime(currentDate.year, currentDate.month + 1, currentDate.day);
-             if (currentDate.isAfter(endDate)) break;
-             
-             if (currentDate.isAfter(now)) {
-               final monthlyInterest = (remainingCapital * yieldRate) / 12;
-               
-               futureEvents.add(CrowdfundingEvent(
-                 date: currentDate,
-                 type: TransactionType.Interest,
-                 amount: monthlyInterest,
-                 assetId: assetId,
-                 isProjected: true,
-               ));
-             }
-           }
-           
-           if (endDate.isAfter(now)) {
-             futureEvents.add(CrowdfundingEvent(
-               date: endDate,
-               type: TransactionType.CapitalRepayment,
-               amount: remainingCapital,
-               assetId: assetId,
-               isProjected: true,
-             ));
-           }
-           
-        } else if (asset.repaymentType == RepaymentType.InFine) {
-           if (endDate.isAfter(now)) {
-             // For InFine, we assume interest is calculated on the full capital for the full duration
-             // But if there was a partial repayment, it gets complicated.
-             // Let's assume InFine interest is based on current remaining capital for the remaining duration?
-             // Or simpler: Total Interest = RemainingCapital * Yield * (Duration/12)
-             // This is an approximation if capital changed.
-             // Given InFine usually doesn't have partial repayments, this is acceptable.
-             
-             final totalInterest = remainingCapital * yieldRate * (durationMonths / 12.0);
-             
-             futureEvents.add(CrowdfundingEvent(
-               date: endDate,
-               type: TransactionType.Interest,
-               amount: totalInterest,
-               assetId: assetId,
-               isProjected: true,
-             ));
-             
-             futureEvents.add(CrowdfundingEvent(
-               date: endDate,
-               type: TransactionType.CapitalRepayment,
-               amount: remainingCapital,
-               assetId: assetId,
-               isProjected: true,
-             ));
-           }
-        }
-      }
+      // Use the shared logic to generate future events
+      // Note: We pass the full lists, but generateFutureEvents will re-calculate activeProjects.
+      // Optimization: We could pass activeProjects to generateFutureEvents if we refactored it to accept it.
+      // For now, to avoid breaking changes and keep it simple, we just call it.
+      // However, generateFutureEvents recalculates activeProjects from scratch.
+      // This ensures consistency.
       
-      futureEvents.sort((a, b) => a.date.compareTo(b.date));
+      final futureEvents = generateFutureEvents(
+        assets: assets, 
+        transactions: transactions, 
+        projectionYears: projectionYears
+      );
       
       for (final event in futureEvents) {
         if (event.date.isAfter(now.add(Duration(days: projectionYears * 365)))) break;

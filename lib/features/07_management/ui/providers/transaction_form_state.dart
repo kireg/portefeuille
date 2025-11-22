@@ -46,6 +46,9 @@ class TransactionFormState extends ChangeNotifier
   RepaymentType? get selectedRepaymentType => _selectedRepaymentType;
   List<Account> get availableAccounts => _availableAccounts;
 
+  String? _locationError;
+  String? get locationError => _locationError;
+
   @override
   String get accountCurrency {
     return _selectedAccount?.currency ?? settingsProvider.baseCurrency;
@@ -72,6 +75,14 @@ class TransactionFormState extends ChangeNotifier
 
     // Correction : Appel sans paramètre (géré par le mixin)
     tickerController.addListener(onTickerChanged);
+    
+    // Clear location error on typing
+    locationController.addListener(() {
+      if (_locationError != null) {
+        _locationError = null;
+        notifyListeners();
+      }
+    });
   }
 
   void _initializeValues() {
@@ -321,6 +332,39 @@ class TransactionFormState extends ChangeNotifier
         assetName = nameController.text;
         break;
     }
+
+    // --- VALIDATION CROWDFUNDING (GEOLOCALISATION) ---
+    if ((_selectedType == TransactionType.Buy || _selectedType == TransactionType.Sell) && 
+        _selectedAssetType == AssetType.RealEstateCrowdfunding && 
+        locationController.text.trim().isNotEmpty) {
+        
+        final location = locationController.text.trim();
+        debugPrint("🔍 [TransactionForm] Validation de la localisation Crowdfunding : $location");
+        
+        final geocodingService = GeocodingService();
+        final coords = await geocodingService.getCoordinates(location);
+        
+        if (coords == null) {
+            debugPrint("❌ [TransactionForm] Localisation invalide : $location");
+            _locationError = "Ville introuvable. Vérifiez l'orthographe.";
+            notifyListeners();
+            
+            if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text("La ville '$location' est introuvable."),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                    ),
+                );
+            }
+            return; // Bloquer la soumission
+        } else {
+            debugPrint("✅ [TransactionForm] Localisation valide : $location (${coords['lat']}, ${coords['lon']})");
+            _locationError = null; // Clear error if valid
+        }
+    }
+    // --- FIN VALIDATION ---
 
     AssetType? finalAssetType;
     if (_selectedType == TransactionType.Buy || _selectedType == TransactionType.Sell) {

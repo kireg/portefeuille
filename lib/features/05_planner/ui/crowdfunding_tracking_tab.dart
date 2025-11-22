@@ -10,6 +10,9 @@ import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
 // Logic
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 
+// Data Models
+import 'package:portefeuille/core/data/models/asset_type.dart';
+
 // Widgets
 import 'widgets/crowdfunding_planner_widget.dart';
 import 'widgets/crowdfunding_timeline_widget.dart';
@@ -46,17 +49,32 @@ class CrowdfundingTrackingTab extends StatelessWidget {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // 1. Résumé / KPI
-                    const FadeInSlide(
+                    FadeInSlide(
                       delay: 0.1,
-                      child: CrowdfundingPlannerWidget(),
+                      child: CrowdfundingPlannerWidget(
+                        assets: portfolio.institutions
+                            .expand((i) => i.accounts)
+                            .expand((a) => a.assets)
+                            .toList(),
+                        transactions: portfolio.institutions
+                            .expand((i) => i.accounts)
+                            .expand((a) => a.transactions)
+                            .toList(),
+                      ),
                     ),
 
                     const SizedBox(height: AppDimens.paddingM),
 
                     // 2. Timeline des remboursements
-                    const FadeInSlide(
+                    FadeInSlide(
                       delay: 0.15,
-                      child: CrowdfundingTimelineWidget(),
+                      child: CrowdfundingTimelineWidget(
+                        assets: portfolio.institutions
+                            .expand((i) => i.accounts)
+                            .expand((a) => a.assets)
+                            .where((a) => a.type == AssetType.RealEstateCrowdfunding)
+                            .toList(),
+                      ),
                     ),
 
                     const SizedBox(height: AppDimens.paddingM),
@@ -85,6 +103,7 @@ class CrowdfundingTrackingTab extends StatelessWidget {
                         assets: portfolio.institutions
                             .expand((i) => i.accounts)
                             .expand((a) => a.assets)
+                            .where((a) => a.type == AssetType.RealEstateCrowdfunding)
                             .toList(),
                       ),
                     ),

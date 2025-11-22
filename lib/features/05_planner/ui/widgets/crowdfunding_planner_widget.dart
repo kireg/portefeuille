@@ -1,35 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
+import 'package:portefeuille/core/data/models/asset.dart';
+import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
-import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/services/crowdfunding_service.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 
 class CrowdfundingPlannerWidget extends StatelessWidget {
-  const CrowdfundingPlannerWidget({super.key});
+  final List<Asset> assets;
+  final List<Transaction> transactions;
+
+  const CrowdfundingPlannerWidget({
+    super.key,
+    required this.assets,
+    required this.transactions,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<PortfolioProvider>();
-    final assets = provider.activePortfolio?.assets ?? [];
-    
     // Utilisation du service (idéalement injecté ou via un provider dédié)
     final service = CrowdfundingService();
-    final projections = service.generateProjections(assets);
+    
+    // Utilisation de la nouvelle méthode generateFutureEvents qui est plus précise
+    final futureEvents = service.generateFutureEvents(
+      assets: assets,
+      transactions: transactions,
+      projectionYears: 2, // On regarde les 2 prochaines années pour le planner
+    );
 
-    if (projections.isEmpty) {
+    if (futureEvents.isEmpty) {
       return const SizedBox.shrink(); // Rien à afficher si pas de crowdfunding
-    }
-
-    // Groupement par mois pour l'affichage
-    final grouped = <String, double>{};
-    for (var p in projections) {
-      final key = DateFormat('MMMM yyyy', 'fr_FR').format(p.date);
-      grouped[key] = (grouped[key] ?? 0.0) + p.amount;
     }
 
     return Column(
@@ -38,7 +41,7 @@ class CrowdfundingPlannerWidget extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingL),
           child: Text(
-            "Projections Crowdfunding Immo",
+            "Prochains Paiements",
             style: AppTypography.h3,
           ),
         ),
@@ -49,11 +52,15 @@ class CrowdfundingPlannerWidget extends StatelessWidget {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
-            itemCount: projections.length, // Suppression de la limite arbitraire
+            itemCount: futureEvents.length,
             itemBuilder: (context, index) {
-              final proj = projections[index];
-              final isCapital = proj.type == TransactionType.CapitalRepayment;
+              final event = futureEvents[index];
+              final isCapital = event.type == TransactionType.CapitalRepayment;
               
+              // Récupérer le nom de l'actif
+              final asset = assets.where((a) => a.id == event.assetId || a.ticker == event.assetId).firstOrNull;
+              final assetName = asset?.name ?? event.assetId ?? "Inconnu";
+
               return Container(
                 width: 140,
                 margin: const EdgeInsets.only(right: AppDimens.paddingS),
@@ -65,12 +72,12 @@ class CrowdfundingPlannerWidget extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        DateFormat('dd MMM yyyy', 'fr_FR').format(proj.date),
+                        DateFormat('dd MMM yyyy', 'fr_FR').format(event.date),
                         style: AppTypography.caption,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "${proj.amount.toStringAsFixed(2)} €",
+                        "${event.amount.toStringAsFixed(2)} €",
                         style: AppTypography.h3.copyWith(
                           color: isCapital ? AppColors.primary : AppColors.success,
                           fontSize: 18,
@@ -78,8 +85,8 @@ class CrowdfundingPlannerWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        proj.assetName,
-                        style: AppTypography.body.copyWith(fontSize: 12), // Correction bodySmall -> body + fontSize
+                        assetName,
+                        style: AppTypography.body.copyWith(fontSize: 12),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

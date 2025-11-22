@@ -27,18 +27,14 @@ class _CrowdfundingMapWidgetState extends State<CrowdfundingMapWidget> {
   @override
   void initState() {
     super.initState();
-    // On post-frame callback, fit bounds if we have assets
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fitBounds();
-    });
+    // On ne force plus le recentrage automatique pour laisser la vue sur la France par défaut
+    // Si l'utilisateur veut voir tous les projets, il peut utiliser le bouton de recentrage.
   }
 
   @override
   void didUpdateWidget(CrowdfundingMapWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.assets != oldWidget.assets) {
-      _fitBounds();
-    }
+    // On ne recentre pas automatiquement non plus lors des mises à jour pour éviter les sauts intempestifs
   }
 
   void _fitBounds() {
@@ -46,7 +42,11 @@ class _CrowdfundingMapWidgetState extends State<CrowdfundingMapWidget> {
       return asset.latitude != null && asset.longitude != null;
     }).toList();
 
-    if (validAssets.isEmpty) return;
+    if (validAssets.isEmpty) {
+      // Si aucun asset valide, on retourne sur la France
+      _mapController.move(_franceCenter, _defaultZoom);
+      return;
+    }
 
     if (validAssets.length == 1) {
       _mapController.move(
