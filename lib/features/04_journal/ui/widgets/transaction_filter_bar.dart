@@ -16,6 +16,7 @@ class TransactionFilterBar extends StatelessWidget {
   final VoidCallback onAddTransaction;
   final VoidCallback onImportPdf;
   final VoidCallback onImportAi;
+  final VoidCallback onImportCrowdfunding;
 
   const TransactionFilterBar({
     super.key,
@@ -29,6 +30,7 @@ class TransactionFilterBar extends StatelessWidget {
     required this.onAddTransaction,
     required this.onImportPdf,
     required this.onImportAi,
+    required this.onImportCrowdfunding,
   });
 
   @override
@@ -75,6 +77,11 @@ class TransactionFilterBar extends StatelessWidget {
                     icon: const Icon(Icons.upload_file, color: AppColors.primary),
                     tooltip: 'Import PDF',
                     onPressed: onImportPdf,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.table_view, color: AppColors.primary),
+                    tooltip: 'Import Excel (Crowdfunding)',
+                    onPressed: onImportCrowdfunding,
                   ),
                   IconButton(
                     icon: const Icon(Icons.auto_awesome, color: AppColors.primary),

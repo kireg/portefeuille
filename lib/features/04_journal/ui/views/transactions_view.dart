@@ -18,6 +18,7 @@ import 'package:portefeuille/features/07_management/ui/screens/edit_transaction_
 import 'package:portefeuille/features/07_management/ui/screens/add_transaction_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/pdf_import_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/ai_import_config_screen.dart';
+import 'package:portefeuille/features/07_management/ui/screens/crowdfunding_import_screen.dart';
 
 // New Widgets & Models
 import 'package:portefeuille/features/04_journal/ui/models/transaction_group.dart';
@@ -234,6 +235,13 @@ class _TransactionsViewState extends State<TransactionsView> {
     );
   }
 
+  void _openCrowdfundingImport() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CrowdfundingImportScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final double topPadding = MediaQuery.of(context).padding.top + 90;
@@ -317,6 +325,7 @@ class _TransactionsViewState extends State<TransactionsView> {
                   onAddTransaction: _openAddTransactionModal,
                   onImportPdf: _openPdfImport,
                   onImportAi: _openAiImport,
+                  onImportCrowdfunding: _openCrowdfundingImport,
                 ),
               ),
 
