@@ -230,7 +230,11 @@ class TransactionFormState extends ChangeNotifier
     if (!formKey.currentState!.validate() || _selectedAccount == null) {
       if (_selectedAccount == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veuillez sélectionner un compte.'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Veuillez sélectionner un compte.'),
+            backgroundColor: Colors.red,
+            showCloseIcon: true,
+          ),
         );
       }
       return;
@@ -287,7 +291,11 @@ class TransactionFormState extends ChangeNotifier
         // Validation spécifique
         if (quantity == null || price == null) {
            ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Quantité ou Prix manquant.'), backgroundColor: Colors.red),
+            const SnackBar(
+              content: Text('Quantité ou Prix manquant.'),
+              backgroundColor: Colors.red,
+              showCloseIcon: true,
+            ),
           );
           return;
         }
@@ -300,7 +308,11 @@ class TransactionFormState extends ChangeNotifier
       case TransactionType.EarlyRepayment:
          if (quantity == null || price == null) {
            ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Quantité ou Prix manquant.'), backgroundColor: Colors.red),
+            const SnackBar(
+              content: Text('Quantité ou Prix manquant.'),
+              backgroundColor: Colors.red,
+              showCloseIcon: true,
+            ),
           );
           return;
         }
@@ -389,6 +401,7 @@ class TransactionFormState extends ChangeNotifier
           content: Text('Enregistré ! Reste $remaining transaction(s)...'),
           backgroundColor: Colors.blueAccent,
           duration: const Duration(seconds: 2),
+          showCloseIcon: true,
         ),
       );
 
@@ -397,7 +410,11 @@ class TransactionFormState extends ChangeNotifier
 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Transaction enregistrée.'), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text('Transaction enregistrée.'),
+          backgroundColor: Colors.green,
+          showCloseIcon: true,
+        ),
       );
       if (context.mounted) Navigator.of(context).pop();
     }

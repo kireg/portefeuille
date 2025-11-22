@@ -86,8 +86,9 @@ class _AiTransactionReviewScreenState extends State<AiTransactionReviewScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text("$successCount transactions importées !"),
-              backgroundColor: AppColors.success
+            content: Text("$successCount transactions importées !"),
+            backgroundColor: AppColors.success,
+            showCloseIcon: true,
           ),
         );
         Navigator.pop(context);
@@ -95,7 +96,11 @@ class _AiTransactionReviewScreenState extends State<AiTransactionReviewScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur: $e"), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text("Erreur: $e"),
+            backgroundColor: AppColors.error,
+            showCloseIcon: true,
+          ),
         );
       }
     } finally {

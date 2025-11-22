@@ -35,13 +35,14 @@ class CrowdfundingProjectionChart extends StatelessWidget {
     for (var p in displayProjections) {
       if (p.investedCapital > maxY) maxY = p.investedCapital;
       if (p.cumulativeInterest > maxY) maxY = p.cumulativeInterest;
+      if (p.availableLiquidity > maxY) maxY = p.availableLiquidity; // Nouveau max
     }
     maxY = maxY * 1.1; // Marge de 10%
     if (maxY == 0) maxY = 100;
 
-    // Largeur dynamique : 50px par année (environ 4px par mois)
+    // Largeur dynamique : 30px par mois pour une meilleure lisibilité et scroll
     // Minimum la largeur de l'écran
-    final double chartWidth = (displayProjections.length * 10.0).clamp(MediaQuery.of(context).size.width - 64, 2000.0);
+    final double chartWidth = (displayProjections.length * 30.0).clamp(MediaQuery.of(context).size.width - 64, 5000.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,6 +137,20 @@ class CrowdfundingProjectionChart extends StatelessWidget {
                       color: Colors.green.withValues(alpha: 0.1),
                     ),
                   ),
+                  // Ligne Liquidités Disponibles (Capital remboursé + Intérêts)
+                  LineChartBarData(
+                    spots: displayProjections.asMap().entries.map((e) {
+                      return FlSpot(e.key.toDouble(), e.value.availableLiquidity);
+                    }).toList(),
+                    isCurved: true,
+                    color: Colors.orange,
+                    barWidth: 3,
+                    dotData: const FlDotData(show: false),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: Colors.orange.withValues(alpha: 0.1),
+                    ),
+                  ),
                 ],
                 lineTouchData: LineTouchData(
                   touchTooltipData: LineTouchTooltipData(
@@ -146,7 +161,11 @@ class CrowdfundingProjectionChart extends StatelessWidget {
                         final data = displayProjections[index];
                         final dateStr = DateFormat('MMM yyyy').format(data.date);
                         
-                        String label = spot.barIndex == 0 ? "Capital" : "Intérêts";
+                        String label;
+                        if (spot.barIndex == 0) label = "Capital Investi";
+                        else if (spot.barIndex == 1) label = "Intérêts Cumulés";
+                        else label = "Liquidités Dispo";
+
                         return LineTooltipItem(
                           "$dateStr\n$label: ${NumberFormat.currency(symbol: '€').format(spot.y)}",
                           const TextStyle(color: Colors.white),
@@ -165,9 +184,11 @@ class CrowdfundingProjectionChart extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendItem(Colors.blue, "Capital Restant"),
+              _buildLegendItem(Colors.blue, "Capital Investi"),
               const SizedBox(width: 16),
               _buildLegendItem(Colors.green, "Intérêts Cumulés"),
+              const SizedBox(width: 16),
+              _buildLegendItem(Colors.orange, "Liquidités Dispo"),
             ],
           ),
         ),
@@ -226,7 +247,12 @@ class CrowdfundingProjectionChart extends StatelessWidget {
     // Initialiser les mois futurs (ex: 5 ans)
     for (int i = 0; i < 60; i++) {
       final date = DateTime(startDate.year, startDate.month + i, 1);
-      monthlyDataMap[date] = _MonthlyData(date: date, investedCapital: currentTotalCapital, cumulativeInterest: 0);
+      monthlyDataMap[date] = _MonthlyData(
+        date: date, 
+        investedCapital: currentTotalCapital, 
+        cumulativeInterest: 0,
+        availableLiquidity: 0,
+      );
     }
 
     // Appliquer les flux futurs
@@ -235,6 +261,7 @@ class CrowdfundingProjectionChart extends StatelessWidget {
 
     double cumulativeInterest = 0;
     double repaidCapital = 0;
+    double availableLiquidity = 0; // Cumul des retours (Capital + Intérêts)
 
     // Pour chaque mois, on regarde ce qui s'est passé AVANT ou PENDANT ce mois
     // Mais attention, 'currentTotalCapital' est le capital AUJOURD'HUI.
@@ -255,8 +282,10 @@ class CrowdfundingProjectionChart extends StatelessWidget {
       for (var flow in monthFlows) {
         if (flow.type == TransactionType.CapitalRepayment) {
           repaidCapital += flow.amount;
+          availableLiquidity += flow.amount; // Le capital remboursé devient dispo
         } else if (flow.type == TransactionType.Interest) {
           cumulativeInterest += flow.amount;
+          availableLiquidity += flow.amount; // Les intérêts payés deviennent dispo
         }
       }
 
@@ -264,6 +293,7 @@ class CrowdfundingProjectionChart extends StatelessWidget {
       // Le capital restant est le capital initial MOINS ce qui a été remboursé DEPUIS LE DÉBUT DE LA PROJECTION
       entry.value.investedCapital = currentTotalCapital - repaidCapital;
       entry.value.cumulativeInterest = cumulativeInterest;
+      entry.value.availableLiquidity = availableLiquidity;
     }
 
     return monthlyDataMap.values.toList()..sort((a, b) => a.date.compareTo(b.date));
@@ -274,10 +304,12 @@ class _MonthlyData {
   final DateTime date;
   double investedCapital;
   double cumulativeInterest;
+  double availableLiquidity; // Nouveau champ
 
   _MonthlyData({
     required this.date,
     required this.investedCapital,
     required this.cumulativeInterest,
+    this.availableLiquidity = 0.0,
   });
 }

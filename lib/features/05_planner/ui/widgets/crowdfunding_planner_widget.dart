@@ -49,7 +49,7 @@ class CrowdfundingPlannerWidget extends StatelessWidget {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
-            itemCount: projections.length > 20 ? 20 : projections.length, // Limite pour l'exemple
+            itemCount: projections.length, // Suppression de la limite arbitraire
             itemBuilder: (context, index) {
               final proj = projections[index];
               final isCapital = proj.type == TransactionType.CapitalRepayment;

@@ -155,7 +155,13 @@ class _ImportTransactionScreenState extends State<ImportTransactionScreen> {
 
   void _showError(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.red,
+        showCloseIcon: true,
+      ),
+    );
   }
 
   @override
