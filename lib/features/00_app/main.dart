@@ -23,6 +23,7 @@ import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
+import 'package:portefeuille/core/data/models/repayment_type.dart';
 
 // --- NOUVEAUX IMPORTS ---
 import 'package:portefeuille/core/data/models/portfolio_value_history_point.dart';
@@ -56,6 +57,7 @@ void main() async {
   Hive.registerAdapter(TransactionAdapter());
   Hive.registerAdapter(AssetTypeAdapter());
   Hive.registerAdapter(AssetMetadataAdapter());
+  Hive.registerAdapter(RepaymentTypeAdapter());
   // --- NOUVEAUX ADAPTERS ---
   Hive.registerAdapter(PortfolioValueHistoryPointAdapter());
   Hive.registerAdapter(PriceHistoryPointAdapter());

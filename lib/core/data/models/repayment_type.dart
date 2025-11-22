@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'repayment_type.g.dart';
 
-@HiveType(typeId: 10)
+@HiveType(typeId: 14)
 enum RepaymentType {
   @HiveField(0)
   InFine, // Capital + Intérêts à la fin
