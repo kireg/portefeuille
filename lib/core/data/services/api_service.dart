@@ -45,7 +45,7 @@ class TickerSuggestion {
 }
 
 // Objets de résultat pour un meilleur feedback
-enum ApiSource { Fmp, Yahoo, Cache, None }
+enum ApiSource { Fmp, Yahoo, Google, Cache, None }
 
 class PriceResult {
   final double? price;
@@ -111,10 +111,17 @@ class ApiService {
         }
       }
 
-      // 3. Stratégie 2 : Yahoo (Fallback ou si FMP n'a pas de clé)
+      // 3. Stratégie 2 : Google Finance (Scraping)
+      result = await _fetchFromGoogleFinance(ticker);
+      if (result != null) {
+        _priceCache[ticker] = _CacheEntry(result);
+        return result;
+      }
+
+      // 4. Stratégie 3 : Yahoo (Fallback ou si FMP n'a pas de clé)
       result = await _fetchFromYahoo(ticker);
 
-      // 4. Mettre à jour le cache et retourner
+      // 5. Mettre à jour le cache et retourner
       if (result != null) {
         _priceCache[ticker] = _CacheEntry(result);
         return result;
@@ -179,6 +186,52 @@ class ApiService {
       debugPrint("Erreur FMP pour $ticker: $e");
       return null;
     }
+  }
+
+  /// Tente de récupérer un prix via Google Finance (Scraping)
+  Future<PriceResult?> _fetchFromGoogleFinance(String ticker) async {
+    // Mapping basique pour Google Finance
+    String googleTicker = ticker;
+    if (ticker.endsWith('.PA')) {
+      googleTicker = '${ticker.replaceAll('.PA', '')}:EPA';
+    } else if (!ticker.contains(':') && !ticker.contains('.')) {
+      googleTicker = '$ticker:NASDAQ';
+    }
+
+    final url = 'https://www.google.com/finance/quote/$googleTicker';
+    
+    try {
+      debugPrint("🔄 Google Finance: Tentative pour $googleTicker");
+      final response = await _httpClient.get(Uri.parse(url));
+      
+      if (response.statusCode == 200) {
+        final body = response.body;
+        // Recherche du pattern de prix (très fragile, dépend du DOM Google)
+        // Pattern commun: <div class="YMlKec fxKbKc">123.45</div>
+        final regExp = RegExp(r'<div class="YMlKec fxKbKc">([^<]+)</div>');
+        final match = regExp.firstMatch(body);
+        
+        if (match != null) {
+          String priceStr = match.group(1) ?? "";
+          // Nettoyage du prix (enlever devises, virgules, etc)
+          priceStr = priceStr.replaceAll(RegExp(r'[^\d.,]'), '');
+          priceStr = priceStr.replaceAll(',', '.');
+          
+          final price = double.tryParse(priceStr);
+          if (price != null) {
+             return PriceResult(
+              price: price,
+              currency: "USD", // TODO: Parser la devise correctement
+              source: ApiSource.Google,
+              ticker: ticker,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Erreur Google Finance pour $ticker: $e");
+    }
+    return null;
   }
 
   /// Tente de récupérer un prix via Yahoo Finance (API 'spark')

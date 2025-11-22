@@ -25,6 +25,7 @@ import 'package:portefeuille/features/00_app/services/hydration_service.dart';
 import 'package:portefeuille/features/00_app/services/migration_service.dart';
 import 'package:portefeuille/features/00_app/services/sync_service.dart';
 import 'package:portefeuille/features/00_app/services/transaction_service.dart';
+import 'package:portefeuille/features/00_app/services/institution_service.dart';
 import 'package:uuid/uuid.dart';
 
 class PortfolioProvider extends ChangeNotifier {
@@ -40,6 +41,7 @@ class PortfolioProvider extends ChangeNotifier {
   late final DemoDataService _demoDataService;
   late final CalculationService _calculationService;
   late final BackupService _backupService;
+  late final InstitutionService _institutionService;
 
   // Settings
   SettingsProvider? _settingsProvider;
@@ -65,6 +67,7 @@ class PortfolioProvider extends ChangeNotifier {
   String? get syncMessage => _syncMessage;
   Map<String, AssetMetadata> get allMetadata =>
       _repository.getAllAssetMetadata();
+  InstitutionService get institutionService => _institutionService;
 
   // Getters - Données calculées
   String get currentBaseCurrency => _aggregatedData.baseCurrency;
@@ -120,6 +123,8 @@ class PortfolioProvider extends ChangeNotifier {
     _demoDataService = DemoDataService(repository: _repository, uuid: _uuid);
     _calculationService = CalculationService(apiService: _apiService);
     _backupService = BackupService();
+    _institutionService = InstitutionService();
+    _institutionService.loadInstitutions(); // Chargement asynchrone (fire & forget)
     loadAllPortfolios();
   }
 

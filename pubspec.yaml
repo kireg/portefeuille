@@ -33,6 +33,7 @@ dependencies:
   printing: ^5.11.0
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
+  syncfusion_flutter_pdf: ^31.2.12
 
 dev_dependencies:
   flutter_test:
@@ -47,11 +48,13 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/data/
+    - assets/logos/
 
-flutter_launcher_icons:
+flutter_icons:
   android: true
   ios: true
   windows:
     generate: true
-  # Spécifiez le chemin vers votre image source
   image_path: "assets/icon/icon.png"
