@@ -237,7 +237,13 @@ class TransactionFormState extends ChangeNotifier
 
     final double amount = double.tryParse(amountController.text.replaceAll(',', '.')) ?? 0.0;
     final double? quantity = double.tryParse(quantityController.text.replaceAll(',', '.'));
-    final double? price = double.tryParse(priceController.text.replaceAll(',', '.'));
+    
+    // Pour le Crowdfunding, le prix est implicitement 1.0 si non renseigné
+    double? price = double.tryParse(priceController.text.replaceAll(',', '.'));
+    if (_selectedAssetType == AssetType.RealEstateCrowdfunding && price == null) {
+      price = 1.0;
+    }
+
     final double fees = double.tryParse(feesController.text.replaceAll(',', '.')) ?? 0.0;
     final String? priceCurrency = priceCurrencyController.text.trim().isEmpty
         ? null
@@ -247,32 +253,58 @@ class TransactionFormState extends ChangeNotifier
     double finalAmount = 0.0;
     String? assetTicker, assetName;
 
+    // Helper pour générer un ticker si absent (Crowdfunding)
+    String getOrGenerateTicker() {
+      String t = tickerController.text.trim().toUpperCase();
+      if (t.isEmpty && _selectedAssetType == AssetType.RealEstateCrowdfunding) {
+        // Génère un ticker basé sur le nom (ex: "RESIDENCE LES PINS" -> "RESIDENCELESPINS")
+        t = nameController.text.trim().toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+        if (t.isEmpty) t = "CROWD_${DateTime.now().millisecondsSinceEpoch}";
+      }
+      return t;
+    }
+
     switch (_selectedType) {
       case TransactionType.Deposit:
+      case TransactionType.Interest:
         finalAmount = amount;
+        if (tickerController.text.isNotEmpty || nameController.text.isNotEmpty) {
+           assetTicker = getOrGenerateTicker();
+           assetName = nameController.text;
+        }
         break;
       case TransactionType.Withdrawal:
       case TransactionType.Fees:
         finalAmount = -amount;
         break;
       case TransactionType.Dividend:
-      case TransactionType.Interest:
         finalAmount = amount;
-        if (tickerController.text.isNotEmpty || nameController.text.isNotEmpty) {
-           assetTicker = tickerController.text.toUpperCase();
-           assetName = nameController.text;
-        }
+        assetTicker = getOrGenerateTicker();
+        assetName = nameController.text;
         break;
       case TransactionType.Buy:
-        finalAmount = -(quantity! * price! * (exchangeRate ?? 1.0));
-        assetTicker = tickerController.text.toUpperCase();
+        // Validation spécifique
+        if (quantity == null || price == null) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Quantité ou Prix manquant.'), backgroundColor: Colors.red),
+          );
+          return;
+        }
+        finalAmount = -(quantity * price * (exchangeRate ?? 1.0));
+        assetTicker = getOrGenerateTicker();
         assetName = nameController.text;
         break;
       case TransactionType.Sell:
       case TransactionType.CapitalRepayment:
       case TransactionType.EarlyRepayment:
-        finalAmount = (quantity! * price! * (exchangeRate ?? 1.0));
-        assetTicker = tickerController.text.toUpperCase();
+         if (quantity == null || price == null) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Quantité ou Prix manquant.'), backgroundColor: Colors.red),
+          );
+          return;
+        }
+        finalAmount = (quantity * price * (exchangeRate ?? 1.0));
+        assetTicker = getOrGenerateTicker();
         assetName = nameController.text;
         break;
     }
