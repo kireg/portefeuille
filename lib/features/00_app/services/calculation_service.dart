@@ -32,8 +32,14 @@ class CalculationService {
     }
 
     // 1. Récupérer tous les taux de change nécessaires
-    final rates = await _fetchExchangeRates(portfolio, targetCurrency);
+    final ratesResult = await _fetchExchangeRates(portfolio, targetCurrency);
+    final rates = ratesResult.rates;
+    final failedConversions = ratesResult.failed;
+    
     debugPrint("    -> ✅ Taux de change récupérés: $rates");
+    if (failedConversions.isNotEmpty) {
+      debugPrint("    -> ⚠️ Echecs de conversion: $failedConversions");
+    }
 
     // 2. Calculer les valeurs converties
     final result = _computeAggregatedData(
@@ -41,6 +47,7 @@ class CalculationService {
       targetCurrency: targetCurrency,
       rates: rates,
       allMetadata: allMetadata,
+      failedConversions: failedConversions,
     );
 
     debugPrint("    -> ✅ Calculs terminés.");
@@ -50,7 +57,7 @@ class CalculationService {
     return result;
   }
 
-  Future<Map<String, double>> _fetchExchangeRates(
+  Future<({Map<String, double> rates, List<String> failed})> _fetchExchangeRates(
       Portfolio portfolio,
       String targetCurrency,
       ) async {
@@ -63,6 +70,7 @@ class CalculationService {
     debugPrint("    -> Devises de compte trouvées: $accountCurrencies");
 
     final rates = <String, double>{};
+    final failed = <String>[];
 
     await Future.wait(
       accountCurrencies.map((accountCurrency) async {
@@ -86,13 +94,14 @@ class CalculationService {
           debugPrint(
               "    -> ⚠️ (L'API a échoué ET le cache était vide). Utilisation du taux de 1.0 comme fallback.");
           rates[accountCurrency] = 1.0;
+          failed.add(accountCurrency);
           // rethrow; // <-- SUPPRIMÉ
           // --- ▲▲▲ FIN CORRECTION ▲▲▲
         }
       }),
     );
 
-    return rates;
+    return (rates: rates, failed: failed);
   }
 
   AggregatedPortfolioData _computeAggregatedData({
@@ -100,6 +109,7 @@ class CalculationService {
     required String targetCurrency,
     required Map<String, double> rates,
     required Map<String, AssetMetadata> allMetadata,
+    required List<String> failedConversions,
   }) {
     double totalValue = 0.0;
     double totalPL = 0.0;
@@ -189,6 +199,7 @@ class CalculationService {
       aggregatedAssets: aggregatedAssets,
       valueByAssetType: aggregatedValueByType,
       estimatedAnnualYield: estimatedAnnualYield,
+      failedConversions: failedConversions,
     );
   }
 

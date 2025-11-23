@@ -150,13 +150,16 @@ class PortfolioHeader extends StatelessWidget {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 16, color: color),
               const SizedBox(width: 8),
-              Expanded(
+              Flexible(
                 child: Text(
                   label,
                   style: AppTypography.caption.copyWith(
@@ -164,6 +167,7 @@ class PortfolioHeader extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
               ),
             ],
@@ -175,6 +179,7 @@ class PortfolioHeader extends StatelessWidget {
               color: color,
               fontSize: 18,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

@@ -90,15 +90,10 @@ class _AppAnimatedBackgroundState extends State<AppAnimatedBackground>
           },
         ),
 
-        // 3. Flou Massif (Mesh Effect)
-        // C'est ce qui transforme les ronds en "nuages" de couleur
-        BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 80.0, sigmaY: 80.0),
-          child: Container(
-            color: Colors.transparent,
-          ),
-        ),
-
+        // 3. Flou Massif (Mesh Effect) - REMPLACÉ PAR DES GRADIENTS
+        // L'ancien BackdropFilter était trop coûteux en performances.
+        // Les orbes utilisent maintenant des RadialGradients pour l'effet de flou.
+        
         // 4. Filtre de bruit (Optionnel, pour la texture "Papier")
         // On ajoute un voile très léger pour unifier le tout
         Container(
@@ -119,7 +114,13 @@ class _AppAnimatedBackgroundState extends State<AppAnimatedBackground>
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color.withValues(alpha: 0.4), // Transparence de base
+        gradient: RadialGradient(
+          colors: [
+            color.withValues(alpha: 0.5),
+            color.withValues(alpha: 0.0),
+          ],
+          stops: const [0.0, 0.7], // Fade out before the edge
+        ),
       ),
     );
   }

@@ -52,6 +52,10 @@ class PortfolioCalculationProvider extends ChangeNotifier {
   bool get hasCrowdfunding =>
       (_aggregatedData.valueByAssetType[AssetType.RealEstateCrowdfunding] ?? 0.0) > 0;
 
+  // Gestion des erreurs de conversion
+  List<String> get failedConversions => _aggregatedData.failedConversions;
+  bool get hasConversionError => _aggregatedData.failedConversions.isNotEmpty;
+
   PortfolioCalculationProvider({
     required CalculationService calculationService,
     required PortfolioProvider portfolioProvider,

@@ -38,6 +38,9 @@ class AggregatedPortfolioData {
   /// Rendement annuel estimé du portefeuille (pondéré)
   final double estimatedAnnualYield;
 
+  /// Liste des devises pour lesquelles la conversion a échoué (fallback à 1.0)
+  final List<String> failedConversions;
+
   AggregatedPortfolioData({
     required this.baseCurrency,
     required this.totalValue,
@@ -50,7 +53,8 @@ class AggregatedPortfolioData {
     required this.assetPLs,
     required this.aggregatedAssets,
     required this.valueByAssetType,
-    this.estimatedAnnualYield = 0.0,
+    required this.estimatedAnnualYield,
+    this.failedConversions = const [],
   });
 
   /// Construit une instance vide par défaut.
@@ -67,5 +71,6 @@ class AggregatedPortfolioData {
     aggregatedAssets: [],
     valueByAssetType: {},
     estimatedAnnualYield: 0.0,
+    failedConversions: [],
   );
 }

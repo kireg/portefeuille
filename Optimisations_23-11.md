@@ -49,29 +49,42 @@ L'importation ligne par ligne (`addTransaction`) déclenche un recalcul complet 
     *   Ajouter `saveTransactions(List<Transaction> transactions)` dans `PortfolioRepository`.
     *   Optimiser pour une écriture groupée (Batch Write) dans Hive.
 
-*   [x] **TransactionProvider (Nouveau)** :
-    *   Implémenter une méthode `addTransactions(List<Transaction> transactions)`.
+*   [x] **TransactionProvider** :
+    *   Implémenter `addTransactions(List<Transaction> transactions)`.
     *   Cette méthode doit :
-        1.  Appeler le repository pour le batch save.
-        2.  Mettre à jour les prix des actifs en une seule passe (Batch Update).
-        3.  Notifier le `PortfolioProvider` **une seule fois** à la fin pour rafraîchir l'état global.
+        1.  Sauvegarder toutes les transactions en une fois.
+        2.  Mettre à jour les prix des assets concernés (si nécessaire).
+        3.  Ne notifier les écouteurs qu'une seule fois à la fin.
 
-*   [x] **UI (Refactoring)** :
-    *   Mettre à jour `CrowdfundingImportScreen`, `PdfImportScreen`, et `AiTransactionReviewScreen` pour utiliser cette nouvelle méthode du `TransactionProvider`.
+*   [x] **UI Import (Crowdfunding / PDF / Wizard)** :
+    *   Remplacer les boucles `for (tx in list) provider.addTransaction(tx)` par `provider.addTransactions(list)`.
 
 ---
 
-## 3. 🟠 Performance Graphique : Rendu de l'Arrière-plan
+## 2.5. 🎨 UI : Centrage des Cards Overview
+
+**Demande :**
+Centrer horizontalement et verticalement le contenu des cartes dans la section "Solde total" de l'onglet Overview.
+
+**Tâches à accomplir :**
+
+*   [x] **PortfolioHeader** :
+    *   Modifier `_buildSummaryCard` pour centrer le contenu (Icon + Label et Valeur).
+
+---
+
+## 3. 🟡 Performance Graphique : Rendu de l'Arrière-plan
 
 **Problème :**
 Le widget `AppAnimatedBackground` utilise un `BackdropFilter` (flou temps réel) très coûteux en ressources GPU sur chaque écran.
 
 **Tâches à accomplir :**
 
-*   [ ] **Optimisation** :
+*   [x] **Optimisation** :
     *   Remplacer la stack `Container` + `BackdropFilter` par une solution performante.
     *   **Option A (Shader)** : Utiliser un `MeshGradient` pour un rendu natif fluide.
     *   **Option B (Image)** : Utiliser une image pré-calculée ou un asset statique animé par opacité.
+    *   *Solution retenue : Remplacement des orbes solides + BackdropFilter par des orbes avec RadialGradient.*
 
 ---
 
@@ -82,7 +95,7 @@ Les erreurs de taux de change sont silencieuses. L'utilisateur peut voir des val
 
 **Tâches à accomplir :**
 
-*   [ ] **PortfolioCalculationProvider (Nouveau)** :
+*   [x] **PortfolioCalculationProvider (Nouveau)** :
     *   Ajouter un état d'erreur (`hasConversionError`, `failedCurrencies`).
     *   Stocker les paires de devises en échec lors du calcul.
 
