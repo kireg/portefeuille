@@ -5,24 +5,23 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:portefeuille/features/07_management/services/excel/la_premiere_brique_parser.dart';
 import 'package:portefeuille/features/07_management/services/excel/parsed_crowdfunding_project.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
-import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
-import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
-import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
-import 'package:portefeuille/core/data/models/transaction_type.dart';
-import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
-import 'package:portefeuille/core/data/models/repayment_type.dart';
-import 'package:portefeuille/core/ui/widgets/feedback/premium_help_button.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/core/data/models/transaction_type.dart';
+import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
+import 'package:portefeuille/features/07_management/ui/widgets/crowdfunding_import/crowdfunding_header.dart';
+import 'package:portefeuille/features/07_management/ui/widgets/crowdfunding_import/crowdfunding_account_selector.dart';
+import 'package:portefeuille/features/07_management/ui/widgets/crowdfunding_import/crowdfunding_file_picker.dart';
+import 'package:portefeuille/features/07_management/ui/widgets/crowdfunding_import/crowdfunding_project_list.dart';
+import 'package:portefeuille/features/07_management/ui/widgets/crowdfunding_import/crowdfunding_edit_dialog.dart';
 
 class CrowdfundingImportScreen extends StatefulWidget {
   const CrowdfundingImportScreen({super.key});
@@ -75,129 +74,15 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
   }
 
   void _editProject(int index) {
-    final project = _extractedProjects[index];
-    final nameController = TextEditingController(text: project.projectName);
-    final amountController = TextEditingController(text: project.investedAmount.toString());
-    final yieldController = TextEditingController(text: project.yieldPercent.toString());
-    final minDurationController = TextEditingController(text: (project.minDurationMonths ?? project.durationMonths).toString());
-    final targetDurationController = TextEditingController(text: project.durationMonths.toString());
-    final maxDurationController = TextEditingController(text: (project.maxDurationMonths ?? project.durationMonths).toString());
-    final cityController = TextEditingController(text: project.city ?? '');
-    
-    RepaymentType selectedRepayment = project.repaymentType;
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceLight,
-        title: Text('Modifier le projet', style: AppTypography.h3),
-        content: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.8,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Nom du projet'),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: amountController,
-                      decoration: const InputDecoration(labelText: 'Montant (€)'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: yieldController,
-                      decoration: const InputDecoration(labelText: 'Rendement (%)'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: minDurationController,
-                      decoration: const InputDecoration(labelText: 'Durée Min (mois)'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: targetDurationController,
-                      decoration: const InputDecoration(labelText: 'Durée Cible (mois)'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: maxDurationController,
-                      decoration: const InputDecoration(labelText: 'Durée Max (mois)'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<RepaymentType>(
-                value: selectedRepayment,
-                decoration: const InputDecoration(labelText: 'Remboursement'),
-                items: RepaymentType.values.map((t) => DropdownMenuItem(
-                  value: t,
-                  child: Text(t.displayName),
-                )).toList(),
-                onChanged: (val) {
-                  if (val != null) selectedRepayment = val;
-                },
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: cityController,
-                decoration: const InputDecoration(labelText: 'Ville'),
-              ),
-            ],
-          ),
-        ),
-      ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          FilledButton(
-            onPressed: () {
-              setState(() {
-                _extractedProjects[index] = ParsedCrowdfundingProject(
-                  projectName: nameController.text,
-                  platform: project.platform,
-                  investmentDate: project.investmentDate,
-                  investedAmount: double.tryParse(amountController.text) ?? project.investedAmount,
-                  yieldPercent: double.tryParse(yieldController.text) ?? project.yieldPercent,
-                  durationMonths: int.tryParse(targetDurationController.text) ?? project.durationMonths,
-                  minDurationMonths: int.tryParse(minDurationController.text),
-                  maxDurationMonths: int.tryParse(maxDurationController.text),
-                  repaymentType: selectedRepayment,
-                  city: cityController.text,
-                  country: project.country,
-                  riskRating: project.riskRating,
-                );
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Enregistrer'),
-          ),
-        ],
+      builder: (context) => CrowdfundingEditDialog(
+        project: _extractedProjects[index],
+        onSave: (newProject) {
+          setState(() {
+            _extractedProjects[index] = newProject;
+          });
+        },
       ),
     );
   }
@@ -333,16 +218,6 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final accounts = context.watch<PortfolioProvider>()
-        .portfolios
-        .expand((p) => p.institutions)
-        .expand((i) => i.accounts)
-        .toList();
-
-    final selectedAccountReal = _selectedAccount == null 
-        ? null 
-        : accounts.firstWhere((a) => a.id == _selectedAccount!.id, orElse: () => _selectedAccount!);
-
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(AppDimens.radiusL),
@@ -352,267 +227,66 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
         body: Column(
           children: [
             // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppDimens.paddingL,
-                  AppDimens.paddingL,
-                  AppDimens.paddingM,
-                  AppDimens.paddingM
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      'Import Crowdfunding',
-                      style: AppTypography.h2,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: const PremiumHelpButton(
-                      title: "Guide d'import",
-                      content: "Pour importer vos investissements :\n\n1. Connectez-vous à votre espace client La Première Brique.\n2. Allez dans la section 'Mes Investissements'.\n3. Cliquez sur le bouton 'Exporter' (format Excel).\n4. Sélectionnez le fichier téléchargé ici.\n\nCe fichier contient tous les détails nécessaires (Montant, Durée, Taux, etc.) pour un suivi précis.",
-                      visual: Icon(Icons.table_view_rounded, size: 48, color: AppColors.primary),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: AppIcon(
-                      icon: Icons.close,
-                      onTap: () => Navigator.of(context).pop(),
-                      backgroundColor: Colors.transparent,
-                      size: 24,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            const CrowdfundingHeader(),
 
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
                 children: [
                   // 1. Account Selection
-                  FadeInSlide(
-                    delay: 0.1,
-                    child: AppCard(
-                      padding: const EdgeInsets.all(AppDimens.paddingM),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Compte de destination", style: AppTypography.h3),
-                          const SizedBox(height: AppDimens.paddingS),
-                          DropdownButtonFormField<Account>(
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            ),
-                            value: _selectedAccount,
-                            isExpanded: true,
-                            items: () {
-                              // Group accounts by institution
-                              final groupedAccounts = <String, List<Account>>{};
-                              for (var acc in accounts) {
-                                // Find institution name for this account
-                                final inst = context.read<PortfolioProvider>().activePortfolio?.institutions.firstWhere(
-                                  (i) => i.accounts.any((a) => a.id == acc.id),
-                                );
-                                final instName = inst?.name ?? "Autre";
-                                groupedAccounts.putIfAbsent(instName, () => []).add(acc);
-                              }
-
-                              final items = <DropdownMenuItem<Account>>[];
-                              groupedAccounts.forEach((instName, accs) {
-                                // Add Institution Header (disabled)
-                                items.add(DropdownMenuItem<Account>(
-                                  enabled: false,
-                                  child: Text(
-                                    instName.toUpperCase(),
-                                    style: AppTypography.caption.copyWith(
-                                      color: AppColors.textSecondary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ));
-                                // Add Accounts
-                                for (var acc in accs) {
-                                  items.add(DropdownMenuItem<Account>(
-                                    value: acc,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 16.0),
-                                      child: Text(acc.name, style: AppTypography.body),
-                                    ),
-                                  ));
-                                }
-                              });
-                              return items;
-                            }(),
-                            onChanged: (val) => setState(() => _selectedAccount = val),
-                          ),
-                        ],
-                      ),
-                    ),
+                  CrowdfundingAccountSelector(
+                    selectedAccount: _selectedAccount,
+                    onChanged: (val) => setState(() => _selectedAccount = val),
                   ),
 
                   const SizedBox(height: AppDimens.paddingM),
 
                   // 2. File Picker
-                  FadeInSlide(
-                    delay: 0.2,
-                    child: AppCard(
-                      padding: const EdgeInsets.all(AppDimens.paddingM),
-                      child: Column(
-                        children: [
-                          if (_fileName == null)
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(AppDimens.paddingL),
-                              decoration: BoxDecoration(
-                                color: AppColors.background.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(AppDimens.radiusM),
-                                border: Border.all(
-                                  color: AppColors.textSecondary.withOpacity(0.2),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary.withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.table_view_rounded,
-                                      size: 32,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppDimens.paddingM),
-                                  Text(
-                                    "Importez votre fichier Excel",
-                                    style: AppTypography.h3,
-                                  ),
-                                  const SizedBox(height: AppDimens.paddingXS),
-                                  Text(
-                                    "Formats supportés : .xlsx, .xls",
-                                    style: AppTypography.body.copyWith(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppDimens.paddingL),
-                                  AppButton(
-                                    label: "Sélectionner le fichier",
-                                    icon: Icons.folder_open,
-                                    onPressed: _pickFile,
-                                  ),
-                                ],
-                              ),
-                            )
-                          else
-                            ListTile(
-                              leading: const Icon(Icons.insert_drive_file, color: AppColors.primary),
-                              title: Text(_fileName!, style: AppTypography.bodyBold),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.close),
-                                onPressed: () => setState(() {
-                                  _fileName = null;
-                                  _extractedProjects = [];
-                                }),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+                  CrowdfundingFilePicker(
+                    fileName: _fileName,
+                    onPickFile: _pickFile,
+                    onClearFile: () => setState(() {
+                      _fileName = null;
+                      _extractedProjects = [];
+                    }),
                   ),
 
                   const SizedBox(height: AppDimens.paddingM),
 
                   // List of Projects
-                  if (_loadingStatus != null)
-                    Center(
-                      child: Column(
-                        children: [
-                          const CircularProgressIndicator(),
-                          const SizedBox(height: 16),
-                          Text(_loadingStatus!, style: AppTypography.body),
-                        ],
-                      ),
-                    )
-                  else if (_extractedProjects.isNotEmpty)
-                    ..._extractedProjects.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final project = entry.value;
-                      final isDuplicate = selectedAccountReal != null && selectedAccountReal.transactions.any((t) =>
-                          t.assetName == project.projectName &&
-                          (t.amount - project.investedAmount).abs() < 0.01 &&
-                          (project.investmentDate == null || isSameDay(t.date, project.investmentDate!)));
-
-                      return FadeInSlide(
-                        delay: 0.2 + (index * 0.05),
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: AppDimens.paddingS),
-                          child: Dismissible(
-                            key: ValueKey(project.projectName),
-                            direction: DismissDirection.endToStart,
-                            onDismissed: (_) => _removeProject(index),
-                            background: Container(
-                              color: AppColors.error,
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
-                              child: const Icon(Icons.delete, color: Colors.white),
-                            ),
-                            child: AppCard(
-                              backgroundColor: isDuplicate ? AppColors.warning.withOpacity(0.1) : null,
-                              onTap: () => _editProject(index),
-                              child: ListTile(
-                                title: Row(
-                                  children: [
-                                    Expanded(child: Text(project.projectName, style: AppTypography.bodyBold)),
-                                    if (isDuplicate)
-                                      const Tooltip(
-                                        message: "Ce projet existe déjà et sera ignoré",
-                                        child: Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 20),
-                                      ),
-                                  ],
-                                ),
-                                subtitle: Text(
-                                  "${project.investedAmount} € • ${project.yieldPercent}% • ${project.durationMonths} mois",
-                                  style: AppTypography.caption,
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      project.repaymentType.displayName,
-                                      style: AppTypography.caption.copyWith(color: AppColors.primary),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Icon(Icons.edit, size: 16, color: AppColors.textSecondary),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
+                  CrowdfundingProjectList(
+                    projects: _extractedProjects,
+                    selectedAccount: _selectedAccount,
+                    onEdit: _editProject,
+                    onRemove: _removeProject,
+                    loadingStatus: _loadingStatus,
+                  ),
                 ],
               ),
             ),
 
-            // Footer Actions
-            if (_extractedProjects.isNotEmpty)
-              Padding(
+            // Bottom Action Bar
+            if (_extractedProjects.isNotEmpty && _loadingStatus == null)
+              Container(
                 padding: const EdgeInsets.all(AppDimens.paddingM),
-                child: AppButton(
-                  label: "Importer ${_extractedProjects.length} projets",
-                  onPressed: _loadingStatus != null ? null : _importProjects,
-                  isFullWidth: true,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: AppButton(
+                    label: "Importer ${_extractedProjects.length} projets",
+                    icon: Icons.download_rounded,
+                    onPressed: _importProjects,
+                    isFullWidth: true,
+                  ),
                 ),
               ),
           ],

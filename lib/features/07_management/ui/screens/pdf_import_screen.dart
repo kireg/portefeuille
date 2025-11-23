@@ -9,16 +9,19 @@ import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
-import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
+
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/utils/isin_validator.dart';
-import 'package:portefeuille/core/ui/widgets/feedback/premium_help_button.dart';
+
+import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_header.dart';
+import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_account_selector.dart';
+import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_file_picker.dart';
+import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_transaction_list.dart';
+import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_edit_dialog.dart';
 
 class PdfImportScreen extends StatefulWidget {
   const PdfImportScreen({super.key});
@@ -65,74 +68,15 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
   }
 
   void _editTransaction(int index) {
-    final tx = _extractedTransactions[index];
-    final nameController = TextEditingController(text: tx.assetName);
-    final tickerController = TextEditingController(text: tx.ticker);
-    final isinController = TextEditingController(text: tx.isin);
-    final qtyController = TextEditingController(text: tx.quantity.toString());
-    final priceController = TextEditingController(text: tx.price.toString());
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceLight,
-        title: Text('Modifier la transaction', style: AppTypography.h3),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Nom de l\'actif'),
-              ),
-              TextField(
-                controller: tickerController,
-                decoration: const InputDecoration(labelText: 'Ticker (ex: AAPL)'),
-              ),
-              TextField(
-                controller: isinController,
-                decoration: const InputDecoration(labelText: 'ISIN (ex: FR0000120073)'),
-              ),
-              TextField(
-                controller: qtyController,
-                decoration: const InputDecoration(labelText: 'Quantité'),
-                keyboardType: TextInputType.number,
-              ),
-              TextField(
-                controller: priceController,
-                decoration: const InputDecoration(labelText: 'Prix unitaire'),
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Annuler', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _extractedTransactions[index] = ParsedTransaction(
-                  date: tx.date,
-                  type: tx.type,
-                  assetName: nameController.text,
-                  ticker: tickerController.text.isEmpty ? null : tickerController.text,
-                  isin: isinController.text.isEmpty ? null : isinController.text,
-                  quantity: double.tryParse(qtyController.text) ?? tx.quantity,
-                  price: double.tryParse(priceController.text) ?? tx.price,
-                  amount: (double.tryParse(qtyController.text) ?? tx.quantity) * 
-                          (double.tryParse(priceController.text) ?? tx.price),
-                  fees: tx.fees,
-                  currency: tx.currency,
-                );
-              });
-              Navigator.pop(context);
-            },
-            child: Text('Enregistrer', style: AppTypography.label.copyWith(color: AppColors.primary)),
-          ),
-        ],
+      builder: (context) => PdfEditDialog(
+        transaction: _extractedTransactions[index],
+        onSave: (newTx) {
+          setState(() {
+            _extractedTransactions[index] = newTx;
+          });
+        },
       ),
     );
   }
@@ -298,13 +242,12 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
         .toList() ?? [];
 
     // Get existing transactions for duplicate check
-    final existingTransactions = _selectedAccount != null 
-        ? provider.activePortfolio?.institutions
-            .expand((inst) => inst.accounts)
+    final existingTransactions = _selectedAccount == null 
+        ? <Transaction>[]
+        : accounts
             .where((acc) => acc.id == _selectedAccount!.id)
             .expand((acc) => acc.transactions)
-            .toList() ?? []
-        : <Transaction>[];
+            .toList();
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(
@@ -315,294 +258,68 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
         body: Column(
           children: [
             // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppDimens.paddingL,
-                  AppDimens.paddingL,
-                  AppDimens.paddingM,
-                  AppDimens.paddingM
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      'Import PDF',
-                      style: AppTypography.h2,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: const PremiumHelpButton(
-                      title: "Guide d'import PDF",
-                      content: "Importez vos relevés de compte ou avis d'opéré au format PDF.\n\nBanques supportées :\n• BoursoBank (Relevé mensuel)\n• Fortuneo (Avis d'opéré)\n• Trade Republic (Relevé de compte)\n\nAssurez-vous que le fichier est un PDF original (non scanné).",
-                      visual: Icon(Icons.picture_as_pdf_rounded, size: 48, color: AppColors.primary),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: AppIcon(
-                      icon: Icons.close,
-                      onTap: () => Navigator.of(context).pop(),
-                      backgroundColor: Colors.transparent,
-                      size: 24,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            const PdfHeader(),
 
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
                 children: [
                   // 1. Account Selection
-                  FadeInSlide(
-                    delay: 0.1,
-                    child: AppCard(
-                      padding: const EdgeInsets.all(AppDimens.paddingM),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Compte de destination", style: AppTypography.h3),
-                          const SizedBox(height: AppDimens.paddingS),
-                          DropdownButtonFormField<Account>(
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            ),
-                            value: _selectedAccount,
-                            isExpanded: true,
-                            items: () {
-                              // Group accounts by institution
-                              final groupedAccounts = <String, List<Account>>{};
-                              for (var acc in accounts) {
-                                // Find institution name for this account
-                                final inst = provider.activePortfolio?.institutions.firstWhere(
-                                  (i) => i.accounts.any((a) => a.id == acc.id),
-                                );
-                                final instName = inst?.name ?? "Autre";
-                                groupedAccounts.putIfAbsent(instName, () => []).add(acc);
-                              }
-
-                              final items = <DropdownMenuItem<Account>>[];
-                              groupedAccounts.forEach((instName, accs) {
-                                // Add Institution Header (disabled)
-                                items.add(DropdownMenuItem<Account>(
-                                  enabled: false,
-                                  child: Text(
-                                    instName.toUpperCase(),
-                                    style: AppTypography.caption.copyWith(
-                                      color: AppColors.textSecondary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ));
-                                // Add Accounts
-                                for (var acc in accs) {
-                                  items.add(DropdownMenuItem<Account>(
-                                    value: acc,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 16.0),
-                                      child: Text(acc.name, style: AppTypography.body),
-                                    ),
-                                  ));
-                                }
-                              });
-                              return items;
-                            }(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedAccount = value;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
+                  PdfAccountSelector(
+                    selectedAccount: _selectedAccount,
+                    onChanged: (val) => setState(() => _selectedAccount = val),
                   ),
-                  
+
                   const SizedBox(height: AppDimens.paddingM),
 
                   // 2. File Picker
-                  FadeInSlide(
-                    delay: 0.2,
-                    child: AppCard(
-                      padding: const EdgeInsets.all(AppDimens.paddingM),
-                      child: Column(
-                        children: [
-                          if (_fileName == null)
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(AppDimens.paddingL),
-                              decoration: BoxDecoration(
-                                color: AppColors.background.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(AppDimens.radiusM),
-                                border: Border.all(
-                                  color: AppColors.textSecondary.withOpacity(0.2),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary.withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.upload_file_rounded,
-                                      size: 32,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppDimens.paddingM),
-                                  Text(
-                                    "Déposez votre PDF ici",
-                                    style: AppTypography.h3,
-                                  ),
-                                  const SizedBox(height: AppDimens.paddingXS),
-                                  Text(
-                                    "Relevés bancaires ou avis d'opéré",
-                                    style: AppTypography.body.copyWith(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppDimens.paddingL),
-                                  AppButton(
-                                    label: 'Sélectionner un PDF',
-                                    onPressed: _pickPdf,
-                                    icon: Icons.folder_open,
-                                  ),
-                                ],
-                              ),
-                            )
-                          else
-                            Row(
-                              children: [
-                                const AppIcon(icon: Icons.description, backgroundColor: AppColors.surfaceLight),
-                                const SizedBox(width: AppDimens.paddingS),
-                                Expanded(child: Text(_fileName!, style: AppTypography.bodyBold)),
-                                IconButton(
-                                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
-                                  onPressed: () {
-                                    setState(() {
-                                      _fileName = null;
-                                      _extractedTransactions = [];
-                                    });
-                                  },
-                                )
-                              ],
-                            ),
-                          
-                          if (_isLoading)
-                            const Padding(
-                              padding: EdgeInsets.only(top: AppDimens.paddingM),
-                              child: LinearProgressIndicator(),
-                            ),
-                        ],
-                      ),
-                    ),
+                  PdfFilePicker(
+                    fileName: _fileName,
+                    onPickFile: _pickPdf,
+                    onClearFile: () => setState(() {
+                      _fileName = null;
+                      _extractedTransactions = [];
+                    }),
                   ),
 
                   const SizedBox(height: AppDimens.paddingM),
 
-                  // 3. Preview List
-                  if (_extractedTransactions.isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppDimens.paddingS),
-                      child: Text("Aperçu (${_extractedTransactions.length})", style: AppTypography.h3),
-                    ),
-                    ..._extractedTransactions.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final tx = entry.value;
-                      final hasTicker = tx.ticker != null && tx.ticker!.isNotEmpty;
-                      final hasIsin = tx.isin != null && IsinValidator.isValidIsinFormat(tx.isin!);
-                      final isReady = (hasTicker || hasIsin) && tx.assetName.isNotEmpty;
-                      final isDuplicate = _isDuplicate(tx, existingTransactions);
-
-                      return FadeInSlide(
-                        delay: 0.3 + (index * 0.05),
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: AppDimens.paddingS),
-                          child: AppCard(
-                            padding: EdgeInsets.zero,
-                            child: ListTile(
-                              leading: Tooltip(
-                                message: isDuplicate 
-                                    ? "Doublon détecté" 
-                                    : (isReady ? "Prêt à importer" : "ISIN ou Ticker manquant/invalide"),
-                                child: AppIcon(
-                                  icon: isDuplicate 
-                                      ? Icons.copy 
-                                      : (isReady ? Icons.check : Icons.warning_amber_rounded),
-                                  backgroundColor: isDuplicate 
-                                      ? AppColors.error.withOpacity(0.1) 
-                                      : (isReady ? AppColors.success.withOpacity(0.1) : AppColors.warning.withOpacity(0.1)),
-                                  color: isDuplicate 
-                                      ? AppColors.error 
-                                      : (isReady ? AppColors.success : AppColors.warning),
-                                  size: 24,
-                                ),
-                              ),
-                              title: Text(tx.assetName, style: AppTypography.bodyBold),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${tx.type.name} • ${tx.quantity} x ${tx.price} ${tx.currency}',
-                                    style: AppTypography.caption,
-                                  ),
-                                  Text(
-                                    '${tx.date.day}/${tx.date.month}/${tx.date.year}${tx.isin != null ? ' • ${tx.isin}' : ''}',
-                                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-                                  ),
-                                  if (isDuplicate)
-                                    Text(
-                                      "Doublon détecté",
-                                      style: AppTypography.caption.copyWith(color: AppColors.error),
-                                    ),
-                                ],
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit, color: AppColors.primary),
-                                    onPressed: () => _editTransaction(index),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete, color: AppColors.error),
-                                    onPressed: () => _removeTransaction(index),
-                                  ),
-                                ],
-                              ),
-                              onTap: () => _editTransaction(index),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-
-                    const SizedBox(height: AppDimens.paddingL),
-
-                    // 4. Validation Button
-                    FadeInSlide(
-                      delay: 0.5,
-                      child: AppButton(
-                        label: 'Importer ${_extractedTransactions.length} transactions',
-                        onPressed: _validateImport,
-                        icon: Icons.check,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                  ],
+                  // List of Transactions
+                  PdfTransactionList(
+                    transactions: _extractedTransactions,
+                    existingTransactions: existingTransactions,
+                    onEdit: _editTransaction,
+                    onRemove: _removeTransaction,
+                    isLoading: _isLoading,
+                  ),
                 ],
               ),
             ),
+
+            // Bottom Action Bar
+            if (_extractedTransactions.isNotEmpty && !_isLoading)
+              Container(
+                padding: const EdgeInsets.all(AppDimens.paddingM),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: AppButton(
+                    label: "Valider l'import (${_extractedTransactions.length})",
+                    icon: Icons.check_circle,
+                    onPressed: _validateImport,
+                    isFullWidth: true,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
