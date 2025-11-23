@@ -7,6 +7,8 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CrowdfundingProjectList extends StatelessWidget {
   final List<ParsedCrowdfundingProject> projects;
@@ -28,6 +30,13 @@ class CrowdfundingProjectList extends StatelessWidget {
     return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
   }
 
+  Future<void> _launchUrl() async {
+    final Uri url = Uri.parse('https://www.lapremierebrique.fr/');
+    if (!await launchUrl(url)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loadingStatus != null) {
@@ -46,10 +55,30 @@ class CrowdfundingProjectList extends StatelessWidget {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(AppDimens.paddingL),
-          child: Text(
-            "Aucun projet à importer.\nSélectionnez un fichier Excel.",
-            textAlign: TextAlign.center,
-            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.real_estate_agent_rounded, size: 64, color: AppColors.primary),
+              const SizedBox(height: AppDimens.paddingM),
+              Text(
+                "Importez vos projets La Première Brique",
+                textAlign: TextAlign.center,
+                style: AppTypography.h3,
+              ),
+              const SizedBox(height: AppDimens.paddingS),
+              Text(
+                "1. Connectez-vous à votre compte La Première Brique\n2. Allez dans 'Mes Prêts' et téléchargez l'export Excel\n3. Importez le fichier ici",
+                textAlign: TextAlign.center,
+                style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: AppDimens.paddingL),
+              AppButton(
+                label: "Ouvrir La Première Brique",
+                icon: Icons.open_in_new,
+                type: AppButtonType.secondary,
+                onPressed: _launchUrl,
+              ),
+            ],
           ),
         ),
       );
