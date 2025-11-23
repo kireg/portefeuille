@@ -14,6 +14,7 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/utils/isin_validator.dart';
@@ -177,6 +178,7 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
     }
 
     final provider = Provider.of<PortfolioProvider>(context, listen: false);
+    final transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
     
     // Get existing transactions for duplicate check
     final existingTransactions = provider.activePortfolio?.institutions
@@ -250,7 +252,7 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
       if (shouldContinue != true) return;
     }
 
-    int count = 0;
+    final newTransactions = <Transaction>[];
 
     for (final parsed in _extractedTransactions) {
       // Conversion ParsedTransaction -> Transaction
@@ -270,9 +272,14 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
         priceCurrency: parsed.currency,
       );
 
-      await provider.addTransaction(transaction);
-      count++;
+      newTransactions.add(transaction);
     }
+
+    if (newTransactions.isNotEmpty) {
+      await transactionProvider.addTransactions(newTransactions);
+    }
+    
+    int count = newTransactions.length;
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

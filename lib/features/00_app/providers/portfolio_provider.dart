@@ -4,22 +4,16 @@ import 'package:flutter/material.dart';
 import 'dart:convert'; // Pour jsonEncode
 import 'package:portefeuille/core/data/services/backup_service.dart';
 import 'package:portefeuille/core/data/models/account.dart';
-import 'package:portefeuille/core/data/models/aggregated_asset.dart';
-import 'package:portefeuille/core/data/models/aggregated_portfolio_data.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
-import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
-import 'package:portefeuille/core/data/models/projection_data.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/core/data/models/sync_log.dart';
-import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/models/background_activity.dart';
-import 'package:portefeuille/features/00_app/services/calculation_service.dart';
 import 'package:portefeuille/features/00_app/services/demo_data_service.dart';
 import 'package:portefeuille/features/00_app/services/hydration_service.dart';
 import 'package:portefeuille/features/00_app/services/migration_service.dart';
@@ -39,7 +33,7 @@ class PortfolioProvider extends ChangeNotifier {
   late final TransactionService _transactionService;
   late final HydrationService _hydrationService;
   late final DemoDataService _demoDataService;
-  late final CalculationService _calculationService;
+  // late final CalculationService _calculationService; // Removed
   late final BackupService _backupService;
   late final InstitutionService _institutionService;
 
@@ -53,7 +47,7 @@ class PortfolioProvider extends ChangeNotifier {
   bool _isLoading = true;
   BackgroundActivity _activity = const Idle();
   String? _syncMessage;
-  AggregatedPortfolioData _aggregatedData = AggregatedPortfolioData.empty;
+  // AggregatedPortfolioData _aggregatedData = AggregatedPortfolioData.empty; // Removed
   
   // Cache pour optimisation O(1)
   final Map<String, Asset> _assetMap = {};
@@ -68,40 +62,6 @@ class PortfolioProvider extends ChangeNotifier {
   Map<String, AssetMetadata> get allMetadata =>
       _repository.getAllAssetMetadata();
   InstitutionService get institutionService => _institutionService;
-
-  // Getters - Données calculées
-  String get currentBaseCurrency => _aggregatedData.baseCurrency;
-  double get activePortfolioTotalValue => _aggregatedData.totalValue;
-  double get activePortfolioTotalInvested => _aggregatedData.totalInvested; // AJOUT
-  double get activePortfolioCashValue => _aggregatedData.valueByAssetType[AssetType.Cash] ?? 0.0; // AJOUT
-  double get activePortfolioTotalPL => _aggregatedData.totalPL;
-  double get activePortfolioTotalPLPercentage {
-    if (_aggregatedData.totalInvested == 0.0) return 0.0;
-    return _aggregatedData.totalPL / _aggregatedData.totalInvested;
-  }
-
-  double get activePortfolioEstimatedAnnualYield =>
-      _aggregatedData.estimatedAnnualYield;
-
-  double getConvertedAccountValue(String accountId) =>
-      _aggregatedData.accountValues[accountId] ?? 0.0;
-  double getConvertedAccountPL(String accountId) =>
-      _aggregatedData.accountPLs[accountId] ?? 0.0;
-  double getConvertedAccountInvested(String accountId) =>
-      _aggregatedData.accountInvested[accountId] ?? 0.0;
-
-  double getConvertedAssetTotalValue(String assetId) =>
-      _aggregatedData.assetTotalValues[assetId] ?? 0.0;
-  double getConvertedAssetPL(String assetId) =>
-      _aggregatedData.assetPLs[assetId] ?? 0.0;
-
-  List<AggregatedAsset> get aggregatedAssets =>
-      _aggregatedData.aggregatedAssets;
-  Map<AssetType, double> get aggregatedValueByAssetType =>
-      _aggregatedData.valueByAssetType;
-
-  bool get hasCrowdfunding =>
-      (_aggregatedData.valueByAssetType[AssetType.RealEstateCrowdfunding] ?? 0.0) > 0;
 
   PortfolioProvider({
     required PortfolioRepository repository,
@@ -123,7 +83,7 @@ class PortfolioProvider extends ChangeNotifier {
       apiService: _apiService,
     );
     _demoDataService = DemoDataService(repository: _repository, uuid: _uuid);
-    _calculationService = CalculationService(apiService: _apiService);
+    // _calculationService removed
     _backupService = BackupService();
     _institutionService = InstitutionService();
     _institutionService.loadInstitutions(); // Chargement asynchrone (fire & forget)
@@ -142,8 +102,7 @@ class PortfolioProvider extends ChangeNotifier {
 
     // ✅ COMPARER AUSSI AVEC LA DEVISE ACTUELLEMENT AFFICHÉE
     final currencyChanged = (oldCurrency != null &&
-        oldCurrency != settingsProvider.baseCurrency) ||
-        (_aggregatedData.baseCurrency != settingsProvider.baseCurrency);
+        oldCurrency != settingsProvider.baseCurrency);
 
     final wasOffline = _settingsProvider?.isOnlineMode ?? false;
     final wasNull = _settingsProvider == null;
@@ -151,10 +110,9 @@ class PortfolioProvider extends ChangeNotifier {
     _settingsProvider = settingsProvider;
 
     if (currencyChanged && !_isLoading) {
-      debugPrint("  -> 🚀 Changement de devise détecté: ${_aggregatedData.baseCurrency} → ${settingsProvider.baseCurrency}");
-      _setActivity(const Recalculating());
+      debugPrint("  -> 🚀 Changement de devise détecté: $oldCurrency → ${settingsProvider.baseCurrency}");
       notifyListeners();
-      Future.microtask(() => _recalculateAggregatedData());
+      // Le calcul est géré par PortfolioCalculationProvider
       return;
     }
 
@@ -208,7 +166,7 @@ class PortfolioProvider extends ChangeNotifier {
 
         if (needsReload) {
           debugPrint("  -> 🚀 Rechargement après migration");
-          await _refreshDataFromSource();
+          await refreshData();
         }
 
         if (_settingsProvider!.isOnlineMode && _activePortfolio != null) {
@@ -227,7 +185,7 @@ class PortfolioProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _refreshDataFromSource();
+      await refreshData();
     } catch (e) {
       debugPrint("ERREUR FATALE loadAllPortfolios: $e");
     } finally {
@@ -242,8 +200,8 @@ class PortfolioProvider extends ChangeNotifier {
   // ============================================================
 
   /// Rechargement complet (lourd) : hydratation + calcul
-  Future<void> _refreshDataFromSource() async {
-    debugPrint("--- 🔄 DÉBUT _refreshDataFromSource ---");
+  Future<void> refreshData() async {
+    debugPrint("--- 🔄 DÉBUT refreshData ---");
 
     // 1. Hydratation
     final rawPortfolios = await _hydrationService.hydrateAll();
@@ -282,7 +240,7 @@ class PortfolioProvider extends ChangeNotifier {
     }
 
     // 4. Calcul
-    await _recalculateAggregatedData();
+    // Le calcul est géré par PortfolioCalculationProvider
     
     // 5. Reconstruire le cache des actifs
     _rebuildAssetMap();
@@ -292,53 +250,20 @@ class PortfolioProvider extends ChangeNotifier {
       _settingsProvider?.setLastPortfolioId(_activePortfolio!.id);
     }
 
-    debugPrint("--- ℹ️ FIN _refreshDataFromSource ---");
-  }
-
-  /// Recalcul léger (uniquement les conversions)
-  /// Recalcul léger (uniquement les conversions)
-  Future<void> _recalculateAggregatedData() async {
-    debugPrint("--- 🔄 DÉBUT _recalculateAggregatedData ---");
-
-    final targetCurrency = _settingsProvider?.baseCurrency ?? 'EUR';
-
-    try {
-      _aggregatedData = await _calculationService.calculate(
-        portfolio: _activePortfolio,
-        targetCurrency: targetCurrency,
-        allMetadata: allMetadata,
-      );
-      debugPrint("  -> ✅ Calcul OK. Valeur totale: ${_aggregatedData.totalValue} $targetCurrency");
-
-      // ▼▼▼ NOUVEAU : Sauvegarde du point d'historique ▼▼▼
-      if (_activePortfolio != null && !_isLoading) {
-        // On enregistre l'historique seulement si le calcul a réussi
-        await _saveHistorySnapshot(_aggregatedData.totalValue);
-      }
-      // ▲▲▲ FIN NOUVEAU ▲▲▲
-
-    } catch (e) {
-      debugPrint("  -> ❌ ERREUR CALCUL: $e");
-      debugPrint("  -> StackTrace: ${StackTrace.current}");
-    } finally {
-      _setActivity(const Idle());
-      debugPrint("  -> 📢 notifyListeners() appelé");
-      notifyListeners();
-      debugPrint("--- ℹ️ FIN _recalculateAggregatedData ---");
-    }
+    debugPrint("--- ℹ️ FIN refreshData ---");
   }
 
   /// Sauvegarde l'historique sans déclencher un rechargement complet de l'app
-  Future<void> _saveHistorySnapshot(double currentValue) async {
+  Future<void> updateHistory(double totalValue) async {
     if (_activePortfolio == null) return;
 
     // Utilise la méthode du modèle pour vérifier si une mise à jour est nécessaire
-    final hasChanged = _activePortfolio!.addOrUpdateHistoryPoint(currentValue);
+    final hasChanged = _activePortfolio!.addOrUpdateHistoryPoint(totalValue);
 
     if (hasChanged) {
-      debugPrint("📈 [Provider] Mise à jour de l'historique de valeur : $currentValue");
+      debugPrint("📈 [Provider] Mise à jour de l'historique de valeur : $totalValue");
       // Sauvegarde directe dans Hive sans passer par savePortfolio() pour éviter
-      // la boucle infinie (_refreshDataFromSource -> _recalculate -> save -> _refresh...)
+      // la boucle infinie (refreshData -> _recalculate -> save -> refresh...)
       await _repository.savePortfolio(_activePortfolio!);
     }
   }
@@ -358,7 +283,7 @@ class PortfolioProvider extends ChangeNotifier {
     final result = await _syncService.synchronize(_activePortfolio!);
 
     if (result.hasUpdates) {
-      await _refreshDataFromSource();
+      await refreshData();
     }
 
     _setActivity(const Idle());
@@ -377,7 +302,7 @@ class PortfolioProvider extends ChangeNotifier {
     final result = await _syncService.forceSync(_activePortfolio!);
 
     if (result.hasUpdates) {
-      await _refreshDataFromSource();
+      await refreshData();
     }
 
     _setActivity(const Idle());
@@ -414,23 +339,7 @@ class PortfolioProvider extends ChangeNotifier {
   // TRANSACTIONS
   // ============================================================
 
-  Future<void> addTransaction(Transaction transaction) async {
-    debugPrint("🔄 [Provider] addTransaction");
-    await _transactionService.add(transaction);
-    await _refreshDataFromSource();
-  }
-
-  Future<void> deleteTransaction(String transactionId) async {
-    debugPrint("🔄 [Provider] deleteTransaction");
-    await _transactionService.delete(transactionId);
-    await _refreshDataFromSource();
-  }
-
-  Future<void> updateTransaction(Transaction transaction) async {
-    debugPrint("🔄 [Provider] updateTransaction");
-    await _transactionService.update(transaction);
-    await _refreshDataFromSource();
-  }
+  // Les méthodes de transaction ont été déplacées vers TransactionProvider
 
   // ============================================================
   // GESTION PORTFOLIOS
@@ -442,7 +351,7 @@ class PortfolioProvider extends ChangeNotifier {
       _activePortfolio = _portfolios.firstWhere((p) => p.id == portfolioId);
       // Sauvegarde de la préférence
       _settingsProvider?.setLastPortfolioId(portfolioId);
-      _recalculateAggregatedData();
+      notifyListeners();
     } catch (e) {
       debugPrint("Portefeuille non trouvé : $portfolioId");
     }
@@ -454,7 +363,7 @@ class PortfolioProvider extends ChangeNotifier {
       final existingDemo = _portfolios.firstWhere(
           (p) => p.name == "Portefeuille de Démo (2020-2025)");
       _activePortfolio = existingDemo;
-      await _refreshDataFromSource();
+      await refreshData();
       return existingDemo;
     }
     debugPrint("🔄 [Provider] addDemoPortfolio");
@@ -462,7 +371,7 @@ class PortfolioProvider extends ChangeNotifier {
       final demo = await _demoDataService.createDemoPortfolio();
       _portfolios.add(demo);
       _activePortfolio = demo;
-      await _refreshDataFromSource();
+      await refreshData();
       return demo;
     } catch (e) {
       debugPrint("❌ Erreur lors de la création du portefeuille de démo: $e");
@@ -475,7 +384,7 @@ class PortfolioProvider extends ChangeNotifier {
     final newPortfolio = _repository.createEmptyPortfolio(name);
     _portfolios.add(newPortfolio);
     _activePortfolio = newPortfolio;
-    _refreshDataFromSource();
+    refreshData();
   }
 
   void savePortfolio(Portfolio portfolio) {
@@ -490,14 +399,14 @@ class PortfolioProvider extends ChangeNotifier {
       _activePortfolio = portfolio;
     }
     _repository.savePortfolio(portfolio);
-    _refreshDataFromSource();
+    refreshData();
   }
 
   void updateActivePortfolio() {
     if (_activePortfolio == null) return;
     debugPrint("🔄 [Provider] updateActivePortfolio");
     _repository.savePortfolio(_activePortfolio!);
-    _refreshDataFromSource();
+    refreshData();
   }
 
   void renameActivePortfolio(String newName) {
@@ -537,7 +446,7 @@ class PortfolioProvider extends ChangeNotifier {
       _activePortfolio = _portfolios.isNotEmpty ? _portfolios.first : null;
     }
 
-    _refreshDataFromSource();
+    refreshData();
   }
 
   Future<void> resetAllData() async {
@@ -547,7 +456,7 @@ class PortfolioProvider extends ChangeNotifier {
     _activePortfolio = null;
     await _settingsProvider?.setMigrationV1Done();
     await _settingsProvider?.setMigrationV2Done();
-    _refreshDataFromSource();
+    refreshData();
   }
 
   // ============================================================
@@ -742,12 +651,21 @@ class PortfolioProvider extends ChangeNotifier {
     return _assetMap[ticker];
   }
 
-  Future<void> updateAssetYield(String ticker, double newYield) async {
-    debugPrint("🔄 [Provider] updateAssetYield");
+  Future<void> updateAssetYield(String ticker, double newYield,
+      {bool isManual = true}) async {
     final metadata = _repository.getOrCreateAssetMetadata(ticker);
-    metadata.updateYield(newYield, isManual: true);
+    metadata.updateYield(newYield, isManual: isManual);
     await _repository.saveAssetMetadata(metadata);
-    await _refreshDataFromSource();
+    await refreshData();
+  }
+
+  Future<void> updateAssetYields(Map<String, double> yields) async {
+    for (var entry in yields.entries) {
+      final metadata = _repository.getOrCreateAssetMetadata(entry.key);
+      metadata.updateYield(entry.value);
+      await _repository.saveAssetMetadata(metadata);
+    }
+    await refreshData();
   }
 
   Future<void> updateAssetPrice(String ticker, double newPrice,
@@ -760,7 +678,20 @@ class PortfolioProvider extends ChangeNotifier {
             : metadata.priceCurrency!);
     metadata.updatePrice(newPrice, targetCurrency);
     await _repository.saveAssetMetadata(metadata);
-    await _refreshDataFromSource();
+    await refreshData();
+  }
+
+  Future<void> updateAssetPrices(Map<String, double> prices) async {
+    debugPrint("🔄 [Provider] updateAssetPrices (Batch: ${prices.length})");
+    for (var entry in prices.entries) {
+      final metadata = _repository.getOrCreateAssetMetadata(entry.key);
+      final targetCurrency = ((metadata.priceCurrency?.isEmpty ?? true)
+          ? _settingsProvider!.baseCurrency
+          : metadata.priceCurrency!);
+      metadata.updatePrice(entry.value, targetCurrency);
+      await _repository.saveAssetMetadata(metadata);
+    }
+    await refreshData();
   }
 
   // ============================================================
@@ -770,43 +701,21 @@ class PortfolioProvider extends ChangeNotifier {
   Future<void> updateAssetMetadata(AssetMetadata metadata) async {
     await _repository.saveAssetMetadata(metadata);
     // Recharger les données pour que les actifs (Assets) soient mis à jour avec les nouvelles métadonnées (lat/lon, etc.)
-    await _refreshDataFromSource();
+    await refreshData();
+  }
+
+  Future<void> updateAssetMetadatas(List<AssetMetadata> metadatas) async {
+    for (var m in metadatas) {
+      await _repository.saveAssetMetadata(m);
+    }
+    await refreshData();
   }
 
   // ============================================================
   // PROJECTIONS
   // ============================================================
 
-  List<ProjectionData> getProjectionData(int duration) {
-    if (_activePortfolio == null) return [];
-
-    final totalValue = _aggregatedData.totalValue;
-    final totalInvested = _aggregatedData.totalInvested;
-    final portfolioAnnualYield = activePortfolioEstimatedAnnualYield;
-
-    double totalMonthlyInvestment = 0;
-    double weightedPlansYield = 0;
-
-    for (var plan in _activePortfolio!.savingsPlans.where((p) => p.isActive)) {
-      final targetAsset = findAssetByTicker(plan.targetTicker);
-      final assetYield = (targetAsset?.estimatedAnnualYield ?? 0.0);
-      totalMonthlyInvestment += plan.monthlyAmount;
-      weightedPlansYield += plan.monthlyAmount * assetYield;
-    }
-
-    final double averagePlansYield = (totalMonthlyInvestment > 0)
-        ? weightedPlansYield / totalMonthlyInvestment
-        : 0.0;
-
-    return ProjectionCalculator.generateProjectionData(
-      duration: duration,
-      initialPortfolioValue: totalValue,
-      initialInvestedCapital: totalInvested,
-      portfolioAnnualYield: portfolioAnnualYield,
-      totalMonthlyInvestment: totalMonthlyInvestment,
-      averagePlansYield: averagePlansYield,
-    );
-  }
+  // Déplacé dans PortfolioCalculationProvider
 
   // ============================================================
   // HELPERS

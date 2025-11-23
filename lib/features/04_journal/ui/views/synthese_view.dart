@@ -14,6 +14,8 @@ import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
 
 // Logic
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
+import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
 // Widgets & Dialogs refactorisés
 import 'package:portefeuille/features/04_journal/ui/dialogs/asset_dialogs.dart';
@@ -28,13 +30,13 @@ class SyntheseView extends StatelessWidget {
     // Calcul du padding pour aligner le titre sous la navbar/status bar
     final double topPadding = MediaQuery.of(context).padding.top + 90;
 
-    return Consumer<PortfolioProvider>(
-      builder: (context, provider, child) {
-        final baseCurrency = provider.currentBaseCurrency;
-        final aggregatedAssets = provider.aggregatedAssets;
-        final isProcessing = provider.isProcessingInBackground;
+    return Consumer3<PortfolioProvider, PortfolioCalculationProvider, SettingsProvider>(
+      builder: (context, portfolioProvider, calculationProvider, settingsProvider, child) {
+        final baseCurrency = settingsProvider.baseCurrency;
+        final aggregatedAssets = calculationProvider.aggregatedAssets;
+        final isProcessing = portfolioProvider.isProcessingInBackground || calculationProvider.isCalculating;
 
-        if (provider.activePortfolio == null) {
+        if (portfolioProvider.activePortfolio == null) {
           return const Center(child: Text("Aucun portefeuille sélectionné."));
         }
 
@@ -82,12 +84,12 @@ class SyntheseView extends StatelessWidget {
                                 onEditPrice: () => AssetDialogs.showEditPriceDialog(
                                   context,
                                   asset,
-                                  provider,
+                                  portfolioProvider,
                                 ),
                                 onEditYield: () => AssetDialogs.showEditYieldDialog(
                                   context,
                                   asset,
-                                  provider,
+                                  portfolioProvider,
                                 ),
                               ),
                             ),

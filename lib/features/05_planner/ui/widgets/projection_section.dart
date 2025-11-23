@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:provider/provider.dart';
 
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
@@ -9,6 +8,8 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
+import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
 import 'projection_chart.dart';
 
@@ -26,23 +27,18 @@ class ProjectionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<PortfolioProvider, ({Portfolio? portfolio, String currency, bool isProcessing, int duration})>(
-      selector: (context, provider) => (
-        portfolio: provider.activePortfolio,
-        currency: provider.currentBaseCurrency,
-        isProcessing: provider.isProcessingInBackground,
-        duration: selectedDuration
-      ),
-      builder: (context, data, child) {
-        final provider = Provider.of<PortfolioProvider>(context, listen: false);
-        final projectionData = provider.getProjectionData(data.duration);
-        final baseCurrency = data.currency;
-        final isProcessing = data.isProcessing;
+    final settings = context.watch<SettingsProvider>();
+    final calculationProvider = context.watch<PortfolioCalculationProvider>();
+    final portfolioProvider = context.watch<PortfolioProvider>();
 
-        return AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    final baseCurrency = settings.baseCurrency;
+    final projectionData = calculationProvider.getProjectionData(selectedDuration);
+    final isProcessing = portfolioProvider.isProcessingInBackground || calculationProvider.isCalculating;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
               // Header
               Row(
                 children: [
@@ -155,8 +151,6 @@ class ProjectionSection extends StatelessWidget {
             ],
           ),
         );
-      },
-    );
   }
 
   Widget _buildSummaryItem(String label, double value, String currency, Color color) {

@@ -14,6 +14,7 @@ import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/core/data/services/geocoding_service.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 
 import 'transaction_form_controllers.dart';
 import 'transaction_search_mixin.dart';
@@ -27,6 +28,7 @@ class TransactionFormState extends ChangeNotifier
   @override
   final SettingsProvider settingsProvider;
   final PortfolioProvider _portfolioProvider;
+  final TransactionProvider _transactionProvider;
   final Transaction? existingTransaction;
 
   final _uuid = const Uuid();
@@ -59,7 +61,9 @@ class TransactionFormState extends ChangeNotifier
     required this.apiService,
     required this.settingsProvider,
     required PortfolioProvider portfolioProvider,
+    required TransactionProvider transactionProvider,
   })  : _portfolioProvider = portfolioProvider,
+        _transactionProvider = transactionProvider,
         _selectedType = existingTransaction?.type ?? TransactionType.Deposit,
         _selectedDate = existingTransaction?.date ?? DateTime.now(),
         _selectedAssetType = existingTransaction?.assetType ?? AssetType.Stock {
@@ -389,9 +393,9 @@ class TransactionFormState extends ChangeNotifier
     );
 
     if (isEditing) {
-      _portfolioProvider.updateTransaction(transaction);
+      _transactionProvider.updateTransaction(transaction);
     } else {
-      _portfolioProvider.addTransaction(transaction);
+      _transactionProvider.addTransaction(transaction);
     }
 
     // --- CROWDFUNDING METADATA ---

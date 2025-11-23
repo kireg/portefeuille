@@ -117,6 +117,14 @@ class PortfolioRepository {
     await _transactionBox.put(transaction.id, transaction);
   }
 
+  /// Sauvegarde plusieurs transactions en une seule opération (Batch).
+  Future<void> saveTransactions(List<Transaction> transactions) async {
+    final Map<String, Transaction> entries = {
+      for (var t in transactions) t.id: t
+    };
+    await _transactionBox.putAll(entries);
+  }
+
   /// Supprime une transaction par son ID.
   Future<void> deleteTransaction(String transactionId) async {
     await _transactionBox.delete(transactionId);

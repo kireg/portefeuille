@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:provider/provider.dart';
 
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
@@ -12,6 +11,7 @@ import 'package:portefeuille/core/ui/widgets/components/app_tile.dart';
 
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_savings_plan_screen.dart';
 
 class SavingsPlansSection extends StatelessWidget {
@@ -62,23 +62,19 @@ class SavingsPlansSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<PortfolioProvider, ({Portfolio? portfolio, String currency})>(
-      selector: (context, provider) => (
-        portfolio: provider.activePortfolio,
-        currency: provider.currentBaseCurrency
-      ),
-      builder: (context, data, child) {
-        final portfolio = data.portfolio;
-        if (portfolio == null) return const SizedBox();
+    final settings = context.watch<SettingsProvider>();
+    final provider = context.watch<PortfolioProvider>();
+    
+    final portfolio = provider.activePortfolio;
+    if (portfolio == null) return const SizedBox();
 
-        final savingsPlans = portfolio.savingsPlans;
-        final baseCurrency = data.currency;
-        final provider = Provider.of<PortfolioProvider>(context, listen: false);
+    final savingsPlans = portfolio.savingsPlans;
+    final baseCurrency = settings.baseCurrency;
 
-        return AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
               // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -167,7 +163,5 @@ class SavingsPlansSection extends StatelessWidget {
             ],
           ),
         );
-      },
-    );
   }
 }

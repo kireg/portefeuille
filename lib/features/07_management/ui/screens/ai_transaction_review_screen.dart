@@ -12,8 +12,8 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 
 import 'package:portefeuille/core/data/models/transaction_extraction_result.dart';
 import 'package:portefeuille/core/data/models/transaction.dart' as model;
-import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 
 import 'package:portefeuille/features/07_management/models/draft_transaction.dart';
 import 'package:portefeuille/features/07_management/ui/widgets/draft_transaction_card.dart';
@@ -59,28 +59,27 @@ class _AiTransactionReviewScreenState extends State<AiTransactionReviewScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final provider = context.read<PortfolioProvider>();
+      final provider = context.read<TransactionProvider>();
       int successCount = 0;
 
-      for (var draft in _drafts) {
-        final newTransaction = model.Transaction(
-          id: const Uuid().v4(),
-          accountId: widget.accountId,
-          type: draft.type,
-          date: draft.date,
-          amount: draft.amount,
-          assetTicker: draft.ticker.isNotEmpty ? draft.ticker : null,
-          assetName: draft.name.isNotEmpty ? draft.name : null,
-          quantity: draft.quantity > 0 ? draft.quantity : null,
-          price: draft.price > 0 ? draft.price : null,
-          fees: draft.fees,
-          assetType: draft.assetType,
-          priceCurrency: draft.currency,
-          notes: "Import IA",
-        );
-        await provider.addTransaction(newTransaction);
-        successCount++;
-      }
+      final transactions = _drafts.map((draft) => model.Transaction(
+        id: const Uuid().v4(),
+        accountId: widget.accountId,
+        type: draft.type,
+        date: draft.date,
+        amount: draft.amount,
+        assetTicker: draft.ticker.isNotEmpty ? draft.ticker : null,
+        assetName: draft.name.isNotEmpty ? draft.name : null,
+        quantity: draft.quantity > 0 ? draft.quantity : null,
+        price: draft.price > 0 ? draft.price : null,
+        fees: draft.fees,
+        assetType: draft.assetType,
+        priceCurrency: draft.currency,
+        notes: "Import IA",
+      )).toList();
+
+      await provider.addTransactions(transactions);
+      successCount = transactions.length;
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

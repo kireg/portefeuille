@@ -13,6 +13,7 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
@@ -217,6 +218,7 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
 
     setState(() => _isLoading = true);
     final provider = context.read<PortfolioProvider>();
+    final transactionProvider = context.read<TransactionProvider>();
 
     int importedCount = 0;
     int skippedCount = 0;
@@ -228,14 +230,24 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
           .expand((i) => i.accounts)
           .firstWhere((a) => a.id == _selectedAccount!.id, orElse: () => _selectedAccount!);
 
+      final newTransactions = <Transaction>[];
+      final newMetadatas = <AssetMetadata>[];
+
       for (final project in _extractedProjects) {
         // Check for duplicates (Same Name + Same Amount + Same Date)
-        final isDuplicate = account.transactions.any((t) =>
+        // Check in existing account transactions
+        final isDuplicateInAccount = account.transactions.any((t) =>
+            t.assetName == project.projectName &&
+            (t.amount - project.investedAmount).abs() < 0.01 &&
+            (project.investmentDate == null || isSameDay(t.date, project.investmentDate!)));
+        
+        // Check in currently batched transactions
+        final isDuplicateInBatch = newTransactions.any((t) =>
             t.assetName == project.projectName &&
             (t.amount - project.investedAmount).abs() < 0.01 &&
             (project.investmentDate == null || isSameDay(t.date, project.investmentDate!)));
 
-        if (isDuplicate) {
+        if (isDuplicateInAccount || isDuplicateInBatch) {
           skippedCount++;
           continue;
         }
@@ -248,8 +260,7 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
           date: project.investmentDate ?? DateTime.now(),
           assetTicker: project.projectName,
           assetName: project.projectName,
-          quantity: 1.0, // Crowdfunding is usually 1 unit of X amount, or X units of 1€. 
-                         // Assuming amount is total invested, let's say quantity 1, price = amount.
+          quantity: 1.0,
           price: project.investedAmount,
           amount: project.investedAmount,
           fees: 0.0,
@@ -258,9 +269,9 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
           priceCurrency: 'EUR',
         );
 
-        await provider.addTransaction(transaction);
+        newTransactions.add(transaction);
 
-        // 2. Update Metadata
+        // 2. Create Metadata
         final metadata = AssetMetadata(
           ticker: project.projectName,
           currentPrice: project.investedAmount, // Initial price
@@ -280,8 +291,17 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
           riskRating: project.riskRating,
         );
 
-        await provider.updateAssetMetadata(metadata);
+        newMetadatas.add(metadata);
         importedCount++;
+      }
+
+      // 3. Batch Save
+      if (newMetadatas.isNotEmpty) {
+        await provider.updateAssetMetadatas(newMetadatas);
+      }
+
+      if (newTransactions.isNotEmpty) {
+        await transactionProvider.addTransactions(newTransactions);
       }
 
       if (mounted) {

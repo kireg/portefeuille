@@ -10,6 +10,7 @@ import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
 
 class PortfolioHeader extends StatelessWidget {
   const PortfolioHeader({super.key});
@@ -17,12 +18,14 @@ class PortfolioHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<PortfolioProvider>();
-    final baseCurrency = provider.currentBaseCurrency;
-    final isProcessing = provider.isProcessingInBackground;
+    final calculationProvider = context.watch<PortfolioCalculationProvider>();
+    
+    final baseCurrency = calculationProvider.currentBaseCurrency;
+    final isProcessing = provider.isProcessingInBackground || calculationProvider.isCalculating;
 
-    final totalValue = provider.activePortfolioTotalValue;
-    final totalPL = provider.activePortfolioTotalPL;
-    final totalPLPercentage = provider.activePortfolioTotalPLPercentage;
+    final totalValue = calculationProvider.activePortfolioTotalValue;
+    final totalPL = calculationProvider.activePortfolioTotalPL;
+    final totalPLPercentage = calculationProvider.activePortfolioTotalPLPercentage;
     final isPositive = totalPL >= 0;
 
     return AppCard(
@@ -64,7 +67,7 @@ class PortfolioHeader extends StatelessWidget {
                     child: _buildSummaryCard(
                       context,
                       label: 'Capital Investi',
-                      value: provider.activePortfolioTotalInvested,
+                      value: calculationProvider.activePortfolioTotalInvested,
                       currency: baseCurrency,
                       color: AppColors.primary,
                       icon: Icons.account_balance_wallet,
@@ -91,7 +94,7 @@ class PortfolioHeader extends StatelessWidget {
                     child: _buildSummaryCard(
                       context,
                       label: 'Liquidités',
-                      value: provider.activePortfolioCashValue,
+                      value: calculationProvider.activePortfolioCashValue,
                       currency: baseCurrency,
                       color: Colors.orange,
                       icon: Icons.savings,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:provider/provider.dart';
 import '../../00_app/providers/portfolio_provider.dart';
+import '../../00_app/providers/portfolio_calculation_provider.dart';
 
 // Ecrans des onglets
 import '../../03_overview/ui/overview_tab.dart';
@@ -35,7 +36,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final portfolio = context.select<PortfolioProvider, Portfolio?>((p) => p.activePortfolio);
-    final hasCrowdfunding = context.select<PortfolioProvider, bool>((p) => p.hasCrowdfunding);
+    final hasCrowdfunding = context.select<PortfolioCalculationProvider, bool>((p) => p.hasCrowdfunding);
 
     // Cas "Aucun portefeuille"
     if (portfolio == null) {

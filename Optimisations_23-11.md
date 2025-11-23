@@ -15,25 +15,25 @@ Découper ce provider en plusieurs unités logiques respectant la Clean Architec
 
 **Tâches à accomplir :**
 
-*   [ ] **Création de `TransactionProvider`** (`lib/features/00_app/providers/transaction_provider.dart`) :
+*   [x] **Création de `TransactionProvider`** (`lib/features/00_app/providers/transaction_provider.dart`) :
     *   Déplacer la logique CRUD (`add`, `update`, `delete`) des transactions.
     *   Ce provider utilisera `TransactionService` et `PortfolioRepository`.
     *   Il devra notifier `PortfolioProvider` (ou déclencher un rafraîchissement) après une modification pour mettre à jour les agrégats.
 
-*   [ ] **Création de `PortfolioCalculationProvider`** (ou `PortfolioStateProvider`) :
+*   [x] **Création de `PortfolioCalculationProvider`** (ou `PortfolioStateProvider`) :
     *   Extraire la logique de calcul (`CalculationService`, getters calculés comme `totalValue`, `totalPL`).
     *   Ce provider prendra en entrée l'état brut du `PortfolioProvider` et retournera un objet `AggregatedPortfolioData`.
     *   Cela séparera la *donnée brute* de la *donnée dérivée*.
 
-*   [ ] **Allègement de `PortfolioProvider`** :
+*   [x] **Allègement de `PortfolioProvider`** :
     *   Ne conserver que la gestion de la structure (Portefeuilles / Institutions / Comptes) et le chargement initial.
     *   Il reste la "Source de Vérité" pour la hiérarchie des objets.
 
-*   [ ] **Injection de Dépendances (`main.dart`)** :
+*   [x] **Injection de Dépendances (`main.dart`)** :
     *   Enregistrer les nouveaux providers dans le `MultiProvider`.
     *   Gérer les dépendances entre providers (ex: `ProxyProvider` si nécessaire, ou injection via constructeur).
 
-*   [ ] **Mise à jour de l'UI** :
+*   [x] **Mise à jour de l'UI** :
     *   Refactoriser les appels dans les vues (ex: `TransactionsView`, `AddTransactionScreen`) pour utiliser les nouveaux providers spécifiques.
 
 ---
@@ -45,18 +45,18 @@ L'importation ligne par ligne (`addTransaction`) déclenche un recalcul complet 
 
 **Tâches à accomplir :**
 
-*   [ ] **Core / Repository** :
+*   [x] **Core / Repository** :
     *   Ajouter `saveTransactions(List<Transaction> transactions)` dans `PortfolioRepository`.
     *   Optimiser pour une écriture groupée (Batch Write) dans Hive.
 
-*   [ ] **TransactionProvider (Nouveau)** :
+*   [x] **TransactionProvider (Nouveau)** :
     *   Implémenter une méthode `addTransactions(List<Transaction> transactions)`.
     *   Cette méthode doit :
         1.  Appeler le repository pour le batch save.
         2.  Mettre à jour les prix des actifs en une seule passe (Batch Update).
         3.  Notifier le `PortfolioProvider` **une seule fois** à la fin pour rafraîchir l'état global.
 
-*   [ ] **UI (Refactoring)** :
+*   [x] **UI (Refactoring)** :
     *   Mettre à jour `CrowdfundingImportScreen`, `PdfImportScreen`, et `AiTransactionReviewScreen` pour utiliser cette nouvelle méthode du `TransactionProvider`.
 
 ---

@@ -27,6 +27,35 @@ class TransactionService {
     }
   }
 
+  /// Ajoute plusieurs transactions en lot.
+  Future<void> addBatch(List<Transaction> transactions) async {
+    await _repository.saveTransactions(transactions);
+
+    // Mise à jour des prix en lot
+    // On ne garde que la dernière transaction (la plus récente) pour chaque ticker
+    final Map<String, Transaction> latestTransactionsByTicker = {};
+    
+    for (var t in transactions) {
+      if (t.assetTicker != null && t.price != null && t.type == TransactionType.Buy) {
+        if (latestTransactionsByTicker.containsKey(t.assetTicker!)) {
+           if (t.date.isAfter(latestTransactionsByTicker[t.assetTicker!]!.date)) {
+             latestTransactionsByTicker[t.assetTicker!] = t;
+           }
+        } else {
+           latestTransactionsByTicker[t.assetTicker!] = t;
+        }
+      }
+    }
+
+    for (var t in latestTransactionsByTicker.values) {
+      await _updateAssetPrice(
+        ticker: t.assetTicker!,
+        price: t.price!,
+        currency: t.priceCurrency ?? 'EUR',
+      );
+    }
+  }
+
   /// Supprime une transaction.
   Future<void> delete(String transactionId) async {
     await _repository.deleteTransaction(transactionId);

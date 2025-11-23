@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
+import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
@@ -60,6 +62,7 @@ class SetupWizardProvider extends ChangeNotifier {
   Future<void> createPortfolio(
     PortfolioProvider portfolioProvider,
     SettingsProvider settingsProvider,
+    TransactionProvider transactionProvider,
   ) async {
     if (_isSaving) return;
     _isSaving = true;
@@ -120,6 +123,9 @@ class SetupWizardProvider extends ChangeNotifier {
           }
           
           final initialDeposit = wizardAccount.cashBalance + totalAssetsCost;
+          final newTransactions = <Transaction>[];
+          final newPrices = <String, double>{};
+          final newYields = <String, double>{};
 
           if (initialDeposit > 0) {
             final depositTx = Transaction(
@@ -131,7 +137,7 @@ class SetupWizardProvider extends ChangeNotifier {
               fees: 0.0,
               notes: 'Solde initial (Assistant)',
             );
-            await portfolioProvider.addTransaction(depositTx);
+            newTransactions.add(depositTx);
           }
 
           // Créer les transactions d'achat pour les actifs
@@ -150,21 +156,28 @@ class SetupWizardProvider extends ChangeNotifier {
               price: wizardAsset.averagePrice,
               notes: 'Position initiale (Assistant)',
             );
-            await portfolioProvider.addTransaction(buyTx);
+            newTransactions.add(buyTx);
 
             // Mettre à jour le prix actuel
-            await portfolioProvider.updateAssetPrice(
-              wizardAsset.ticker,
-              wizardAsset.currentPrice,
-            );
+            newPrices[wizardAsset.ticker] = wizardAsset.currentPrice;
 
             // Mettre à jour le rendement estimé
             if (wizardAsset.estimatedYield != null) {
-              await portfolioProvider.updateAssetYield(
-                wizardAsset.ticker,
-                wizardAsset.estimatedYield!,
-              );
+              newYields[wizardAsset.ticker] = wizardAsset.estimatedYield!;
             }
+          }
+
+          // Batch updates
+          if (newPrices.isNotEmpty) {
+            await portfolioProvider.updateAssetPrices(newPrices);
+          }
+          
+          if (newYields.isNotEmpty) {
+            await portfolioProvider.updateAssetYields(newYields);
+          }
+
+          if (newTransactions.isNotEmpty) {
+            await transactionProvider.addTransactions(newTransactions);
           }
         }
       }

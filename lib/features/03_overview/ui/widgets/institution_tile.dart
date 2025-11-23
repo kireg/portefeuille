@@ -11,10 +11,12 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_tile.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
-import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
 import 'package:portefeuille/features/00_app/services/modal_service.dart';
 
 import 'account_tile.dart';
+
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 
 class InstitutionTile extends StatelessWidget {
   final Institution institution;
@@ -22,17 +24,17 @@ class InstitutionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<PortfolioProvider>();
-    final baseCurrency = provider.currentBaseCurrency;
+    final calculationProvider = context.watch<PortfolioCalculationProvider>();
+    final baseCurrency = calculationProvider.currentBaseCurrency;
 
     // 1. Calcul de la Valeur Totale de l'institution
     final institutionTotalValue = institution.accounts.fold(
-        0.0, (sum, acc) => sum + provider.getConvertedAccountValue(acc.id));
+        0.0, (sum, acc) => sum + calculationProvider.getConvertedAccountValue(acc.id));
 
     // 2. Calcul du P/L Total de l'institution
     // Note: Assure-toi que getConvertedAccountPL existe dans PortfolioProvider, sinon utilise 0.0
     final institutionTotalPL = institution.accounts.fold(
-        0.0, (sum, acc) => sum + provider.getConvertedAccountPL(acc.id));
+        0.0, (sum, acc) => sum + calculationProvider.getConvertedAccountPL(acc.id));
 
     // Calcul du pourcentage (gestion de la division par zéro)
     final double investedAmount = institutionTotalValue - institutionTotalPL;
@@ -174,7 +176,7 @@ class InstitutionTile extends StatelessWidget {
                           ),
                           TextButton(
                             onPressed: () {
-                              provider.deleteInstitution(institution.id);
+                              context.read<PortfolioProvider>().deleteInstitution(institution.id);
                               Navigator.of(ctx).pop();
                             },
                             child: Text('Supprimer', style: AppTypography.label.copyWith(color: AppColors.error)),

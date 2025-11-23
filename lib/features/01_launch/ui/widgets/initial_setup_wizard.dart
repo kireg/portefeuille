@@ -8,6 +8,7 @@ import 'package:portefeuille/features/01_launch/ui/widgets/wizard_dialogs/add_ac
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 
 // ignore_for_file: use_build_context_synchronously
 
@@ -168,8 +169,9 @@ class _WizardContentState extends State<_WizardContent> {
     try {
       final portfolioProvider = context.read<PortfolioProvider>();
       final settingsProvider = context.read<SettingsProvider>();
+      final transactionProvider = context.read<TransactionProvider>();
       
-      await provider.createPortfolio(portfolioProvider, settingsProvider);
+      await provider.createPortfolio(portfolioProvider, settingsProvider, transactionProvider);
       
       if (!mounted) return;
       Navigator.of(context).pop(true);

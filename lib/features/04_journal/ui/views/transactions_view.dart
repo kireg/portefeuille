@@ -14,6 +14,7 @@ import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 import 'package:portefeuille/features/07_management/ui/screens/edit_transaction_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_transaction_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/pdf_import_screen.dart';
@@ -60,7 +61,7 @@ class _TransactionsViewState extends State<TransactionsView> {
     });
   }
 
-  Future<void> _deleteSelectedTransactions(PortfolioProvider provider) async {
+  Future<void> _deleteSelectedTransactions(TransactionProvider provider) async {
     final count = _selectedIds.length;
     if (count == 0) return;
 
@@ -177,7 +178,7 @@ class _TransactionsViewState extends State<TransactionsView> {
     return groups;
   }
 
-  void _confirmDelete(BuildContext context, PortfolioProvider provider, Transaction transaction) {
+  void _confirmDelete(BuildContext context, TransactionProvider provider, Transaction transaction) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -255,7 +256,7 @@ class _TransactionsViewState extends State<TransactionsView> {
 
         final accountsMap = <String, Account>{};
         final accountIdToInstitutionName = <String, String>{};
-        final provider = Provider.of<PortfolioProvider>(context, listen: false);
+        final transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
         for (var inst in portfolio.institutions) {
           for (var acc in inst.accounts) {
             accountsMap[acc.id] = acc;
@@ -322,7 +323,7 @@ class _TransactionsViewState extends State<TransactionsView> {
                   isSelectionMode: _isSelectionMode,
                   selectedCount: _selectedIds.length,
                   onSelectAll: () => _selectAll(allTransactions),
-                  onDeleteSelected: () => _deleteSelectedTransactions(provider),
+                  onDeleteSelected: () => _deleteSelectedTransactions(transactionProvider),
                   onCancelSelection: () => setState(() => _selectedIds.clear()),
                   onAddTransaction: _openAddTransactionModal,
                   onImportPdf: _openPdfImport,
@@ -350,7 +351,7 @@ class _TransactionsViewState extends State<TransactionsView> {
                         selectedIds: _selectedIds,
                         isSelectionMode: _isSelectionMode,
                         onToggleSelection: _toggleSelection,
-                        onDelete: (t) => _confirmDelete(context, provider, t),
+                        onDelete: (t) => _confirmDelete(context, transactionProvider, t),
                         onEdit: (t) => _editTransaction(context, t),
                       ),
                     );

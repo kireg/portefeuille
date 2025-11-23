@@ -37,6 +37,10 @@ import 'package:portefeuille/core/data/models/sync_log.dart';
 // Features
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
+import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
+import 'package:portefeuille/features/00_app/services/transaction_service.dart';
+import 'package:portefeuille/features/00_app/services/calculation_service.dart';
 import 'package:portefeuille/features/00_app/services/route_manager.dart';
 
 void main() async {
@@ -230,6 +234,42 @@ class MyApp extends StatelessWidget {
             return portfolioProvider;
           },
 
+        ),
+        ChangeNotifierProxyProvider<PortfolioProvider, TransactionProvider>(
+          create: (context) => TransactionProvider(
+            transactionService: TransactionService(repository: repository),
+            portfolioProvider: context.read<PortfolioProvider>(),
+          ),
+          update: (context, portfolioProvider, transactionProvider) =>
+              TransactionProvider(
+            transactionService: TransactionService(repository: repository),
+            portfolioProvider: portfolioProvider,
+          ),
+        ),
+        ChangeNotifierProxyProvider2<PortfolioProvider, SettingsProvider,
+            PortfolioCalculationProvider>(
+          create: (context) => PortfolioCalculationProvider(
+            calculationService:
+                CalculationService(apiService: context.read<ApiService>()),
+            portfolioProvider: context.read<PortfolioProvider>(),
+            settingsProvider: context.read<SettingsProvider>(),
+          ),
+          update: (context, portfolioProvider, settingsProvider,
+              calculationProvider) {
+            final provider = calculationProvider ??
+                PortfolioCalculationProvider(
+                  calculationService: CalculationService(
+                      apiService: context.read<ApiService>()),
+                  portfolioProvider: portfolioProvider,
+                  settingsProvider: settingsProvider,
+                );
+
+            // Trigger calculation when dependencies change
+            if (!portfolioProvider.isLoading) {
+              Future.microtask(() => provider.calculate());
+            }
+            return provider;
+          },
         ),
       ],
       child: Consumer<SettingsProvider>(

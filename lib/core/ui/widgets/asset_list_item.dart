@@ -7,6 +7,7 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart'; // IMPORTANT
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 class AssetListItem extends StatelessWidget {
@@ -24,10 +25,11 @@ class AssetListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<PortfolioProvider>();
-    final isProcessing = provider.isProcessingInBackground;
+    final calculationProvider = context.watch<PortfolioCalculationProvider>();
+    final isProcessing = provider.isProcessingInBackground || calculationProvider.isCalculating;
 
-    final totalValueConverted = provider.getConvertedAssetTotalValue(asset.id);
-    final pnlConverted = provider.getConvertedAssetPL(asset.id);
+    final totalValueConverted = calculationProvider.getConvertedAssetTotalValue(asset.id);
+    final pnlConverted = calculationProvider.getConvertedAssetPL(asset.id);
     final pnlPercentage = asset.profitAndLossPercentage;
     final isPositive = pnlConverted >= 0;
 

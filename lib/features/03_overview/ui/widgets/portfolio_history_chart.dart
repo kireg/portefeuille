@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/core/data/models/portfolio_value_history_point.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
@@ -21,15 +22,11 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
     // Calcul responsive de la hauteur : 25% de l'écran, borné entre 200 et 350px
     final screenHeight = MediaQuery.of(context).size.height;
     final double chartHeight = (screenHeight * 0.25).clamp(200.0, 350.0);
+    final currencyCode = context.select<SettingsProvider, String>((s) => s.baseCurrency);
 
-    return Selector<PortfolioProvider, ({List<PortfolioValueHistoryPoint> history, String currency})>(
-      selector: (context, provider) => (
-        history: provider.activePortfolio?.valueHistory ?? [],
-        currency: provider.currentBaseCurrency
-      ),
-      builder: (context, data, child) {
-        final history = data.history;
-        final currencyCode = data.currency;
+    return Selector<PortfolioProvider, List<PortfolioValueHistoryPoint>>(
+      selector: (context, provider) => provider.activePortfolio?.valueHistory ?? [],
+      builder: (context, history, child) {
 
         if (history.isEmpty) {
           return _buildPlaceholder("Pas encore d'historique.", chartHeight);
