@@ -379,15 +379,21 @@ class PortfolioProvider extends ChangeNotifier {
     }
   }
 
-  void addNewPortfolio(String name) {
+  Future<void> addNewPortfolio(String name) async {
     debugPrint("🔄 [Provider] addNewPortfolio");
     final newPortfolio = _repository.createEmptyPortfolio(name);
+    // On doit sauvegarder AVANT de rafraîchir, sinon le refresh va écraser
+    // la liste locale avec celle du disque (qui ne contient pas encore le nouveau).
+    await _repository.savePortfolio(newPortfolio);
+    
+    // On peut mettre à jour localement en attendant le refresh pour être plus réactif
     _portfolios.add(newPortfolio);
     _activePortfolio = newPortfolio;
-    refreshData();
+    
+    await refreshData();
   }
 
-  void savePortfolio(Portfolio portfolio) {
+  Future<void> savePortfolio(Portfolio portfolio) async {
     debugPrint("🔄 [Provider] savePortfolio");
     final index = _portfolios.indexWhere((p) => p.id == portfolio.id);
     if (index != -1) {
@@ -398,15 +404,15 @@ class PortfolioProvider extends ChangeNotifier {
     if (_activePortfolio?.id == portfolio.id) {
       _activePortfolio = portfolio;
     }
-    _repository.savePortfolio(portfolio);
-    refreshData();
+    await _repository.savePortfolio(portfolio);
+    await refreshData();
   }
 
-  void updateActivePortfolio() {
+  Future<void> updateActivePortfolio() async {
     if (_activePortfolio == null) return;
     debugPrint("🔄 [Provider] updateActivePortfolio");
-    _repository.savePortfolio(_activePortfolio!);
-    refreshData();
+    await _repository.savePortfolio(_activePortfolio!);
+    await refreshData();
   }
 
   void renameActivePortfolio(String newName) {
@@ -463,22 +469,22 @@ class PortfolioProvider extends ChangeNotifier {
   // INSTITUTIONS & ACCOUNTS
   // ============================================================
 
-  void addInstitution(Institution newInstitution) {
+  Future<void> addInstitution(Institution newInstitution) async {
     if (_activePortfolio == null) return;
     debugPrint("🔄 [Provider] addInstitution");
     final updatedPortfolio = _activePortfolio!.deepCopy();
     updatedPortfolio.institutions.add(newInstitution);
-    savePortfolio(updatedPortfolio);
+    await savePortfolio(updatedPortfolio);
   }
 
-  void updateInstitution(Institution updatedInstitution) {
+  Future<void> updateInstitution(Institution updatedInstitution) async {
     if (_activePortfolio == null) return;
     debugPrint("🔄 [Provider] updateInstitution");
     final updatedPortfolio = _activePortfolio!.deepCopy();
     final index = updatedPortfolio.institutions.indexWhere((i) => i.id == updatedInstitution.id);
     if (index != -1) {
       updatedPortfolio.institutions[index] = updatedInstitution;
-      savePortfolio(updatedPortfolio);
+      await savePortfolio(updatedPortfolio);
     } else {
       debugPrint("Institution non trouvée : ${updatedInstitution.id}");
     }
@@ -518,7 +524,7 @@ class PortfolioProvider extends ChangeNotifier {
     savePortfolio(updatedPortfolio);
   }
 
-  void addAccount(String institutionId, Account newAccount) {
+  Future<void> addAccount(String institutionId, Account newAccount) async {
     if (_activePortfolio == null) return;
     debugPrint("🔄 [Provider] addAccount");
     final updatedPortfolio = _activePortfolio!.deepCopy();
@@ -527,13 +533,13 @@ class PortfolioProvider extends ChangeNotifier {
           .firstWhere((inst) => inst.id == institutionId)
           .accounts
           .add(newAccount);
-      savePortfolio(updatedPortfolio);
+      await savePortfolio(updatedPortfolio);
     } catch (e) {
       debugPrint("Institution non trouvée : $institutionId");
     }
   }
 
-  void updateAccount(String institutionId, Account updatedAccount) {
+  Future<void> updateAccount(String institutionId, Account updatedAccount) async {
     if (_activePortfolio == null) return;
     debugPrint("🔄 [Provider] updateAccount");
 
@@ -551,7 +557,7 @@ class PortfolioProvider extends ChangeNotifier {
         // 3. Remplacer l'ancien compte par le nouveau
         institution.accounts[accountIndex] = updatedAccount;
         // 4. Sauvegarder
-        savePortfolio(updatedPortfolio);
+        await savePortfolio(updatedPortfolio);
       } else {
         debugPrint("Compte non trouvé : ${updatedAccount.id}");
       }

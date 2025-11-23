@@ -30,10 +30,13 @@ class AddAccountScreen extends StatefulWidget {
 
 class _AddAccountScreenState extends State<AddAccountScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  late final TextEditingController _nameController;
+  final _uuid = const Uuid();
+  
+  bool _isSaving = false;
+
   AccountType _selectedType = AccountType.cto;
   String _selectedCurrency = 'EUR';
-  final _uuid = const Uuid();
 
   final List<String> _currencies = ['EUR', 'USD', 'CHF', 'GBP', 'CAD', 'JPY'];
 
@@ -42,6 +45,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
   @override
   void initState() {
     super.initState();
+    _nameController = TextEditingController();
     if (_isEditing) {
       final account = widget.accountToEdit!;
       _nameController.text = account.name;
@@ -56,35 +60,53 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
     super.dispose();
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final provider = Provider.of<PortfolioProvider>(context, listen: false);
+      setState(() {
+        _isSaving = true;
+      });
 
-      if (_isEditing) {
-        final oldAccount = widget.accountToEdit!;
-        final updatedAccount = Account(
-          id: oldAccount.id,
-          name: _nameController.text,
-          type: _selectedType,
-          currency: oldAccount.currency, // Non modifiable
-        );
-        updatedAccount.assets = oldAccount.assets;
-        updatedAccount.transactions = oldAccount.transactions;
-        provider.updateAccount(widget.institutionId, updatedAccount);
-      } else {
-        final newAccount = Account(
-          id: _uuid.v4(),
-          name: _nameController.text,
-          type: _selectedType,
-          currency: _selectedCurrency,
-        );
-        if (widget.onAccountCreated != null) {
-          widget.onAccountCreated!(newAccount);
+      try {
+        final provider = Provider.of<PortfolioProvider>(context, listen: false);
+
+        if (_isEditing) {
+          final oldAccount = widget.accountToEdit!;
+          final updatedAccount = Account(
+            id: oldAccount.id,
+            name: _nameController.text,
+            type: _selectedType,
+            currency: oldAccount.currency, // Non modifiable
+          );
+          updatedAccount.assets = oldAccount.assets;
+          updatedAccount.transactions = oldAccount.transactions;
+          await provider.updateAccount(widget.institutionId, updatedAccount);
         } else {
-          provider.addAccount(widget.institutionId, newAccount);
+          final newAccount = Account(
+            id: _uuid.v4(),
+            name: _nameController.text,
+            type: _selectedType,
+            currency: _selectedCurrency,
+          );
+          if (widget.onAccountCreated != null) {
+            widget.onAccountCreated!(newAccount);
+          } else {
+            await provider.addAccount(widget.institutionId, newAccount);
+          }
+        }
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        debugPrint("Erreur lors de la sauvegarde du compte : $e");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Erreur lors de la sauvegarde : $e")),
+          );
+          setState(() {
+            _isSaving = false;
+          });
         }
       }
-      Navigator.of(context).pop();
     }
   }
 
@@ -163,7 +185,8 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
               AppButton(
                 label: _isEditing ? 'Enregistrer' : 'Créer',
                 icon: _isEditing ? Icons.save : Icons.add,
-                onPressed: _submitForm,
+                onPressed: _isSaving ? null : _submitForm,
+                isLoading: _isSaving,
               )
             ],
           ),

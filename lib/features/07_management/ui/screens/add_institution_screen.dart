@@ -31,6 +31,7 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
   final _searchFocusNode = FocusNode();
   final _uuid = const Uuid();
   
+  bool _isSaving = false;
   List<InstitutionMetadata> _filteredInstitutions = [];
 
   @override
@@ -57,31 +58,49 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
     super.dispose();
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      if (widget.institutionToEdit != null) {
-        // Mode Édition
-        final updatedInstitution = widget.institutionToEdit!.copyWith(
-          name: _nameController.text,
-        );
-        Provider.of<PortfolioProvider>(context, listen: false)
-            .updateInstitution(updatedInstitution);
-      } else {
-        // Mode Création
-        final newInstitution = Institution(
-          id: _uuid.v4(),
-          name: _nameController.text,
-          accounts: [],
-        );
+      setState(() {
+        _isSaving = true;
+      });
 
-        if (widget.onInstitutionCreated != null) {
-          widget.onInstitutionCreated!(newInstitution);
+      try {
+        if (widget.institutionToEdit != null) {
+          // Mode Édition
+          final updatedInstitution = widget.institutionToEdit!.copyWith(
+            name: _nameController.text,
+          );
+          await Provider.of<PortfolioProvider>(context, listen: false)
+              .updateInstitution(updatedInstitution);
         } else {
-          Provider.of<PortfolioProvider>(context, listen: false)
-              .addInstitution(newInstitution);
+          // Mode Création
+          final newInstitution = Institution(
+            id: _uuid.v4(),
+            name: _nameController.text,
+            accounts: [],
+          );
+
+          if (widget.onInstitutionCreated != null) {
+            widget.onInstitutionCreated!(newInstitution);
+          } else {
+            await Provider.of<PortfolioProvider>(context, listen: false)
+                .addInstitution(newInstitution);
+          }
+        }
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        debugPrint("Erreur lors de la sauvegarde : $e");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Erreur lors de la sauvegarde : $e")),
+          );
+          setState(() {
+            _isSaving = false;
+          });
         }
       }
-      Navigator.of(context).pop();
     }
   }
   
@@ -261,8 +280,9 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
 
             AppButton(
               label: 'Créer manuellement',
-              onPressed: _submitForm,
+              onPressed: _isSaving ? null : _submitForm,
               icon: Icons.add,
+              isLoading: _isSaving,
             ),
           ],
         ),

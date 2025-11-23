@@ -102,7 +102,7 @@ class SetupWizardProvider extends ChangeNotifier {
           name: institutionName,
           accounts: [],
         );
-        portfolioProvider.addInstitution(institution);
+        await portfolioProvider.addInstitution(institution);
 
         for (final wizardAccount in accountsList) {
           // Créer le compte
@@ -111,7 +111,7 @@ class SetupWizardProvider extends ChangeNotifier {
             name: wizardAccount.name,
             type: wizardAccount.type,
           );
-          portfolioProvider.addAccount(institution.id, account);
+          await portfolioProvider.addAccount(institution.id, account);
 
           // Calculer le dépôt initial (Cash + Valeur d'achat des actifs)
           // On considère que le cashBalance est le "reste" en cash.

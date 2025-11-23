@@ -272,34 +272,6 @@ class _TransactionsViewState extends State<TransactionsView> {
         final groupedTransactions = _groupTransactions(allTransactions, accountsMap, accountIdToInstitutionName);
         final sortedGroupKeys = groupedTransactions.keys.toList();
 
-        if (allTransactions.isEmpty) {
-          return AppScreen(
-            withSafeArea: false,
-            body: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(top: topPadding, bottom: AppDimens.paddingL),
-                  child: Center(
-                    child: FadeInSlide(
-                      duration: 0.6,
-                      child: Text('Historique', style: AppTypography.h2),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: FadeInSlide(
-                    delay: 0.2,
-                    duration: 0.6,
-                    child: EmptyTransactionsWidget(
-                      onAdd: _openAddTransactionModal,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
         return AppScreen(
           withSafeArea: false,
           body: Column(
@@ -335,28 +307,36 @@ class _TransactionsViewState extends State<TransactionsView> {
               const SizedBox(height: AppDimens.paddingM),
 
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(AppDimens.paddingM, 0, AppDimens.paddingM, 80),
-                  itemCount: sortedGroupKeys.length,
-                  itemBuilder: (context, groupIndex) {
-                    final key = sortedGroupKeys[groupIndex];
-                    final group = groupedTransactions[key]!;
-                    
-                    return FadeInSlide(
-                      delay: 0.2 + (groupIndex * 0.05), // Staggered animation
-                      duration: 0.5,
-                      child: TransactionGroupWidget(
-                        group: group,
-                        accountsMap: accountsMap,
-                        selectedIds: _selectedIds,
-                        isSelectionMode: _isSelectionMode,
-                        onToggleSelection: _toggleSelection,
-                        onDelete: (t) => _confirmDelete(context, transactionProvider, t),
-                        onEdit: (t) => _editTransaction(context, t),
+                child: allTransactions.isEmpty
+                    ? FadeInSlide(
+                        delay: 0.2,
+                        duration: 0.6,
+                        child: EmptyTransactionsWidget(
+                          onAdd: _openAddTransactionModal,
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(AppDimens.paddingM, 0, AppDimens.paddingM, 80),
+                        itemCount: sortedGroupKeys.length,
+                        itemBuilder: (context, groupIndex) {
+                          final key = sortedGroupKeys[groupIndex];
+                          final group = groupedTransactions[key]!;
+                          
+                          return FadeInSlide(
+                            delay: 0.2 + (groupIndex * 0.05), // Staggered animation
+                            duration: 0.5,
+                            child: TransactionGroupWidget(
+                              group: group,
+                              accountsMap: accountsMap,
+                              selectedIds: _selectedIds,
+                              isSelectionMode: _isSelectionMode,
+                              onToggleSelection: _toggleSelection,
+                              onDelete: (t) => _confirmDelete(context, transactionProvider, t),
+                              onEdit: (t) => _editTransaction(context, t),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
             ],
           ),
