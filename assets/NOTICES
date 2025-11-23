@@ -2085,7 +2085,10 @@ google_fonts
 path_provider_android
 path_provider_foundation
 pointer_interceptor_ios
+url_launcher_android
+url_launcher_ios
 url_launcher_linux
+url_launcher_macos
 url_launcher_windows
 
 Copyright 2013 The Flutter Authors
@@ -5923,6 +5926,7 @@ plugin_platform_interface
 pointer_interceptor
 pointer_interceptor_platform_interface
 pointer_interceptor_web
+url_launcher
 url_launcher_platform_interface
 xdg_directories
 
