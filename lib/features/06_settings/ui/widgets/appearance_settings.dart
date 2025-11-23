@@ -26,19 +26,26 @@ class AppearanceSettings extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Apparence',
+          'Couleur principale',
           style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Cette couleur sera utilisée pour les boutons, les icônes et les éléments actifs de l\'interface.',
+          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
-          child: Wrap(
-            alignment: WrapAlignment.spaceEvenly,
-            spacing: 8.0,
-            runSpacing: 8.0,
-            children: _colorOptions.map((color) {
-              return _buildColorChip(
-                  context, color, settingsProvider.appColor == color);
-            }).toList(),
+          child: Center( // Centrer les options
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 16.0, // Plus d'espace
+              runSpacing: 16.0,
+              children: _colorOptions.map((color) {
+                return _buildColorChip(
+                    context, color, settingsProvider.appColor == color);
+              }).toList(),
+            ),
           ),
         ),
       ],
@@ -51,26 +58,27 @@ class AppearanceSettings extends StatelessWidget {
       onTap: () {
         Provider.of<SettingsProvider>(context, listen: false).setAppColor(color);
       },
-      child: Container(
-        width: 36,
-        height: 36,
+      child: AnimatedContainer( // Animation
+        duration: const Duration(milliseconds: 200),
+        width: isSelected ? 48 : 40, // Plus grand si sélectionné
+        height: isSelected ? 48 : 40,
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
           border: Border.all(
             color: isSelected ? Colors.white : Colors.transparent,
-            width: 3,
+            width: isSelected ? 4 : 0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: color.withValues(alpha: 0.4),
+              blurRadius: isSelected ? 12 : 4,
+              offset: const Offset(0, 4),
             )
           ],
         ),
         child: isSelected
-            ? const Icon(Icons.check, color: Colors.white, size: 20)
+            ? const Icon(Icons.check, color: Colors.white, size: 24)
             : null,
       ),
     );

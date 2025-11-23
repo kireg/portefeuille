@@ -17,6 +17,7 @@ You are an expert Flutter & Dart developer working in Android Studio. Your goal 
 - **Clean Code:** Privilégie la composition de widgets plutôt que l'héritage complexe.
 - **Async:** Utilise `async`/`await` plutôt que la syntaxe `.then()`.
 - **Refactoring:** Si tu vois du code qui peut être optimisé ou nettoyé, signale-le ou propose une version refactorisée.
+- **Testing:** Crée systématiquement des tests unitaires après chaque modification de logique ou de widget pour éviter les régressions.
 
 # Architecture & UI
 - Assure-toi que l'UI est responsive.

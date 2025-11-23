@@ -21,9 +21,10 @@ class DangerZoneCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center, // Centré
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.center, // Centré
               children: [
                 Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
                 const SizedBox(width: 12),
@@ -34,12 +35,21 @@ class DangerZoneCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
+            Text(
+              "Cette action effacera toutes les données de l'application (portefeuilles, transactions, paramètres) et la remettra à zéro comme lors de la première installation.",
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.error.withValues(alpha: 0.8),
+              ),
+            ),
+            const SizedBox(height: 24),
             OutlinedButton.icon(
               icon: const Icon(Icons.delete_forever, size: 18),
               label: const Text('Réinitialiser l\'application'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: theme.colorScheme.error,
                 side: BorderSide(color: theme.colorScheme.error),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
               onPressed: () => _showResetDialog(context),
             ),

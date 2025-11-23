@@ -29,14 +29,14 @@ class EmptyTransactionsWidget extends StatelessWidget {
             Text('Aucune transaction', style: AppTypography.h3),
             const SizedBox(height: AppDimens.paddingS),
             Text(
-              'Commencez par ajouter votre première transaction.',
+              'Pour commencer, assurez-vous d\'avoir créé un compte dans l\'onglet "Vue".\n\nVous pouvez ensuite ajouter des transactions manuellement ou utiliser les boutons d\'import (PDF, Excel, IA) situés dans la barre d\'outils ci-dessus pour importer plusieurs transactions en une seule fois.',
               style: AppTypography.body,
               textAlign: TextAlign.center,
             ),
             if (onAdd != null) ...[
               const SizedBox(height: AppDimens.paddingM),
               AppButton(
-                label: "Ajouter une transaction",
+                label: "Ajouter une transaction manuelle",
                 icon: Icons.add,
                 onPressed: onAdd,
               ),

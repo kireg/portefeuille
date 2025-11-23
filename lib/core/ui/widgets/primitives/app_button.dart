@@ -12,7 +12,8 @@ class AppButton extends StatefulWidget {
   final IconData? icon;
   final bool isLoading;
   final bool isFullWidth;
-  final Color? textColor; // AJOUT
+  final Color? textColor;
+  final Color? borderColor; // AJOUT
 
   const AppButton({
     super.key,
@@ -22,7 +23,8 @@ class AppButton extends StatefulWidget {
     this.icon,
     this.isLoading = false,
     this.isFullWidth = true,
-    this.textColor, // AJOUT
+    this.textColor,
+    this.borderColor, // AJOUT
   });
 
   @override
@@ -124,7 +126,7 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
       case AppButtonType.secondary:
         return BoxDecoration(
           color: Colors.transparent,
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: widget.borderColor ?? AppColors.border), // Utilise la couleur personnalisée si dispo
           borderRadius: BorderRadius.circular(AppDimens.radiusS),
         );
       case AppButtonType.ghost:

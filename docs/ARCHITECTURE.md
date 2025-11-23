@@ -48,7 +48,11 @@ Chaque fonctionnalité majeure est un module indépendant dans `lib/features/`. 
 - Les dépendances sont injectées via le contexte
 - Pas de singletons globaux (sauf nécessité absolue)
 
-### 4. **Separation of Concerns**
+### 4. **Testing Strategy**
+- **Tests Unitaires** : Obligatoires pour toute modification de logique métier ou de widget complexe.
+- **Non-régression** : Chaque nouvelle fonctionnalité ou correction de bug doit être accompagnée de son test.
+
+### 5. **Separation of Concerns**
 ```
 UI (Widgets/Screens) → Providers (State Management) → Services/Repositories → Models
 ```

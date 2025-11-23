@@ -68,23 +68,27 @@ class TransactionFilterBar extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.add_circle, color: AppColors.primary),
+                  _HoverScaleIcon(
+                    icon: Icons.add_circle,
+                    color: AppColors.primary,
                     tooltip: 'Ajouter',
                     onPressed: onAddTransaction,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.upload_file, color: AppColors.primary),
+                  _HoverScaleIcon(
+                    icon: Icons.upload_file,
+                    color: AppColors.primary,
                     tooltip: 'Import PDF',
                     onPressed: onImportPdf,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.table_view, color: AppColors.primary),
+                  _HoverScaleIcon(
+                    icon: Icons.table_view,
+                    color: AppColors.primary,
                     tooltip: 'Import Excel (Crowdfunding)',
                     onPressed: onImportCrowdfunding,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.auto_awesome, color: AppColors.primary),
+                  _HoverScaleIcon(
+                    icon: Icons.auto_awesome,
+                    color: AppColors.primary,
                     tooltip: 'Import IA',
                     onPressed: onImportAi,
                   ),
@@ -121,6 +125,45 @@ class TransactionFilterBar extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HoverScaleIcon extends StatefulWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _HoverScaleIcon({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  State<_HoverScaleIcon> createState() => _HoverScaleIconState();
+}
+
+class _HoverScaleIconState extends State<_HoverScaleIcon> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedScale(
+        scale: _isHovered ? 1.2 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutBack,
+        child: IconButton(
+          icon: Icon(widget.icon, color: widget.color),
+          tooltip: widget.tooltip,
+          onPressed: widget.onPressed,
         ),
       ),
     );

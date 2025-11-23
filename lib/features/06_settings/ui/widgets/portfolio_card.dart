@@ -68,9 +68,10 @@ class PortfolioCard extends StatelessWidget {
               AppButton(
                 label: 'Supprimer',
                 icon: Icons.delete_outline,
-                type: AppButtonType.ghost,
+                type: AppButtonType.secondary, // Changé de ghost à secondary
                 isFullWidth: false,
-                textColor: AppColors.error, // Bouton rouge
+                textColor: AppColors.error,
+                borderColor: AppColors.error, // Bordure rouge
                 onPressed: provider.activePortfolio == null 
                     ? null 
                     : () => _showDeleteConfirmation(context, provider),
