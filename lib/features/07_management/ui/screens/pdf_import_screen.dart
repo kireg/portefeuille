@@ -211,7 +211,9 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
         assetName: parsed.assetName,
         quantity: parsed.quantity,
         price: parsed.price,
-        amount: parsed.amount,
+        amount: (parsed.type == TransactionType.Buy || parsed.type == TransactionType.Withdrawal)
+            ? -parsed.amount.abs()
+            : parsed.amount.abs(),
         fees: parsed.fees,
         notes: "Import PDF: $_fileName",
         assetType: parsed.assetType ?? AssetType.Stock, // Use inferred or default

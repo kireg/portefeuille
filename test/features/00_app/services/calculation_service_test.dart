@@ -194,4 +194,128 @@ void main() {
     // Check error reporting
     expect(result.failedConversions, contains('FAIL'));
   });
+
+  test('calculate should reflect negative cash balance when Buy transactions have negative amount', () async {
+    // Arrange
+    // 10 Buys of 1000 USD each. Amount should be -1000.
+    final transactions = List.generate(10, (index) {
+      return Transaction(
+        id: 't_buy_$index',
+        accountId: 'acc_mass',
+        type: TransactionType.Buy,
+        date: DateTime.now(),
+        amount: -1000, // Correct negative amount
+        assetTicker: 'AAPL',
+        assetName: 'Apple',
+        quantity: 10, // 10 * 100 = 1000
+        price: 100,
+        fees: 0,
+        assetType: AssetType.Stock,
+        priceCurrency: 'USD',
+        exchangeRate: 1.0,
+      );
+    });
+
+    final assetAAPL = Asset(
+      id: 'asset_aapl',
+      ticker: 'AAPL',
+      name: 'Apple',
+      type: AssetType.Stock,
+      priceCurrency: 'USD',
+      currentPrice: 100,
+      transactions: transactions,
+    );
+
+    final account = Account(
+      id: 'acc_mass',
+      name: 'Mass Account',
+      type: AccountType.cto,
+      currency: 'USD',
+      transactions: transactions,
+    )..assets = [assetAAPL];
+
+    final portfolio = Portfolio(
+      id: 'p_mass',
+      name: 'Mass Portfolio',
+      institutions: [Institution(id: 'i1', name: 'Inst', accounts: [account])],
+      savingsPlans: [],
+    );
+
+    // Act
+    final result = await service.calculate(
+      portfolio: portfolio,
+      targetCurrency: 'USD', // Keep simple
+      allMetadata: {},
+    );
+
+    // Assert
+    // Assets Value = 10 * (10 * 100) = 10,000 USD
+    // Cash Balance = 10 * (-1000) = -10,000 USD
+    // Total Value = 0 USD
+    expect(result.valueByAssetType[AssetType.Stock], 10000.0);
+    expect(result.valueByAssetType[AssetType.Cash], -10000.0);
+    expect(result.totalValue, 0.0);
+  });
+
+  test('calculate should IGNORE cash impact if Buy transactions have ZERO amount (Bad Import)', () async {
+    // Arrange
+    // 10 Buys of 1000 USD each. Amount is 0 (Simulating bad import).
+    final transactions = List.generate(10, (index) {
+      return Transaction(
+        id: 't_buy_bad_$index',
+        accountId: 'acc_bad',
+        type: TransactionType.Buy,
+        date: DateTime.now(),
+        amount: 0, // INCORRECT amount
+        assetTicker: 'AAPL',
+        assetName: 'Apple',
+        quantity: 10,
+        price: 100,
+        fees: 0,
+        assetType: AssetType.Stock,
+        priceCurrency: 'USD',
+        exchangeRate: 1.0,
+      );
+    });
+
+    final assetAAPL = Asset(
+      id: 'asset_aapl_bad',
+      ticker: 'AAPL',
+      name: 'Apple',
+      type: AssetType.Stock,
+      priceCurrency: 'USD',
+      currentPrice: 100,
+      transactions: transactions,
+    );
+
+    final account = Account(
+      id: 'acc_bad',
+      name: 'Bad Account',
+      type: AccountType.cto,
+      currency: 'USD',
+      transactions: transactions,
+    )..assets = [assetAAPL];
+
+    final portfolio = Portfolio(
+      id: 'p_bad',
+      name: 'Bad Portfolio',
+      institutions: [Institution(id: 'i1', name: 'Inst', accounts: [account])],
+      savingsPlans: [],
+    );
+
+    // Act
+    final result = await service.calculate(
+      portfolio: portfolio,
+      targetCurrency: 'USD',
+      allMetadata: {},
+    );
+
+    // Assert
+    // Assets Value = 10,000 USD
+    // Cash Balance = 0 USD (Because amount was 0)
+    // Total Value = 10,000 USD
+    expect(result.valueByAssetType[AssetType.Stock], 10000.0);
+    expect(result.valueByAssetType[AssetType.Cash] ?? 0.0, 0.0);
+    expect(result.totalValue, 10000.0);
+  });
 }

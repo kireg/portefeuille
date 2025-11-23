@@ -147,7 +147,7 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
           assetName: project.projectName,
           quantity: 1.0,
           price: project.investedAmount,
-          amount: project.investedAmount,
+          amount: -project.investedAmount, // Negative for Buy
           fees: 0.0,
           notes: "Import La Première Brique",
           assetType: AssetType.RealEstateCrowdfunding,

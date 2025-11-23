@@ -144,7 +144,7 @@ class CalculationService {
         accountInvested[acc.id] = accInvested;
 
         // Agrégation Cash
-        if (accCash > 0) {
+        if (accCash != 0) {
           aggregatedValueByType.update(
             AssetType.Cash,
                 (value) => value + accCash,

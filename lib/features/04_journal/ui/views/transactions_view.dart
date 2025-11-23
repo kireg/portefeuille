@@ -247,9 +247,9 @@ class _TransactionsViewState extends State<TransactionsView> {
   Widget build(BuildContext context) {
     final double topPadding = MediaQuery.of(context).padding.top + 90;
 
-    return Selector<PortfolioProvider, Portfolio?>(
-      selector: (context, provider) => provider.activePortfolio,
-      builder: (context, portfolio, child) {
+    return Consumer<PortfolioProvider>(
+      builder: (context, provider, child) {
+        final portfolio = provider.activePortfolio;
         if (portfolio == null) {
           return const Center(child: Text("Aucun portefeuille."));
         }
