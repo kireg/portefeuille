@@ -31,12 +31,30 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
   bool _isSnackBarVisible = false;
 
   Map<String, int> _getSyncStats(PortfolioProvider portfolio) {
+    final activePortfolio = portfolio.activePortfolio;
+    if (activePortfolio == null) return {'synced': 0, 'errors': 0, 'total': 0};
+
+    // Récupérer tous les tickers du portefeuille actif
+    final activeTickers = <String>{};
+    for (final institution in activePortfolio.institutions) {
+      for (final account in institution.accounts) {
+        for (final asset in account.assets) {
+          activeTickers.add(asset.ticker);
+        }
+      }
+    }
+
     final metadata = portfolio.allMetadata;
     int synced = 0;
     int errors = 0;
     int manual = 0;
     int unsyncable = 0;
-    for (final meta in metadata.values) {
+    
+    // Ne compter que les métadonnées des actifs présents dans le portefeuille actif
+    for (final ticker in activeTickers) {
+      final meta = metadata[ticker];
+      if (meta == null) continue;
+
       final status = meta.syncStatus ?? SyncStatus.never;
       switch (status) {
         case SyncStatus.synced: synced++; break;
@@ -46,7 +64,8 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
         default: break;
       }
     }
-    final total = metadata.length - unsyncable;
+    
+    final total = activeTickers.length - unsyncable;
     return {
       'synced': synced + manual,
       'errors': errors,

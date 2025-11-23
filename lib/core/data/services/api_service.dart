@@ -101,30 +101,30 @@ class ApiService {
 
       // 2. Si le cache est vide ou obsolète, appeler le réseau
       PriceResult? result;
-      final bool hasFmpKey = _settings.hasFmpApiKey;
+      
+      // Récupérer l'ordre des services depuis les paramètres
+      final serviceOrder = _settings.serviceOrder;
+      
+      for (final serviceName in serviceOrder) {
+        switch (serviceName) {
+          case 'FMP':
+            if (_settings.hasFmpApiKey) {
+              result = await _fetchFromFmp(ticker);
+            }
+            break;
+          case 'Yahoo':
+            result = await _fetchFromYahoo(ticker);
+            break;
+          case 'Google':
+            result = await _fetchFromGoogleFinance(ticker);
+            break;
+        }
 
-      if (hasFmpKey) {
-        result = await _fetchFromFmp(ticker);
+        // Si un résultat est trouvé, on arrête la boucle
         if (result != null) {
           _priceCache[ticker] = _CacheEntry(result);
           return result;
         }
-      }
-
-      // 3. Stratégie 2 : Google Finance (Scraping)
-      result = await _fetchFromGoogleFinance(ticker);
-      if (result != null) {
-        _priceCache[ticker] = _CacheEntry(result);
-        return result;
-      }
-
-      // 4. Stratégie 3 : Yahoo (Fallback ou si FMP n'a pas de clé)
-      result = await _fetchFromYahoo(ticker);
-
-      // 5. Mettre à jour le cache et retourner
-      if (result != null) {
-        _priceCache[ticker] = _CacheEntry(result);
-        return result;
       }
 
       // 5. Échec complet

@@ -12,6 +12,7 @@ class AppButton extends StatefulWidget {
   final IconData? icon;
   final bool isLoading;
   final bool isFullWidth;
+  final Color? textColor; // AJOUT
 
   const AppButton({
     super.key,
@@ -21,6 +22,7 @@ class AppButton extends StatefulWidget {
     this.icon,
     this.isLoading = false,
     this.isFullWidth = true,
+    this.textColor, // AJOUT
   });
 
   @override
@@ -131,6 +133,8 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
   }
 
   Color _getTextColor() {
+    if (widget.textColor != null) return widget.textColor!; // Priorité à la couleur explicite
+
     switch (widget.type) {
       case AppButtonType.primary:
         return Colors.white;

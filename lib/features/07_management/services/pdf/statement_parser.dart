@@ -1,3 +1,4 @@
+import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 
 /// Modèle intermédiaire pour une transaction extraite d'un PDF.
@@ -13,6 +14,7 @@ class ParsedTransaction {
   final double amount;
   final double fees;
   final String currency;
+  final AssetType? assetType;
 
   ParsedTransaction({
     required this.date,
@@ -25,11 +27,12 @@ class ParsedTransaction {
     required this.amount,
     required this.fees,
     required this.currency,
+    this.assetType,
   });
 
   @override
   String toString() {
-    return 'ParsedTransaction(date: $date, type: $type, asset: $assetName, qty: $quantity, price: $price, amount: $amount)';
+    return 'ParsedTransaction(date: $date, type: $type, asset: $assetName, qty: $quantity, price: $price, amount: $amount, assetType: $assetType)';
   }
 }
 

@@ -19,5 +19,8 @@ abstract class ISettings {
   /// La couleur thème de l'application
   /// Retourne une valeur au format 0xAARRGGBB
   int get appColorValue;
+
+  /// L'ordre de priorité des services de données (ex: ["FMP", "Yahoo", "Google"])
+  List<String> get serviceOrder;
 }
 

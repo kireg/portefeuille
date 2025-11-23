@@ -70,9 +70,40 @@ class PortfolioCard extends StatelessWidget {
                 icon: Icons.delete_outline,
                 type: AppButtonType.ghost,
                 isFullWidth: false,
-                onPressed: provider.activePortfolio == null ? null : () => provider.deletePortfolio(provider.activePortfolio!.id),
+                textColor: AppColors.error, // Bouton rouge
+                onPressed: provider.activePortfolio == null 
+                    ? null 
+                    : () => _showDeleteConfirmation(context, provider),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, PortfolioProvider provider) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceLight,
+        title: Text('Supprimer le portefeuille ?', style: AppTypography.h3),
+        content: Text(
+          'Êtes-vous sûr de vouloir supprimer "${provider.activePortfolio?.name}" ?\nCette action est irréversible.',
+          style: AppTypography.body,
+        ),
+        actions: [
+          TextButton(
+            child: Text('Annuler', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
+            onPressed: () => Navigator.pop(ctx),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Supprimer'),
+            onPressed: () {
+              provider.deletePortfolio(provider.activePortfolio!.id);
+              Navigator.pop(ctx);
+            },
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/features/07_management/services/pdf/statement_parser.dart';
 
 class TradeRepublicParser implements StatementParser {
@@ -11,6 +12,17 @@ class TradeRepublicParser implements StatementParser {
     final canParse = rawText.contains("Trade Republic Bank GmbH") || rawText.contains("TRADE REPUBLIC");
     debugPrint("TradeRepublicParser.canParse: $canParse");
     return canParse;
+  }
+
+  AssetType _inferAssetType(String name) {
+    final upper = name.toUpperCase();
+    if (upper.contains('ETF') || upper.contains('MSCI') || upper.contains('S&P') || upper.contains('VANGUARD') || upper.contains('ISHARES') || upper.contains('AMUNDI')) {
+      return AssetType.ETF;
+    }
+    if (upper.contains('COIN') || upper.contains('BITCOIN') || upper.contains('ETHEREUM') || upper.contains('BTC') || upper.contains('ETH') || upper.contains('SOLANA')) {
+      return AssetType.Crypto;
+    }
+    return AssetType.Stock;
   }
 
   @override
@@ -99,6 +111,7 @@ class TradeRepublicParser implements StatementParser {
         amount: amount,
         fees: 1.0, // TR a souvent 1€ de frais, mais c'est une supposition
         currency: currency,
+        assetType: _inferAssetType(assetName),
       ));
       debugPrint("TradeRepublicParser: Added transaction: $typeStr $quantity $assetName @ $price $currency");
     }
@@ -132,6 +145,7 @@ class TradeRepublicParser implements StatementParser {
         amount: total,
         fees: 0.0,
         currency: "EUR", // Par défaut EUR sur ce relevé
+        assetType: _inferAssetType(assetName),
       ));
       debugPrint("TradeRepublicParser: Added position: $quantity $assetName ($isin) @ $price");
     }
@@ -156,6 +170,7 @@ class TradeRepublicParser implements StatementParser {
         amount: 0, // À extraire plus précisément
         fees: 0,
         currency: "EUR",
+        assetType: _inferAssetType(assetName),
       ));
       debugPrint("TradeRepublicParser: Added dividend: $assetName");
     }

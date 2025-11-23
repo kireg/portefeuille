@@ -16,6 +16,8 @@ import 'package:portefeuille/features/00_app/providers/transaction_provider.dart
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/utils/isin_validator.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
+import 'package:portefeuille/core/data/models/transaction_type.dart';
 
 import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_header.dart';
 import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_account_selector.dart';
@@ -212,11 +214,31 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
         amount: parsed.amount,
         fees: parsed.fees,
         notes: "Import PDF: $_fileName",
-        assetType: null, // TODO: Infer asset type
+        assetType: parsed.assetType ?? AssetType.Stock, // Use inferred or default
         priceCurrency: parsed.currency,
       );
 
       newTransactions.add(transaction);
+
+      // Auto-Deposit for Buy transactions to neutralize liquidity impact
+      if (parsed.type == TransactionType.Buy) {
+         final depositTransaction = Transaction(
+          id: _uuid.v4(),
+          accountId: _selectedAccount!.id,
+          type: TransactionType.Deposit,
+          date: parsed.date, // Same date
+          assetTicker: null,
+          assetName: "Dépôt (Auto-Import)",
+          quantity: null,
+          price: null,
+          amount: parsed.amount + parsed.fees, // Cover cost + fees
+          fees: 0,
+          notes: "Auto-dépôt pour couvrir l'achat de ${parsed.assetName}",
+          assetType: AssetType.Cash,
+          priceCurrency: parsed.currency,
+        );
+        newTransactions.add(depositTransaction);
+      }
     }
 
     if (newTransactions.isNotEmpty) {

@@ -1,4 +1,5 @@
 import 'package:portefeuille/core/data/models/transaction_type.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/features/07_management/services/pdf/statement_parser.dart';
 
 class BoursoramaParser implements StatementParser {
@@ -8,6 +9,17 @@ class BoursoramaParser implements StatementParser {
   @override
   bool canParse(String rawText) {
     return rawText.contains("Boursorama") && rawText.contains("Avis d'opéré");
+  }
+
+  AssetType _inferAssetType(String name) {
+    final upper = name.toUpperCase();
+    if (upper.contains('ETF') || upper.contains('MSCI') || upper.contains('S&P') || upper.contains('VANGUARD') || upper.contains('ISHARES') || upper.contains('AMUNDI')) {
+      return AssetType.ETF;
+    }
+    if (upper.contains('COIN') || upper.contains('BITCOIN') || upper.contains('ETHEREUM') || upper.contains('BTC') || upper.contains('ETH') || upper.contains('SOLANA')) {
+      return AssetType.Crypto;
+    }
+    return AssetType.Stock;
   }
 
   @override
@@ -56,6 +68,7 @@ class BoursoramaParser implements StatementParser {
         amount: amount,
         fees: 0.0, // Frais souvent indiqués plus bas dans le tableau, difficile à choper avec une regex simple
         currency: currency,
+        assetType: _inferAssetType(assetName),
       ));
     }
 

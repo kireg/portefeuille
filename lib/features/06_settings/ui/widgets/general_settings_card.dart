@@ -63,6 +63,45 @@ class GeneralSettingsCard extends StatelessWidget {
             },
             prefixIcon: Icons.person_outline,
           ),
+
+          const SizedBox(height: AppDimens.paddingL),
+
+          Text('Priorité des sources de données', style: AppTypography.label),
+          const SizedBox(height: AppDimens.paddingS),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(AppDimens.radiusS),
+            ),
+            child: ReorderableListView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              children: [
+                for (int index = 0; index < settingsProvider.serviceOrder.length; index++)
+                  ListTile(
+                    key: ValueKey(settingsProvider.serviceOrder[index]),
+                    title: Text(settingsProvider.serviceOrder[index], style: AppTypography.body),
+                    leading: ReorderableDragStartListener(
+                      index: index,
+                      child: const Icon(Icons.drag_handle, color: AppColors.textSecondary),
+                    ),
+                    trailing: index == 0 
+                        ? const Icon(Icons.star, size: 16, color: AppColors.primary) 
+                        : null,
+                  ),
+              ],
+              onReorder: (oldIndex, newIndex) {
+                if (oldIndex < newIndex) {
+                  newIndex -= 1;
+                }
+                final List<String> newOrder = List.from(settingsProvider.serviceOrder);
+                final String item = newOrder.removeAt(oldIndex);
+                newOrder.insert(newIndex, item);
+                settingsProvider.setServiceOrder(newOrder);
+              },
+            ),
+          ),
         ],
       ),
     );

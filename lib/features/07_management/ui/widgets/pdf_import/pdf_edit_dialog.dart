@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:portefeuille/features/07_management/services/pdf/statement_parser.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
 
 class PdfEditDialog extends StatefulWidget {
   final ParsedTransaction transaction;
@@ -23,6 +24,7 @@ class _PdfEditDialogState extends State<PdfEditDialog> {
   late TextEditingController _isinController;
   late TextEditingController _qtyController;
   late TextEditingController _priceController;
+  AssetType? _selectedAssetType;
 
   @override
   void initState() {
@@ -32,6 +34,7 @@ class _PdfEditDialogState extends State<PdfEditDialog> {
     _isinController = TextEditingController(text: widget.transaction.isin);
     _qtyController = TextEditingController(text: widget.transaction.quantity.toString());
     _priceController = TextEditingController(text: widget.transaction.price.toString());
+    _selectedAssetType = widget.transaction.assetType ?? AssetType.Stock;
   }
 
   @override
@@ -53,6 +56,17 @@ class _PdfEditDialogState extends State<PdfEditDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            DropdownButtonFormField<AssetType>(
+              value: _selectedAssetType,
+              decoration: const InputDecoration(labelText: 'Type d\'actif'),
+              items: AssetType.values.map((type) {
+                return DropdownMenuItem(
+                  value: type,
+                  child: Text(type.displayName),
+                );
+              }).toList(),
+              onChanged: (val) => setState(() => _selectedAssetType = val),
+            ),
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Nom de l\'actif'),
@@ -97,6 +111,7 @@ class _PdfEditDialogState extends State<PdfEditDialog> {
                       (double.tryParse(_priceController.text) ?? widget.transaction.price),
               fees: widget.transaction.fees,
               currency: widget.transaction.currency,
+              assetType: _selectedAssetType,
             );
             widget.onSave(newTx);
             Navigator.pop(context);

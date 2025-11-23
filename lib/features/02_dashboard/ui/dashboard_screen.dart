@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:provider/provider.dart';
 import '../../00_app/providers/portfolio_provider.dart';
-import '../../00_app/providers/portfolio_calculation_provider.dart';
 
 // Ecrans des onglets
 import '../../03_overview/ui/overview_tab.dart';
@@ -36,7 +35,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final portfolio = context.select<PortfolioProvider, Portfolio?>((p) => p.activePortfolio);
-    final hasCrowdfunding = context.select<PortfolioCalculationProvider, bool>((p) => p.hasCrowdfunding);
 
     // Cas "Aucun portefeuille"
     if (portfolio == null) {
@@ -67,6 +65,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final List<Widget> tabs = [
       const OverviewTab(),
       const PlannerTab(),
+      const CrowdfundingTrackingTab(),
+      const SyntheseView(),
     ];
 
     final List<AppNavItem> navItems = [
@@ -80,23 +80,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         selectedIcon: Icons.calendar_today,
         label: 'Plan',
       ),
-    ];
-
-    if (hasCrowdfunding) {
-      tabs.add(const CrowdfundingTrackingTab());
-      navItems.add(const AppNavItem(
+      const AppNavItem(
         icon: Icons.rocket_launch_outlined,
         selectedIcon: Icons.rocket_launch,
         label: 'Crowd',
-      ));
-    }
-
-    tabs.add(const SyntheseView());
-    navItems.add(const AppNavItem(
-      icon: Icons.pie_chart_outline,
-      selectedIcon: Icons.pie_chart,
-      label: 'Synthèse',
-    ));
+      ),
+      const AppNavItem(
+        icon: Icons.pie_chart_outline,
+        selectedIcon: Icons.pie_chart,
+        label: 'Synthèse',
+      ),
+    ];
 
     tabs.add(const TransactionsView());
     navItems.add(const AppNavItem(
