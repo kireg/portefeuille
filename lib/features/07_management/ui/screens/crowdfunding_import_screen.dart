@@ -189,6 +189,11 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
           repaymentType: project.repaymentType,
           riskRating: project.riskRating,
         );
+        
+        debugPrint("--- DEBUG METADATA: ${project.projectName} ---");
+        debugPrint("Target Duration: ${metadata.targetDuration}");
+        debugPrint("Min Duration: ${metadata.minDuration}");
+        debugPrint("Max Duration: ${metadata.maxDuration}");
 
         newMetadatas.add(metadata);
         importedCount++;

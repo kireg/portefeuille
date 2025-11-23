@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // Pour debugPrint
 import 'package:excel/excel.dart';
 import 'package:portefeuille/core/data/models/repayment_type.dart';
 import 'parsed_crowdfunding_project.dart';
@@ -71,6 +72,11 @@ class LaPremiereBriqueParser {
       final dateMinIdx = headers['Date de remboursement minimale (JJ/MM/AAAA)'];
       final dateMaxIdx = headers['Date de remboursement maximale (JJ/MM/AAAA)'];
       
+      debugPrint("--- DEBUG PARSER: $projectName ---");
+      debugPrint("Raw Date Sign: ${dateSignIdx != null ? _getCellValue(row[dateSignIdx]) : 'NULL'}");
+      debugPrint("Raw Date Min: ${dateMinIdx != null ? _getCellValue(row[dateMinIdx]) : 'NULL'}");
+      debugPrint("Raw Date Max: ${dateMaxIdx != null ? _getCellValue(row[dateMaxIdx]) : 'NULL'}");
+
       DateTime? startDate = (dateSignIdx != null && dateSignIdx < row.length) 
           ? _parseDate(row[dateSignIdx]) 
           : null;
@@ -83,6 +89,10 @@ class LaPremiereBriqueParser {
           ? _parseDate(row[dateMaxIdx]) 
           : null;
       
+      debugPrint("Parsed Start: $startDate");
+      debugPrint("Parsed Min: $minDate");
+      debugPrint("Parsed Max: $maxDate");
+
       // Duration
       int? minMonths;
       int? maxMonths;
@@ -107,6 +117,9 @@ class LaPremiereBriqueParser {
       } else if (maxMonths != null) {
         durationMonths = maxMonths;
       }
+      
+      debugPrint("Calculated Duration: $durationMonths (Min: $minMonths, Max: $maxMonths)");
+
       
       // Amount
       final amountIdx = headers['Montant investi (€)'];
@@ -222,14 +235,29 @@ class LaPremiereBriqueParser {
     if (val is DateCellValue) {
       return DateTime(val.year, val.month, val.day);
     }
+    
+    String text = "";
     if (val is TextCellValue) {
+      text = val.value.toString();
+    } else if (val != null) {
+      text = val.toString();
+    }
+    
+    text = text.trim();
+    
+    // Try parsing dd/MM/yyyy
+    if (text.contains('/')) {
       try {
-        final parts = val.value.toString().split('/');
+        final parts = text.split('/');
         if (parts.length == 3) {
-          return DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+          final day = int.parse(parts[0].trim());
+          final month = int.parse(parts[1].trim());
+          final year = int.parse(parts[2].trim());
+          return DateTime(year, month, day);
         }
       } catch (_) {}
     }
+    
     return null;
   }
 
