@@ -17,6 +17,7 @@ import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/utils/isin_validator.dart';
+import 'package:portefeuille/core/ui/widgets/feedback/premium_help_button.dart';
 
 class PdfImportScreen extends StatefulWidget {
   const PdfImportScreen({super.key});
@@ -326,6 +327,14 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
                     ),
                   ),
                   Align(
+                    alignment: Alignment.centerLeft,
+                    child: const PremiumHelpButton(
+                      title: "Guide d'import PDF",
+                      content: "Importez vos relevés de compte ou avis d'opéré au format PDF.\n\nBanques supportées :\n• BoursoBank (Relevé mensuel)\n• Fortuneo (Avis d'opéré)\n• Trade Republic (Relevé de compte)\n\nAssurez-vous que le fichier est un PDF original (non scanné).",
+                      visual: Icon(Icons.picture_as_pdf_rounded, size: 48, color: AppColors.primary),
+                    ),
+                  ),
+                  Align(
                     alignment: Alignment.centerRight,
                     child: AppIcon(
                       icon: Icons.close,
@@ -418,10 +427,51 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
                       child: Column(
                         children: [
                           if (_fileName == null)
-                            AppButton(
-                              label: 'Sélectionner un PDF',
-                              onPressed: _pickPdf,
-                              icon: Icons.upload_file,
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(AppDimens.paddingL),
+                              decoration: BoxDecoration(
+                                color: AppColors.background.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(AppDimens.radiusM),
+                                border: Border.all(
+                                  color: AppColors.textSecondary.withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withOpacity(0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.upload_file_rounded,
+                                      size: 32,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimens.paddingM),
+                                  Text(
+                                    "Déposez votre PDF ici",
+                                    style: AppTypography.h3,
+                                  ),
+                                  const SizedBox(height: AppDimens.paddingXS),
+                                  Text(
+                                    "Relevés bancaires ou avis d'opéré",
+                                    style: AppTypography.body.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimens.paddingL),
+                                  AppButton(
+                                    label: 'Sélectionner un PDF',
+                                    onPressed: _pickPdf,
+                                    icon: Icons.folder_open,
+                                  ),
+                                ],
+                              ),
                             )
                           else
                             Row(

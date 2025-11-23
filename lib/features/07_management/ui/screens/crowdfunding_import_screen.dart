@@ -20,6 +20,8 @@ import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/core/data/models/repayment_type.dart';
+import 'package:portefeuille/core/ui/widgets/feedback/premium_help_button.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 
 class CrowdfundingImportScreen extends StatefulWidget {
   const CrowdfundingImportScreen({super.key});
@@ -319,150 +321,272 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
         ? null 
         : accounts.firstWhere((a) => a.id == _selectedAccount!.id, orElse: () => _selectedAccount!);
 
-    return AppScreen(
-      body: Column(
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(AppDimens.paddingM),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                const SizedBox(width: AppDimens.paddingS),
-                Text("Import La Première Brique", style: AppTypography.h2),
-              ],
-            ),
-          ),
-
-          // Header / File Picker
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
-            child: AppCard(
-              child: Column(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppDimens.radiusL),
+      ),
+      child: AppScreen(
+        withSafeArea: false,
+        body: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppDimens.paddingL,
+                  AppDimens.paddingL,
+                  AppDimens.paddingM,
+                  AppDimens.paddingM
+              ),
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  if (_fileName == null)
-                    Center(
-                      child: AppButton(
-                        label: "Sélectionner le fichier Excel",
-                        icon: Icons.upload_file,
-                        onPressed: _pickFile,
-                      ),
-                    )
-                  else
-                    ListTile(
-                      leading: const Icon(Icons.insert_drive_file, color: AppColors.primary),
-                      title: Text(_fileName!, style: AppTypography.bodyBold),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => setState(() {
-                          _fileName = null;
-                          _extractedProjects = [];
-                        }),
-                      ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      'Import Crowdfunding',
+                      style: AppTypography.h2,
+                      textAlign: TextAlign.center,
                     ),
-                  
-                  const SizedBox(height: AppDimens.paddingM),
-                  
-                  DropdownButtonFormField<Account>(
-                    decoration: const InputDecoration(
-                      labelText: "Compte de destination",
-                      border: OutlineInputBorder(),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: const PremiumHelpButton(
+                      title: "Guide d'import",
+                      content: "Pour importer vos investissements :\n\n1. Connectez-vous à votre espace client La Première Brique.\n2. Allez dans la section 'Mes Investissements'.\n3. Cliquez sur le bouton 'Exporter' (format Excel).\n4. Sélectionnez le fichier téléchargé ici.\n\nCe fichier contient tous les détails nécessaires (Montant, Durée, Taux, etc.) pour un suivi précis.",
+                      visual: Icon(Icons.table_view_rounded, size: 48, color: AppColors.primary),
                     ),
-                    value: _selectedAccount,
-                    items: accounts.map((acc) => DropdownMenuItem(
-                      value: acc,
-                      child: Text(acc.name),
-                    )).toList(),
-                    onChanged: (val) => setState(() => _selectedAccount = val),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: AppIcon(
+                      icon: Icons.close,
+                      onTap: () => Navigator.of(context).pop(),
+                      backgroundColor: Colors.transparent,
+                      size: 24,
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
 
-          const SizedBox(height: AppDimens.paddingM),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+                children: [
+                  // 1. Account Selection
+                  FadeInSlide(
+                    delay: 0.1,
+                    child: AppCard(
+                      padding: const EdgeInsets.all(AppDimens.paddingM),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Compte de destination", style: AppTypography.h3),
+                          const SizedBox(height: AppDimens.paddingS),
+                          DropdownButtonFormField<Account>(
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            value: _selectedAccount,
+                            isExpanded: true,
+                            items: () {
+                              // Group accounts by institution
+                              final groupedAccounts = <String, List<Account>>{};
+                              for (var acc in accounts) {
+                                // Find institution name for this account
+                                final inst = context.read<PortfolioProvider>().activePortfolio?.institutions.firstWhere(
+                                  (i) => i.accounts.any((a) => a.id == acc.id),
+                                );
+                                final instName = inst?.name ?? "Autre";
+                                groupedAccounts.putIfAbsent(instName, () => []).add(acc);
+                              }
 
-          // List of Projects
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _extractedProjects.isEmpty
-                    ? Center(child: Text("Aucun projet à importer", style: AppTypography.body))
-                    : ListView.builder(
-                        itemCount: _extractedProjects.length,
-                        itemBuilder: (context, index) {
-                          final project = _extractedProjects[index];
-                          final isDuplicate = selectedAccountReal != null && selectedAccountReal.transactions.any((t) =>
-                              t.assetName == project.projectName &&
-                              (t.amount - project.investedAmount).abs() < 0.01 &&
-                              (project.investmentDate == null || isSameDay(t.date, project.investmentDate!)));
-
-                          return FadeInSlide(
-                            duration: .1 + (index * .05),
-                            child: Dismissible(
-                              key: ValueKey(project.projectName),
-                              direction: DismissDirection.endToStart,
-                              onDismissed: (_) => _removeProject(index),
-                              background: Container(
-                                color: AppColors.error,
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
-                                child: const Icon(Icons.delete, color: Colors.white),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM, vertical: AppDimens.paddingS / 2),
-                                child: AppCard(
-                                  backgroundColor: isDuplicate ? AppColors.warning.withOpacity(0.1) : null,
-                                  onTap: () => _editProject(index),
-                                  child: ListTile(
-                                    title: Row(
-                                      children: [
-                                        Expanded(child: Text(project.projectName, style: AppTypography.bodyBold)),
-                                        if (isDuplicate)
-                                          const Tooltip(
-                                            message: "Ce projet existe déjà et sera ignoré",
-                                            child: Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 20),
-                                          ),
-                                      ],
-                                    ),
-                                    subtitle: Text(
-                                      "${project.investedAmount} € • ${project.yieldPercent}% • ${project.durationMonths} mois",
-                                      style: AppTypography.caption,
-                                    ),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          project.repaymentType.displayName,
-                                          style: AppTypography.caption.copyWith(color: AppColors.primary),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        const Icon(Icons.edit, size: 16, color: AppColors.textSecondary),
-                                      ],
+                              final items = <DropdownMenuItem<Account>>[];
+                              groupedAccounts.forEach((instName, accs) {
+                                // Add Institution Header (disabled)
+                                items.add(DropdownMenuItem<Account>(
+                                  enabled: false,
+                                  child: Text(
+                                    instName.toUpperCase(),
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
+                                ));
+                                // Add Accounts
+                                for (var acc in accs) {
+                                  items.add(DropdownMenuItem<Account>(
+                                    value: acc,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 16.0),
+                                      child: Text(acc.name, style: AppTypography.body),
+                                    ),
+                                  ));
+                                }
+                              });
+                              return items;
+                            }(),
+                            onChanged: (val) => setState(() => _selectedAccount = val),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: AppDimens.paddingM),
+
+                  // 2. File Picker
+                  FadeInSlide(
+                    delay: 0.2,
+                    child: AppCard(
+                      padding: const EdgeInsets.all(AppDimens.paddingM),
+                      child: Column(
+                        children: [
+                          if (_fileName == null)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(AppDimens.paddingL),
+                              decoration: BoxDecoration(
+                                color: AppColors.background.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(AppDimens.radiusM),
+                                border: Border.all(
+                                  color: AppColors.textSecondary.withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withOpacity(0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.table_view_rounded,
+                                      size: 32,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimens.paddingM),
+                                  Text(
+                                    "Importez votre fichier Excel",
+                                    style: AppTypography.h3,
+                                  ),
+                                  const SizedBox(height: AppDimens.paddingXS),
+                                  Text(
+                                    "Formats supportés : .xlsx, .xls",
+                                    style: AppTypography.body.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimens.paddingL),
+                                  AppButton(
+                                    label: "Sélectionner le fichier",
+                                    icon: Icons.folder_open,
+                                    onPressed: _pickFile,
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            ListTile(
+                              leading: const Icon(Icons.insert_drive_file, color: AppColors.primary),
+                              title: Text(_fileName!, style: AppTypography.bodyBold),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () => setState(() {
+                                  _fileName = null;
+                                  _extractedProjects = [];
+                                }),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: AppDimens.paddingM),
+
+                  // List of Projects
+                  if (_isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_extractedProjects.isNotEmpty)
+                    ..._extractedProjects.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final project = entry.value;
+                      final isDuplicate = selectedAccountReal != null && selectedAccountReal.transactions.any((t) =>
+                          t.assetName == project.projectName &&
+                          (t.amount - project.investedAmount).abs() < 0.01 &&
+                          (project.investmentDate == null || isSameDay(t.date, project.investmentDate!)));
+
+                      return FadeInSlide(
+                        delay: 0.2 + (index * 0.05),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AppDimens.paddingS),
+                          child: Dismissible(
+                            key: ValueKey(project.projectName),
+                            direction: DismissDirection.endToStart,
+                            onDismissed: (_) => _removeProject(index),
+                            background: Container(
+                              color: AppColors.error,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
+                              child: const Icon(Icons.delete, color: Colors.white),
+                            ),
+                            child: AppCard(
+                              backgroundColor: isDuplicate ? AppColors.warning.withOpacity(0.1) : null,
+                              onTap: () => _editProject(index),
+                              child: ListTile(
+                                title: Row(
+                                  children: [
+                                    Expanded(child: Text(project.projectName, style: AppTypography.bodyBold)),
+                                    if (isDuplicate)
+                                      const Tooltip(
+                                        message: "Ce projet existe déjà et sera ignoré",
+                                        child: Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 20),
+                                      ),
+                                  ],
+                                ),
+                                subtitle: Text(
+                                  "${project.investedAmount} € • ${project.yieldPercent}% • ${project.durationMonths} mois",
+                                  style: AppTypography.caption,
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      project.repaymentType.displayName,
+                                      style: AppTypography.caption.copyWith(color: AppColors.primary),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.edit, size: 16, color: AppColors.textSecondary),
+                                  ],
                                 ),
                               ),
                             ),
-                          );
-                        },
-                      ),
-          ),
-
-          // Footer Actions
-          if (_extractedProjects.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(AppDimens.paddingM),
-              child: AppButton(
-                label: "Importer ${_extractedProjects.length} projets",
-                onPressed: _isLoading ? null : _importProjects,
-                isFullWidth: true,
+                          ),
+                        ),
+                      );
+                    }),
+                ],
               ),
             ),
-        ],
+
+            // Footer Actions
+            if (_extractedProjects.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(AppDimens.paddingM),
+                child: AppButton(
+                  label: "Importer ${_extractedProjects.length} projets",
+                  onPressed: _isLoading ? null : _importProjects,
+                  isFullWidth: true,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

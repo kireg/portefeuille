@@ -285,11 +285,13 @@ class _TransactionsViewState extends State<TransactionsView> {
                     ),
                   ),
                 ),
-                const Expanded(
+                Expanded(
                   child: FadeInSlide(
                     delay: 0.2,
                     duration: 0.6,
-                    child: EmptyTransactionsWidget(),
+                    child: EmptyTransactionsWidget(
+                      onAdd: _openAddTransactionModal,
+                    ),
                   ),
                 ),
               ],

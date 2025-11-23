@@ -8,13 +8,15 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
+import 'package:portefeuille/core/ui/widgets/feedback/premium_help_button.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart'; // Usage du widget standardisé
+import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/07_management/ui/screens/import_transaction_screen.dart';
-import 'package:portefeuille/features/07_management/ui/screens/ai_transaction_review_screen.dart';
-import 'package:portefeuille/core/data/models/transaction_extraction_result.dart';
+
 
 class AiImportConfigScreen extends StatefulWidget {
   const AiImportConfigScreen({super.key});
@@ -51,134 +53,157 @@ class _AiImportConfigScreenState extends State<AiImportConfigScreen> {
       }
     }
 
-    return AppScreen(
-      appBar: AppBar(
-        title: Text("Import Intelligent", style: AppTypography.h3),
-        backgroundColor: Colors.transparent,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppDimens.radiusL),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimens.paddingL),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: AppScreen(
+        withSafeArea: false,
+        body: Column(
           children: [
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Configuration", style: AppTypography.h2),
-                  const SizedBox(height: AppDimens.paddingS),
-                  Text(
-                    "Sélectionnez le compte de destination pour les transactions détectées.",
-                    style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: AppDimens.paddingL),
-
-                  // Sélecteur standardisé
-                  AppDropdown<String>(
-                    label: "Compte cible",
-                    value: _selectedAccountId,
-                    items: accountItems,
-                    prefixIcon: Icons.account_balance_wallet_outlined,
-                    onChanged: (val) => setState(() => _selectedAccountId = val),
-                  ),
-                ],
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppDimens.paddingL,
+                  AppDimens.paddingL,
+                  AppDimens.paddingM,
+                  AppDimens.paddingM
               ),
-            ),
-
-            const SizedBox(height: AppDimens.paddingL),
-
-            // Zone d'avertissement stylisée
-            Container(
-              padding: const EdgeInsets.all(AppDimens.paddingM),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.1),
-                border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
-                borderRadius: BorderRadius.circular(AppDimens.radiusM),
-              ),
-              child: Column(
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.security, color: AppColors.warning),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          "Confidentialité des données",
-                          style: AppTypography.bodyBold.copyWith(color: AppColors.warning),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "L'image sera envoyée à l'IA de Google (Gemini) pour analyse.\n\n"
-                        "• Masquez vos informations personnelles (Nom, IBAN).\n"
-                        "• Aucune image n'est conservée sur nos serveurs.",
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: AppDimens.paddingM),
-
-            // Checkbox personnalisé
-            GestureDetector(
-              onTap: () => setState(() => _hasAcceptedWarning = !_hasAcceptedWarning),
-              child: Row(
-                children: [
-                  Icon(
-                    _hasAcceptedWarning ? Icons.check_box : Icons.check_box_outline_blank,
-                    color: _hasAcceptedWarning ? AppColors.primary : AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
+                  SizedBox(
+                    width: double.infinity,
                     child: Text(
-                      "J'ai compris et je souhaite continuer.",
-                      style: AppTypography.body,
+                      'Import Intelligent',
+                      style: AppTypography.h2,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: const PremiumHelpButton(
+                      title: "Guide Import IA",
+                      content: "L'import intelligent utilise l'IA pour analyser n'importe quel document financier (PDF ou Image).\n\n1. Sélectionnez le compte de destination.\n2. Importez votre document.\n3. Sélectionnez la zone contenant les transactions.\n4. L'IA extrait automatiquement les données.",
+                      visual: Icon(Icons.auto_awesome, size: 48, color: AppColors.primary),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: AppIcon(
+                      icon: Icons.close,
+                      onTap: () => Navigator.of(context).pop(),
+                      backgroundColor: Colors.transparent,
+                      size: 24,
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: AppDimens.paddingXL),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+                children: [
+                  FadeInSlide(
+                    delay: 0.1,
+                    child: AppCard(
+                      padding: const EdgeInsets.all(AppDimens.paddingM),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Configuration", style: AppTypography.h2),
+                          const SizedBox(height: AppDimens.paddingS),
+                          Text(
+                            "Sélectionnez le compte de destination pour les transactions détectées.",
+                            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: AppDimens.paddingL),
 
-            AppButton(
-              label: "SCANNER LE DOCUMENT",
-              icon: Icons.camera_alt_outlined,
-              onPressed: (_selectedAccountId != null && _hasAcceptedWarning)
-                  ? () => _startScanProcess(context)
-                  : null,
+                          // Sélecteur standardisé
+                          AppDropdown<String>(
+                            label: "Compte cible",
+                            value: _selectedAccountId,
+                            items: accountItems,
+                            prefixIcon: Icons.account_balance_wallet_outlined,
+                            onChanged: (val) => setState(() => _selectedAccountId = val),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: AppDimens.paddingL),
+
+                  // Zone d'avertissement stylisée
+                  FadeInSlide(
+                    delay: 0.2,
+                    child: Container(
+                      padding: const EdgeInsets.all(AppDimens.paddingM),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.1),
+                        border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+                        borderRadius: BorderRadius.circular(AppDimens.radiusM),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.security, color: AppColors.warning, size: 32),
+                          const SizedBox(height: AppDimens.paddingM),
+                          Text(
+                            "Confidentialité & Sécurité",
+                            style: AppTypography.h3.copyWith(color: AppColors.warning),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: AppDimens.paddingS),
+                          Text(
+                            "L'analyse IA nécessite l'envoi de votre document sur des serveurs externes sécurisés. Bien que nous prenions toutes les précautions, nous vous déconseillons d'envoyer des documents contenant des données personnelles sensibles (Nom, Adresse, IBAN complet).\n\nLes développeurs déclinent toute responsabilité en cas de fuite de données.",
+                            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: AppDimens.paddingM),
+                  
+                  FadeInSlide(
+                    delay: 0.3,
+                    child: CheckboxListTile(
+                      value: _hasAcceptedWarning,
+                      onChanged: (val) => setState(() => _hasAcceptedWarning = val ?? false),
+                      title: Text("J'ai compris", style: AppTypography.body),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      activeColor: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Footer Actions
+            Padding(
+              padding: const EdgeInsets.all(AppDimens.paddingM),
+              child: AppButton(
+                label: "Continuer vers l'import",
+                icon: Icons.arrow_forward,
+                isFullWidth: true,
+                onPressed: (_selectedAccountId != null && _hasAcceptedWarning)
+                    ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ImportTransactionScreen(),
+                          ),
+                        );
+                      }
+                    : null,
+              ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _startScanProcess(BuildContext context) async {
-    final results = await Navigator.push<List<TransactionExtractionResult>>(
-      context,
-      MaterialPageRoute(builder: (_) => const ImportTransactionScreen()),
-    );
-
-    if (results == null || results.isEmpty) return;
-    if (!mounted) return;
-
-    Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => AiTransactionReviewScreen(
-            accountId: _selectedAccountId!,
-            extractedResults: results,
-          ),
-        ),
-      );
   }
 }

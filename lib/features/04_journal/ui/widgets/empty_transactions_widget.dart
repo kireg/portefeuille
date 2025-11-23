@@ -5,8 +5,12 @@ import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 
+import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+
 class EmptyTransactionsWidget extends StatelessWidget {
-  const EmptyTransactionsWidget({super.key});
+  final VoidCallback? onAdd;
+
+  const EmptyTransactionsWidget({super.key, this.onAdd});
 
   @override
   Widget build(BuildContext context) {
@@ -25,10 +29,18 @@ class EmptyTransactionsWidget extends StatelessWidget {
             Text('Aucune transaction', style: AppTypography.h3),
             const SizedBox(height: AppDimens.paddingS),
             Text(
-              'Utilisez le bouton "+" pour commencer.',
+              'Commencez par ajouter votre première transaction.',
               style: AppTypography.body,
               textAlign: TextAlign.center,
             ),
+            if (onAdd != null) ...[
+              const SizedBox(height: AppDimens.paddingM),
+              AppButton(
+                label: "Ajouter une transaction",
+                icon: Icons.add,
+                onPressed: onAdd,
+              ),
+            ],
           ],
         ),
       ),
