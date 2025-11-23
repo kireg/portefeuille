@@ -313,6 +313,9 @@ class _TransactionsViewState extends State<TransactionsView> {
                         duration: 0.6,
                         child: EmptyTransactionsWidget(
                           onAdd: _openAddTransactionModal,
+                          onImportPdf: _openPdfImport,
+                          onImportCrowdfunding: _openCrowdfundingImport,
+                          onImportAi: _openAiImport,
                         ),
                       )
                     : ListView.builder(

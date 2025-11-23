@@ -20,11 +20,8 @@ class CrowdfundingAccountSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accounts = context.watch<PortfolioProvider>()
-        .portfolios
-        .expand((p) => p.institutions)
-        .expand((i) => i.accounts)
-        .toList();
+    // Just watch to rebuild on changes
+    context.watch<PortfolioProvider>();
 
     return FadeInSlide(
       delay: 0.1,
@@ -45,13 +42,15 @@ class CrowdfundingAccountSelector extends StatelessWidget {
               items: () {
                 // Group accounts by institution
                 final groupedAccounts = <String, List<Account>>{};
-                for (var acc in accounts) {
-                  // Find institution name for this account
-                  final inst = context.read<PortfolioProvider>().activePortfolio?.institutions.firstWhere(
-                    (i) => i.accounts.any((a) => a.id == acc.id),
-                  );
-                  final instName = inst?.name ?? "Autre";
-                  groupedAccounts.putIfAbsent(instName, () => []).add(acc);
+                final provider = context.read<PortfolioProvider>();
+                
+                // Iterate through all portfolios/institutions to group correctly
+                for (var portfolio in provider.portfolios) {
+                  for (var inst in portfolio.institutions) {
+                     if (inst.accounts.isNotEmpty) {
+                       groupedAccounts.putIfAbsent(inst.name, () => []).addAll(inst.accounts);
+                     }
+                  }
                 }
 
                 final items = <DropdownMenuItem<Account>>[];

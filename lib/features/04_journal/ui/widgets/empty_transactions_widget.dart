@@ -9,8 +9,17 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 
 class EmptyTransactionsWidget extends StatelessWidget {
   final VoidCallback? onAdd;
+  final VoidCallback? onImportPdf;
+  final VoidCallback? onImportCrowdfunding;
+  final VoidCallback? onImportAi;
 
-  const EmptyTransactionsWidget({super.key, this.onAdd});
+  const EmptyTransactionsWidget({
+    super.key,
+    this.onAdd,
+    this.onImportPdf,
+    this.onImportCrowdfunding,
+    this.onImportAi,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,16 +38,53 @@ class EmptyTransactionsWidget extends StatelessWidget {
             Text('Aucune transaction', style: AppTypography.h3),
             const SizedBox(height: AppDimens.paddingS),
             Text(
-              'Pour commencer, assurez-vous d\'avoir créé un compte dans l\'onglet "Vue".\n\nVous pouvez ensuite ajouter des transactions manuellement ou utiliser les boutons d\'import (PDF, Excel, IA) situés dans la barre d\'outils ci-dessus pour importer plusieurs transactions en une seule fois.',
+              'Commencez par ajouter vos premières transactions.',
               style: AppTypography.body,
               textAlign: TextAlign.center,
             ),
-            if (onAdd != null) ...[
-              const SizedBox(height: AppDimens.paddingM),
+            const SizedBox(height: AppDimens.paddingL),
+            
+            if (onAdd != null)
               AppButton(
-                label: "Ajouter une transaction manuelle",
+                label: "Ajouter manuellement",
                 icon: Icons.add,
                 onPressed: onAdd,
+              ),
+
+            if (onImportPdf != null || onImportCrowdfunding != null || onImportAi != null) ...[
+              const SizedBox(height: AppDimens.paddingM),
+              Text("Ou importez en masse :", style: AppTypography.label),
+              const SizedBox(height: AppDimens.paddingS),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  if (onImportPdf != null)
+                    AppButton(
+                      label: "PDF",
+                      icon: Icons.picture_as_pdf,
+                      type: AppButtonType.secondary,
+                      isFullWidth: false,
+                      onPressed: onImportPdf,
+                    ),
+                  if (onImportCrowdfunding != null)
+                    AppButton(
+                      label: "Crowdfunding",
+                      icon: Icons.table_view,
+                      type: AppButtonType.secondary,
+                      isFullWidth: false,
+                      onPressed: onImportCrowdfunding,
+                    ),
+                  if (onImportAi != null)
+                    AppButton(
+                      label: "IA",
+                      icon: Icons.auto_awesome,
+                      type: AppButtonType.secondary,
+                      isFullWidth: false,
+                      onPressed: onImportAi,
+                    ),
+                ],
               ),
             ],
           ],

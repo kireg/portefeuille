@@ -9,22 +9,13 @@ class CurrencyFormatter {
   // Un cache pour les formateurs afin d'éviter de les recréer constamment
   static final Map<String, NumberFormat> _formattersCache = {};
 
-  /// Formate une valeur monétaire en utilisant le code de devise ISO 4217.
-  ///
-  /// Exemples:
-  /// - format(1234.56, 'EUR') -> "1 234,56 €"
-  /// - format(1234.56, 'USD') -> "1 234,56 $US"
-  static String format(double value, String currencyCode) {
+  /// Récupère ou crée le formateur pour une devise donnée
+  static NumberFormat _getFormatter(String currencyCode) {
     final code = currencyCode.toUpperCase();
-
-    // 1. Chercher dans le cache
     if (_formattersCache.containsKey(code)) {
-      return _formattersCache[code]!.format(value);
+      return _formattersCache[code]!;
     }
 
-    // 2. Si non trouvé, créer le formateur
-    // Utilise 'fr_FR' comme locale de base pour le formatage (espace comme séparateur)
-    // mais 'en_US' pour les symboles USD/GBP afin d'avoir le symbole correct.
     String locale;
     String symbol;
     int decimalDigits = 2;
@@ -63,15 +54,37 @@ class CurrencyFormatter {
         break;
     }
 
-    // Créer le formateur
     final formatter = NumberFormat.currency(
       locale: locale,
       symbol: symbol,
       decimalDigits: decimalDigits,
     );
 
-    // 3. Mettre en cache et retourner
     _formattersCache[code] = formatter;
+    return formatter;
+  }
+
+  /// Formate une valeur monétaire en utilisant le code de devise ISO 4217.
+  ///
+  /// Exemples:
+  /// - format(1234.56, 'EUR') -> "1 234,56 €"
+  /// - format(1234.56, 'USD') -> "1 234,56 $US"
+  static String format(double value, String currencyCode) {
+    final formatter = _getFormatter(currencyCode);
+
+    // Fix pour éviter "-0.00" (Negative Zero)
+    // Si la valeur absolue est inférieure à la moitié de la plus petite décimale,
+    // on force à 0.0 positif.
+    final digits = formatter.decimalDigits ?? 2;
+    double threshold = 0.5;
+    for (int i = 0; i < digits; i++) {
+      threshold /= 10;
+    }
+
+    if (value.abs() < threshold) {
+      value = 0.0;
+    }
+
     return formatter.format(value);
   }
 

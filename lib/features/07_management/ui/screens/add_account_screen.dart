@@ -42,6 +42,8 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
   bool get _isEditing => widget.accountToEdit != null;
 
+  String? _institutionName;
+
   @override
   void initState() {
     super.initState();
@@ -51,6 +53,33 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       _nameController.text = account.name;
       _selectedType = account.type;
       _selectedCurrency = account.currency ?? 'EUR';
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_institutionName == null) {
+      final provider = Provider.of<PortfolioProvider>(context, listen: false);
+      final portfolio = provider.activePortfolio;
+      if (portfolio != null) {
+        try {
+          final institution =
+              portfolio.institutions.firstWhere((i) => i.id == widget.institutionId);
+          _institutionName = institution.name;
+
+          // Auto-fill initial si nouveau compte
+          if (!_isEditing && _nameController.text.isEmpty) {
+            _updateNameIfEmpty();
+          }
+        } catch (_) {}
+      }
+    }
+  }
+
+  void _updateNameIfEmpty() {
+    if (_nameController.text.trim().isEmpty && _institutionName != null) {
+      _nameController.text = "${_selectedType.displayName} - $_institutionName";
     }
   }
 
@@ -134,18 +163,6 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
               ),
               const SizedBox(height: AppDimens.paddingL),
 
-              // Nom
-              AppTextField(
-                controller: _nameController,
-                label: 'Nom du compte',
-                hint: 'ex: PEA, CTO...',
-                prefixIcon: Icons.account_balance_wallet,
-                autofocus: true,
-                textCapitalization: TextCapitalization.words,
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Requis' : null,
-              ),
-              const SizedBox(height: AppDimens.paddingM),
-
               // Type
               AppDropdown<AccountType>(
                 label: 'Type de compte',
@@ -158,8 +175,23 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                   );
                 }).toList(),
                 onChanged: (type) {
-                  if (type != null) setState(() => _selectedType = type);
+                  if (type != null) {
+                    setState(() => _selectedType = type);
+                    _updateNameIfEmpty();
+                  }
                 },
+              ),
+              const SizedBox(height: AppDimens.paddingM),
+
+              // Nom
+              AppTextField(
+                controller: _nameController,
+                label: 'Nom du compte',
+                hint: 'ex: PEA, CTO...',
+                prefixIcon: Icons.account_balance_wallet,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                validator: (value) => (value == null || value.trim().isEmpty) ? 'Requis' : null,
               ),
               const SizedBox(height: AppDimens.paddingM),
 
