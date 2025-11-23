@@ -52,16 +52,18 @@ class PriceResult {
   final String currency; // Ex: "USD", "EUR"
   final ApiSource source;
   final String ticker;
+  final Map<String, String>? errorDetails; // Source -> Error Message
 
   PriceResult({
     required this.price,
     required this.currency,
     required this.source,
     required this.ticker,
+    this.errorDetails,
   });
 
   // Constructeur d'échec
-  PriceResult.failure(this.ticker, {String? currency})
+  PriceResult.failure(this.ticker, {String? currency, this.errorDetails})
       : price = null,
         currency = currency ??
             'EUR', // Utilise la devise fournie, sinon EUR par défaut
@@ -92,6 +94,8 @@ class ApiService {
 
   /// Récupère le prix pour un ticker.
   Future<PriceResult> getPrice(String ticker) async {
+    final errors = <String, String>{};
+
     try {
       // 1. Vérifier le cache
       final cached = _priceCache[ticker];
@@ -106,18 +110,27 @@ class ApiService {
       final serviceOrder = _settings.serviceOrder;
       
       for (final serviceName in serviceOrder) {
-        switch (serviceName) {
-          case 'FMP':
-            if (_settings.hasFmpApiKey) {
-              result = await _fetchFromFmp(ticker);
-            }
-            break;
-          case 'Yahoo':
-            result = await _fetchFromYahoo(ticker);
-            break;
-          case 'Google':
-            result = await _fetchFromGoogleFinance(ticker);
-            break;
+        try {
+          switch (serviceName) {
+            case 'FMP':
+              if (_settings.hasFmpApiKey) {
+                result = await _fetchFromFmp(ticker);
+                if (result == null) errors['FMP'] = "Aucune donnée (ou erreur réseau)";
+              } else {
+                errors['FMP'] = "Clé API manquante";
+              }
+              break;
+            case 'Yahoo':
+              result = await _fetchFromYahoo(ticker);
+              if (result == null) errors['Yahoo'] = "Aucune donnée (ou erreur réseau)";
+              break;
+            case 'Google':
+              result = await _fetchFromGoogleFinance(ticker);
+              if (result == null) errors['Google'] = "Scraping échoué";
+              break;
+          }
+        } catch (e) {
+          errors[serviceName] = e.toString();
         }
 
         // Si un résultat est trouvé, on arrête la boucle
@@ -129,12 +142,13 @@ class ApiService {
 
       // 5. Échec complet
       return PriceResult.failure(ticker,
-          currency: _settings.baseCurrency);
+          currency: _settings.baseCurrency, errorDetails: errors);
     } catch (e) {
       debugPrint(
           "⚠️ Erreur inattendue lors de la récupération du prix pour $ticker : $e");
+      errors['System'] = e.toString();
       return PriceResult.failure(ticker,
-          currency: _settings.baseCurrency);
+          currency: _settings.baseCurrency, errorDetails: errors);
     }
   }
 
@@ -221,7 +235,7 @@ class ApiService {
           if (price != null) {
              return PriceResult(
               price: price,
-              currency: "USD", // TODO: Parser la devise correctement
+              currency: _inferCurrency(ticker),
               source: ApiSource.Google,
               ticker: ticker,
             );
@@ -560,6 +574,23 @@ class ApiService {
       debugPrint("❌ Erreur lors de la recherche de ticker pour '$query': $e");
       return [];
     }
+  }
+
+  String _inferCurrency(String ticker) {
+    if (ticker.endsWith('.PA') || ticker.endsWith('.DE') || ticker.endsWith('.AS') || ticker.endsWith('.BR') || ticker.endsWith('.MC')) {
+      return 'EUR';
+    }
+    if (ticker.endsWith('.L')) {
+      return 'GBP';
+    }
+    if (ticker.endsWith('.TO')) {
+      return 'CAD';
+    }
+    if (ticker.endsWith('.SW')) {
+      return 'CHF';
+    }
+    // Default to USD for US stocks (no suffix or NASDAQ/NYSE)
+    return 'USD';
   }
 
   /// Vide les caches de prix, recherche et taux de change.

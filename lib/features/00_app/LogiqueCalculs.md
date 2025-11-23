@@ -56,6 +56,8 @@ $$ \text{PRU} = \frac{\sum (\text{Prix Achat} \times \text{Quantité Achat})}{\s
 
 > Les ventes ne modifient pas le PRU, elles réduisent seulement la quantité détenue.
 
+> **Note :** Les transactions dont la date est future (postérieure à la date actuelle) sont exclues des calculs de quantité, PRU et valeur totale. Elles sont considérées comme "planifiées" mais non réalisées.
+
 ---
 
 ## 4. Rendement (Yield)

@@ -3,6 +3,7 @@
 
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart'; // AJOUT
 
 /// Modèle pour la vue "Synthèse des Actifs".
 /// Toutes les valeurs monétaires de ce modèle sont CONVERTIES
@@ -39,6 +40,9 @@ class AggregatedAsset {
   /// Devise de base (ex: EUR)
   final String baseCurrency;
 
+  /// Type de l'actif
+  final AssetType type;
+
   AggregatedAsset({
     required this.ticker,
     required this.name,
@@ -49,9 +53,10 @@ class AggregatedAsset {
     required this.profitAndLoss,
     required this.profitAndLossPercentage,
     required this.estimatedAnnualYield,
-    required this.metadata,
+    this.metadata,
     required this.assetCurrency,
     required this.baseCurrency,
+    this.type = AssetType.Other,
   });
 
   SyncStatus get syncStatus => metadata?.syncStatus ?? SyncStatus.never;

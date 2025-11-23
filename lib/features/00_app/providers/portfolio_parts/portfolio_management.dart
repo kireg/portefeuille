@@ -166,6 +166,8 @@ mixin PortfolioManagement on PortfolioState {
     // 6. Sauvegarder le choix actuel pour la prochaine fois
     if (_activePortfolio != null) {
       _settingsProvider?.setLastPortfolioId(_activePortfolio!.id);
+      // Mise à jour de l'historique
+      await updateHistory(_activePortfolio!.totalValue);
     }
 
     notifyListeners();
@@ -176,6 +178,17 @@ mixin PortfolioManagement on PortfolioState {
   Future<void> updateHistory(double totalValue) async {
     if (_activePortfolio == null) return;
 
+    // 1. Reconstruction si vide et transactions présentes
+    final hasTransactions = _activePortfolio!.institutions.any((i) => i.accounts.any((a) => a.transactions.isNotEmpty));
+    if (_activePortfolio!.valueHistory.isEmpty && hasTransactions) {
+       debugPrint("📜 [Provider] Historique vide, reconstruction...");
+       final history = _historyService.reconstructHistory(_activePortfolio!);
+       _activePortfolio!.valueHistory = history;
+       await _repository.savePortfolio(_activePortfolio!);
+       // On ne retourne pas, on laisse le point d'aujourd'hui s'ajouter/mettre à jour si besoin
+    }
+
+    // 2. Mise à jour du point du jour
     // Utilise la méthode du modèle pour vérifier si une mise à jour est nécessaire
     final hasChanged = _activePortfolio!.addOrUpdateHistoryPoint(totalValue);
 
@@ -253,6 +266,17 @@ mixin PortfolioManagement on PortfolioState {
     }
     await _repository.savePortfolio(portfolio);
     await refreshData();
+  }
+
+  Future<void> reconstructPortfolioHistory() async {
+    if (_activePortfolio == null) return;
+    debugPrint("🔄 [Provider] reconstructPortfolioHistory");
+    
+    final history = _historyService.reconstructHistory(_activePortfolio!);
+    _activePortfolio!.valueHistory = history;
+    
+    await _repository.savePortfolio(_activePortfolio!);
+    notifyListeners();
   }
 
   Future<void> updateActivePortfolio() async {

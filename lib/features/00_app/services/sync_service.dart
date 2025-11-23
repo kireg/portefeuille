@@ -156,6 +156,11 @@ class SyncService {
         } else {
           metadata.markSyncError(
               'Impossible de récupérer le prix depuis les APIs');
+          
+          // Sauvegarde des erreurs détaillées
+          if (result.errorDetails != null) {
+            metadata.apiErrors = result.errorDetails;
+          }
 
           saveFutures.add(_saveSyncLog(SyncLog.error(
             id: _uuid.v4(),

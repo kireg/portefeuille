@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
@@ -5,7 +6,6 @@ import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 
 class CrowdfundingSummaryCards extends StatelessWidget {
   final List<Asset> assets;
@@ -44,11 +44,11 @@ class CrowdfundingSummaryCards extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: AppDimens.paddingM),
             child: Text("Synthèse Crowdfunding", style: AppTypography.h3),
           ),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 117, // Hauteur fixe pour alignement
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
                   child: _buildSummaryCard(
                     context,
                     title: "Capital Investi",
@@ -57,11 +57,8 @@ class CrowdfundingSummaryCards extends StatelessWidget {
                     color: AppColors.primary,
                   ),
                 ),
-              ),
-              const SizedBox(width: AppDimens.paddingM),
-              Expanded(
-                child: SizedBox(
-                  height: 117, // Hauteur fixe pour alignement
+                const SizedBox(width: AppDimens.paddingM),
+                Expanded(
                   child: _buildSummaryCard(
                     context,
                     title: "Valeur Actuelle",
@@ -71,15 +68,15 @@ class CrowdfundingSummaryCards extends StatelessWidget {
                     color: AppColors.success,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: AppDimens.paddingM),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 117, // Hauteur fixe pour alignement
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
                   child: _buildSummaryCard(
                     context,
                     title: "Rendement Moyen",
@@ -88,11 +85,8 @@ class CrowdfundingSummaryCards extends StatelessWidget {
                     color: AppColors.accent,
                   ),
                 ),
-              ),
-              const SizedBox(width: AppDimens.paddingM),
-              Expanded(
-                child: SizedBox(
-                  height: 117, // Hauteur fixe pour alignement
+                const SizedBox(width: AppDimens.paddingM),
+                Expanded(
                   child: _buildSummaryCard(
                     context,
                     title: "Projets Actifs",
@@ -101,8 +95,8 @@ class CrowdfundingSummaryCards extends StatelessWidget {
                     color: Colors.orange,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -117,42 +111,54 @@ class CrowdfundingSummaryCards extends StatelessWidget {
     required IconData icon,
     required Color color,
   }) {
-    return AppCard(
-      padding: const EdgeInsets.all(AppDimens.paddingM),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  title,
-                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimens.radiusM),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(AppDimens.paddingM),
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(AppDimens.radiusM),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.1),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: AppTypography.h2.copyWith(fontSize: 20),
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(height: AppDimens.paddingS),
+              Text(
+                value,
+                style: AppTypography.h2.copyWith(fontSize: 20),
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                title,
+                style: AppTypography.caption,
+                textAlign: TextAlign.center,
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: AppTypography.caption.copyWith(
+                      color: AppColors.success, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ],
           ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: AppTypography.caption.copyWith(color: AppColors.success),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

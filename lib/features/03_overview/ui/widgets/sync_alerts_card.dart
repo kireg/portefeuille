@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'package:portefeuille/core/data/models/sync_status.dart';
@@ -61,7 +62,7 @@ class SyncAlertsCard extends StatelessWidget {
 
               // 1. Jamais synchronisés
               if (neverSyncedCount > 0)
-                _buildAlertItem(
+                _ExpandableAlertItem(
                   icon: Icons.info_outline,
                   color: AppColors.primary,
                   title: '$neverSyncedCount actif(s) jamais synchronisé(s)',
@@ -70,7 +71,7 @@ class SyncAlertsCard extends StatelessWidget {
 
               // 2. Non synchronisables
               if (unsyncableCount > 0)
-                _buildAlertItem(
+                _ExpandableAlertItem(
                   icon: Icons.block,
                   color: AppColors.textTertiary,
                   title: '$unsyncableCount actif(s) non synchronisable(s)',
@@ -79,12 +80,12 @@ class SyncAlertsCard extends StatelessWidget {
 
               // 3. Erreurs
               ...assetsWithErrors.map((entry) {
-                return _buildAlertItem(
+                return _ExpandableAlertItem(
                   icon: Icons.error_outline,
                   color: AppColors.error,
                   title: entry.key,
                   subtitle: entry.value.syncErrorMessage ?? 'Erreur inconnue',
-                  isError: true,
+                  metadata: entry.value,
                 );
               }),
 
@@ -104,44 +105,137 @@ class SyncAlertsCard extends StatelessWidget {
       },
     );
   }
+}
 
-  Widget _buildAlertItem({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String subtitle,
-    bool isError = false,
-  }) {
+class _ExpandableAlertItem extends StatefulWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+  final AssetMetadata? metadata;
+
+  const _ExpandableAlertItem({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    this.metadata,
+  });
+
+  @override
+  State<_ExpandableAlertItem> createState() => _ExpandableAlertItemState();
+}
+
+class _ExpandableAlertItemState extends State<_ExpandableAlertItem> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasDetails = widget.metadata != null &&
+        (widget.metadata!.lastSyncAttempt != null ||
+            (widget.metadata!.apiErrors?.isNotEmpty ?? false));
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.paddingM),
-      padding: const EdgeInsets.all(AppDimens.paddingM),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.05),
+        color: widget.color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(AppDimens.radiusS),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: widget.color.withValues(alpha: 0.2)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: AppDimens.paddingM),
-          Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: hasDetails
+              ? () {
+            setState(() {
+              _isExpanded = !_isExpanded;
+            });
+          }
+              : null,
+          borderRadius: BorderRadius.circular(AppDimens.radiusS),
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimens.paddingM),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: AppTypography.bodyBold.copyWith(color: color),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(widget.icon, color: widget.color, size: 20),
+                    const SizedBox(width: AppDimens.paddingM),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.title,
+                            style: AppTypography.bodyBold.copyWith(color: widget.color),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.subtitle,
+                            style: AppTypography.caption,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (hasDetails)
+                      Icon(
+                        _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                        color: widget.color,
+                        size: 20,
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: AppTypography.caption,
-                ),
+                if (hasDetails)
+                  AnimatedCrossFade(
+                    firstChild: const SizedBox.shrink(),
+                    secondChild: Padding(
+                      padding: const EdgeInsets.only(top: AppDimens.paddingM),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Divider(color: widget.color.withValues(alpha: 0.2)),
+                          if (widget.metadata!.lastSyncAttempt != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Text(
+                                "Dernier essai : ${DateFormat('dd/MM/yyyy HH:mm:ss').format(widget.metadata!.lastSyncAttempt!)}",
+                                style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          if (widget.metadata!.apiErrors != null && widget.metadata!.apiErrors!.isNotEmpty)
+                            ...widget.metadata!.apiErrors!.entries.map((e) => Padding(
+                              padding: const EdgeInsets.only(bottom: 4.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width: 60,
+                                    child: Text(
+                                      "${e.key} :",
+                                      style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      e.value,
+                                      style: AppTypography.caption.copyWith(color: AppColors.error),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )),
+                        ],
+                      ),
+                    ),
+                    crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 200),
+                  ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

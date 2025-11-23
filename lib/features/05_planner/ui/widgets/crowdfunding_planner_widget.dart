@@ -8,6 +8,7 @@ import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/features/00_app/services/crowdfunding_service.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 
 class CrowdfundingPlannerWidget extends StatefulWidget {
@@ -25,7 +26,13 @@ class CrowdfundingPlannerWidget extends StatefulWidget {
 }
 
 class _CrowdfundingPlannerWidgetState extends State<CrowdfundingPlannerWidget> {
-  final Set<String> _selectedProjectIds = {};
+  final Set<String> _selectedProjectTickers = {};
+
+  List<Asset> get _crowdfundingAssets {
+    return widget.assets
+        .where((a) => a.type == AssetType.RealEstateCrowdfunding)
+        .toList();
+  }
 
   void _showFilterDialog() {
     showDialog(
@@ -39,19 +46,19 @@ class _CrowdfundingPlannerWidgetState extends State<CrowdfundingPlannerWidget> {
                 width: double.maxFinite,
                 child: ListView.builder(
                   shrinkWrap: true,
-                  itemCount: widget.assets.length,
+                  itemCount: _crowdfundingAssets.length,
                   itemBuilder: (context, index) {
-                    final asset = widget.assets[index];
-                    final isSelected = _selectedProjectIds.contains(asset.id);
+                    final asset = _crowdfundingAssets[index];
+                    final isSelected = _selectedProjectTickers.contains(asset.ticker);
                     return CheckboxListTile(
                       title: Text(asset.name),
                       value: isSelected,
                       onChanged: (val) {
                         setState(() {
                           if (val == true) {
-                            _selectedProjectIds.add(asset.id);
+                            _selectedProjectTickers.add(asset.ticker);
                           } else {
-                            _selectedProjectIds.remove(asset.id);
+                            _selectedProjectTickers.remove(asset.ticker);
                           }
                         });
                       },
@@ -63,7 +70,7 @@ class _CrowdfundingPlannerWidgetState extends State<CrowdfundingPlannerWidget> {
                 TextButton(
                   onPressed: () {
                     setState(() {
-                      _selectedProjectIds.clear();
+                      _selectedProjectTickers.clear();
                     });
                   },
                   child: const Text("Tout effacer"),
@@ -90,14 +97,14 @@ class _CrowdfundingPlannerWidgetState extends State<CrowdfundingPlannerWidget> {
     
     // Utilisation de la nouvelle méthode generateFutureEvents qui est plus précise
     final allEvents = service.generateFutureEvents(
-      assets: widget.assets,
+      assets: _crowdfundingAssets,
       transactions: widget.transactions,
       projectionMonths: 24, // On regarde les 2 prochaines années pour le planner
     );
 
     final futureEvents = allEvents.where((e) {
-      if (_selectedProjectIds.isEmpty) return true;
-      return _selectedProjectIds.contains(e.assetId);
+      if (_selectedProjectTickers.isEmpty) return true;
+      return _selectedProjectTickers.contains(e.assetId);
     }).toList();
 
     if (allEvents.isEmpty) {
@@ -119,7 +126,7 @@ class _CrowdfundingPlannerWidgetState extends State<CrowdfundingPlannerWidget> {
               IconButton(
                 icon: Icon(
                   Icons.filter_list,
-                  color: _selectedProjectIds.isNotEmpty ? AppColors.primary : AppColors.textSecondary,
+                  color: _selectedProjectTickers.isNotEmpty ? AppColors.primary : AppColors.textSecondary,
                 ),
                 onPressed: _showFilterDialog,
               ),

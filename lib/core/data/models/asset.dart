@@ -84,10 +84,16 @@ class Asset {
   // Injecté par le getter `Account.assets`
   List<Transaction> transactions = [];
 
+  /// Transactions passées (exclut les transactions futures)
+  List<Transaction> get _pastTransactions {
+    final now = DateTime.now();
+    return transactions.where((tr) => tr.date.isBefore(now) || tr.date.isAtSameMomentAs(now)).toList();
+  }
+
   // NOUVEAU : Getter pour la quantité
   double get quantity {
-    if (transactions.isEmpty) return 0.0;
-    return transactions.fold(0.0, (sum, tr) {
+    if (_pastTransactions.isEmpty) return 0.0;
+    return _pastTransactions.fold(0.0, (sum, tr) {
       if (tr.type == TransactionType.Buy) {
         return sum + (tr.quantity ?? 0.0);
       }
@@ -101,9 +107,9 @@ class Asset {
   // MODIFIÉ : Getter pour le PRU (en devise d'ACTIF)
   // Conforme à l'étape 1.3 de la feuille de route
   double get averagePrice {
-    if (transactions.isEmpty) return 0.0;
+    if (_pastTransactions.isEmpty) return 0.0;
     final buyTransactions =
-    transactions.where((tr) => tr.type == TransactionType.Buy).toList();
+    _pastTransactions.where((tr) => tr.type == TransactionType.Buy).toList();
     if (buyTransactions.isEmpty) return 0.0;
 
     double totalCostInAssetCurrency = 0.0; // En devise d'actif (ex: USD)
@@ -164,7 +170,7 @@ class Asset {
       double totalBuyValueWithInterest = 0.0;
       double totalBuyQuantity = 0.0;
 
-      final buyTransactions = transactions.where((tr) => tr.type == TransactionType.Buy);
+      final buyTransactions = _pastTransactions.where((tr) => tr.type == TransactionType.Buy);
 
       for (final tr in buyTransactions) {
         final qty = tr.quantity ?? 0.0;
@@ -207,7 +213,7 @@ class Asset {
   // Conforme à l'étape 1.3 de la feuille de route
   double get totalInvestedCapital {
     final buyTransactions =
-    transactions.where((tr) => tr.type == TransactionType.Buy).toList();
+    _pastTransactions.where((tr) => tr.type == TransactionType.Buy).toList();
     if (buyTransactions.isEmpty) return 0.0;
 
     // Calcule le coût total d'acquisition dans la devise du COMPTE

@@ -20,6 +20,7 @@ import 'package:portefeuille/features/07_management/ui/screens/add_transaction_s
 import 'package:portefeuille/features/07_management/ui/screens/pdf_import_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/ai_import_config_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/crowdfunding_import_screen.dart';
+import 'package:portefeuille/features/07_management/ui/screens/csv_import_screen.dart';
 
 // New Widgets & Models
 import 'package:portefeuille/features/04_journal/ui/models/transaction_group.dart';
@@ -229,6 +230,13 @@ class _TransactionsViewState extends State<TransactionsView> {
     );
   }
 
+  void _openCsvImport() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CsvImportScreen()),
+    );
+  }
+
   void _openAiImport() {
     Navigator.push(
       context,
@@ -301,6 +309,7 @@ class _TransactionsViewState extends State<TransactionsView> {
                   onImportPdf: _openPdfImport,
                   onImportAi: _openAiImport,
                   onImportCrowdfunding: _openCrowdfundingImport,
+                  onImportCsv: _openCsvImport,
                 ),
               ),
 
@@ -314,6 +323,7 @@ class _TransactionsViewState extends State<TransactionsView> {
                         child: EmptyTransactionsWidget(
                           onAdd: _openAddTransactionModal,
                           onImportPdf: _openPdfImport,
+                          onImportCsv: _openCsvImport,
                           onImportCrowdfunding: _openCrowdfundingImport,
                           onImportAi: _openAiImport,
                         ),

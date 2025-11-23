@@ -264,6 +264,7 @@ class CalculationService {
           metadata: allMetadata[ticker],
           assetCurrency: firstAsset.priceCurrency,
           baseCurrency: targetCurrency,
+          type: firstAsset.type,
         ));
       }
     });

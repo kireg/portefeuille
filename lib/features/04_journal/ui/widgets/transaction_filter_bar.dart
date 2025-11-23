@@ -16,6 +16,7 @@ class TransactionFilterBar extends StatelessWidget {
   final VoidCallback onCancelSelection;
   final VoidCallback onAddTransaction;
   final VoidCallback onImportPdf;
+  final VoidCallback onImportCsv;
   final VoidCallback onImportAi;
   final VoidCallback onImportCrowdfunding;
 
@@ -30,6 +31,7 @@ class TransactionFilterBar extends StatelessWidget {
     required this.onCancelSelection,
     required this.onAddTransaction,
     required this.onImportPdf,
+    required this.onImportCsv,
     required this.onImportAi,
     required this.onImportCrowdfunding,
   });
@@ -80,6 +82,12 @@ class TransactionFilterBar extends StatelessWidget {
                     color: AppColors.primary,
                     tooltip: 'Import PDF',
                     onPressed: onImportPdf,
+                  ),
+                  AppIconButton(
+                    icon: Icons.grid_on,
+                    color: AppColors.primary,
+                    tooltip: 'Import CSV (Revolut)',
+                    onPressed: onImportCsv,
                   ),
                   AppIconButton(
                     icon: Icons.table_view,

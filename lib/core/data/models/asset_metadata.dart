@@ -45,6 +45,9 @@ class AssetMetadata {
   @HiveField(11)
   String? lastSyncSource;
 
+  @HiveField(12)
+  Map<String, String>? apiErrors;
+
   // --- CROWDFUNDING ---
   // Note: 'platform' supprimé car redondant avec l'Institution du compte
 

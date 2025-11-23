@@ -175,7 +175,7 @@ class _AssetCardState extends State<AssetCard> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
-                                              "${widget.asset.estimatedAnnualYield.toStringAsFixed(2)}%",
+                                              "${(widget.asset.estimatedAnnualYield * 100).toStringAsFixed(2)}%",
                                               style: AppTypography.body.copyWith(color: AppColors.primary),
                                             ),
                                             const SizedBox(width: 4),

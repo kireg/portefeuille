@@ -8,6 +8,7 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 class EmptyTransactionsWidget extends StatelessWidget {
   final VoidCallback? onAdd;
   final VoidCallback? onImportPdf;
+  final VoidCallback? onImportCsv;
   final VoidCallback? onImportCrowdfunding;
   final VoidCallback? onImportAi;
 
@@ -15,6 +16,7 @@ class EmptyTransactionsWidget extends StatelessWidget {
     super.key,
     this.onAdd,
     this.onImportPdf,
+    this.onImportCsv,
     this.onImportCrowdfunding,
     this.onImportAi,
   });
@@ -39,7 +41,13 @@ class EmptyTransactionsWidget extends StatelessWidget {
               _buildHelpSection(
                 "PDF Bancaires",
                 "Importez vos relevés de compte ou d'opérations.",
-                ["Trade Republic", "Boursorama", "Fortuneo", "Revolut", "Degiro", "Interactive Brokers"],
+                ["Trade Republic", "Boursorama", "Fortuneo", "Degiro", "Interactive Brokers"],
+              ),
+              const SizedBox(height: 16),
+              _buildHelpSection(
+                "CSV Bancaires",
+                "Importez vos exports CSV.",
+                ["Revolut"],
               ),
               const SizedBox(height: 16),
               _buildHelpSection(
@@ -143,6 +151,14 @@ class EmptyTransactionsWidget extends StatelessWidget {
                           icon: Icons.picture_as_pdf_outlined,
                           color: Colors.redAccent,
                           onTap: onImportPdf!,
+                        ),
+                      if (onImportCsv != null)
+                        _ActionCard(
+                          title: "Import CSV",
+                          subtitle: "Revolut, etc.",
+                          icon: Icons.grid_on,
+                          color: Colors.blueAccent,
+                          onTap: onImportCsv!,
                         ),
                       if (onImportCrowdfunding != null)
                         _ActionCard(

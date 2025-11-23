@@ -13,6 +13,7 @@ abstract class PortfolioState extends ChangeNotifier {
   late final DemoDataService _demoDataService;
   late final BackupService _backupService;
   late final InstitutionService _institutionService;
+  late final HistoryReconstructionService _historyService;
 
   // Settings
   SettingsProvider? _settingsProvider;
@@ -48,6 +49,7 @@ abstract class PortfolioState extends ChangeNotifier {
         _uuid = uuid ?? const Uuid() {
     // Initialisation des services
     _migrationService = MigrationService(repository: _repository, uuid: _uuid);
+    _historyService = HistoryReconstructionService();
     _syncService = SyncService(
       repository: _repository,
       apiService: _apiService,

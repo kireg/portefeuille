@@ -20,6 +20,7 @@ import 'package:portefeuille/features/00_app/services/migration_service.dart';
 import 'package:portefeuille/features/00_app/services/sync_service.dart';
 import 'package:portefeuille/features/00_app/services/transaction_service.dart';
 import 'package:portefeuille/features/00_app/services/institution_service.dart';
+import 'package:portefeuille/features/00_app/services/history_reconstruction_service.dart';
 import 'package:uuid/uuid.dart';
 
 part 'portfolio_parts/portfolio_state.dart';
