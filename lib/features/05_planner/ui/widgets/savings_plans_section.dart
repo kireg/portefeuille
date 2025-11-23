@@ -6,8 +6,8 @@ import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_tile.dart';
+import 'package:portefeuille/core/ui/widgets/empty_states/app_empty_state.dart';
 
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -71,6 +71,18 @@ class SavingsPlansSection extends StatelessWidget {
     final savingsPlans = portfolio.savingsPlans;
     final baseCurrency = settings.baseCurrency;
 
+    if (savingsPlans.isEmpty) {
+      return AppCard(
+        child: AppEmptyState(
+          title: 'Aucun plan d\'épargne',
+          message: 'Programmez vos versements réguliers pour simuler votre patrimoine futur.',
+          icon: Icons.savings_outlined,
+          buttonLabel: 'Créer un plan',
+          onAction: () => _openPlanForm(context),
+        ),
+      );
+    }
+
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,32 +120,7 @@ class SavingsPlansSection extends StatelessWidget {
               const SizedBox(height: AppDimens.paddingM),
 
               // Liste ou Empty State
-              if (savingsPlans.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        Text('Aucun plan configuré', style: AppTypography.h3),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Créez un plan pour simuler vos investissements.',
-                          style: AppTypography.caption,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        AppButton(
-                          label: 'Créer un plan',
-                          onPressed: () => _openPlanForm(context),
-                          icon: Icons.add,
-                          isFullWidth: false,
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                ...savingsPlans.map((plan) {
+              ...savingsPlans.map((plan) {
                   final targetAsset = provider.findAssetByTicker(plan.targetTicker);
                   final assetYield = targetAsset?.estimatedAnnualYield ?? 0.0;
 

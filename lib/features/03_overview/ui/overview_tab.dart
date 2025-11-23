@@ -21,6 +21,7 @@ import 'widgets/allocation_chart.dart';
 import 'widgets/asset_type_allocation_chart.dart';
 import 'widgets/sync_alerts_card.dart';
 import 'package:portefeuille/features/03_overview/ui/widgets/institution_tile.dart';
+import 'package:portefeuille/core/ui/widgets/empty_states/app_empty_state.dart';
 
 class OverviewTab extends StatelessWidget {
   const OverviewTab({super.key});
@@ -149,14 +150,15 @@ class OverviewTab extends StatelessWidget {
                     const SizedBox(height: AppDimens.paddingS),
 
                     if (institutions.isEmpty)
-                      const FadeInSlide(
+                      FadeInSlide(
                         delay: 0.45,
                         child: AppCard(
-                          child: Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Text('Aucune institution. Ajoutez-en une pour commencer.'),
-                            ),
+                          child: AppEmptyState(
+                            title: 'Aucune institution',
+                            message: 'Ajoutez votre première banque ou plateforme pour commencer à suivre votre patrimoine.',
+                            icon: Icons.account_balance,
+                            buttonLabel: 'Ajouter une institution',
+                            onAction: () => ModalService.showAddInstitution(context),
                           ),
                         ),
                       )

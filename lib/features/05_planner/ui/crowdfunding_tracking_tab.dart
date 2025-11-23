@@ -6,9 +6,11 @@ import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
 import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
+import 'package:portefeuille/core/ui/widgets/empty_states/app_empty_state.dart';
 
 // Logic
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/services/modal_service.dart';
 
 // Data Models
 import 'package:portefeuille/core/data/models/asset_type.dart';
@@ -31,6 +33,24 @@ class CrowdfundingTrackingTab extends StatelessWidget {
 
         if (portfolio == null) {
           return const Center(child: Text("Aucun portefeuille sélectionné."));
+        }
+
+        final allAssets = portfolio.institutions
+            .expand((i) => i.accounts)
+            .expand((a) => a.assets)
+            .where((a) => a.type == AssetType.RealEstateCrowdfunding)
+            .toList();
+
+        if (allAssets.isEmpty) {
+          return AppScreen(
+            body: AppEmptyState(
+              title: 'Aucun projet Crowdfunding',
+              message: 'Importez vos projets immobiliers pour suivre vos remboursements et échéances.',
+              icon: Icons.domain,
+              buttonLabel: 'Importer des projets',
+              onAction: () => ModalService.showImportCrowdfunding(context),
+            ),
+          );
         }
 
         return AppScreen(

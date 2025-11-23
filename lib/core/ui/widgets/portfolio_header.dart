@@ -36,12 +36,31 @@ class PortfolioHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         // ▲▲▲ FIN MODIFICATION ▲▲▲
         children: [
-          Text(
-            'Solde total'.toUpperCase(),
-            style: AppTypography.label.copyWith(
-              color: AppColors.textSecondary,
-              letterSpacing: 1.5,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Solde total'.toUpperCase(),
+                style: AppTypography.label.copyWith(
+                  color: AppColors.textSecondary,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              if (calculationProvider.hasConversionError) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _showConversionErrorDialog(
+                    context,
+                    calculationProvider.failedConversions,
+                  ),
+                  child: const Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.warning,
+                    size: 18,
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: AppDimens.paddingS),
 
@@ -197,6 +216,55 @@ class PortfolioHeader extends StatelessWidget {
           color: Colors.black,
           borderRadius: BorderRadius.circular(AppDimens.radiusS),
         ),
+      ),
+    );
+  }
+
+  void _showConversionErrorDialog(BuildContext context, List<String> failedCurrencies) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
+            const SizedBox(width: 8),
+            Text('Erreur de conversion', style: AppTypography.h3),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Impossible de récupérer les taux de change pour les devises suivantes :',
+              style: AppTypography.body,
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: failedCurrencies.map((currency) {
+                return Chip(
+                  label: Text(currency, style: AppTypography.caption),
+                  backgroundColor: AppColors.surfaceLight,
+                  side: BorderSide.none,
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Un taux de 1.0 a été utilisé par défaut. Vérifiez votre connexion internet.',
+              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }

@@ -36,7 +36,7 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
   final _uuid = const Uuid();
   
   List<ParsedCrowdfundingProject> _extractedProjects = [];
-  bool _isLoading = false;
+  String? _loadingStatus; // Remplacé _isLoading par un status textuel
   String? _fileName;
   Account? _selectedAccount;
 
@@ -48,7 +48,7 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
 
     if (result != null && result.files.single.path != null) {
       setState(() {
-        _isLoading = true;
+        _loadingStatus = "Lecture du fichier Excel...";
         _fileName = result.files.single.name;
       });
 
@@ -58,11 +58,11 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
 
         setState(() {
           _extractedProjects = projects;
-          _isLoading = false;
+          _loadingStatus = null;
         });
       } catch (e) {
         setState(() {
-          _isLoading = false;
+          _loadingStatus = null;
           _fileName = null;
         });
         if (mounted) {
@@ -216,7 +216,7 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() => _loadingStatus = "Préparation de l'import...");
     final provider = context.read<PortfolioProvider>();
     final transactionProvider = context.read<TransactionProvider>();
 
@@ -297,10 +297,12 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
 
       // 3. Batch Save
       if (newMetadatas.isNotEmpty) {
+        setState(() => _loadingStatus = "Mise à jour des métadonnées...");
         await provider.updateAssetMetadatas(newMetadatas);
       }
 
       if (newTransactions.isNotEmpty) {
+        setState(() => _loadingStatus = "Sauvegarde des transactions...");
         await transactionProvider.addTransactions(newTransactions);
       }
 
@@ -321,7 +323,7 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _loadingStatus = null);
     }
   }
 
@@ -531,8 +533,16 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
                   const SizedBox(height: AppDimens.paddingM),
 
                   // List of Projects
-                  if (_isLoading)
-                    const Center(child: CircularProgressIndicator())
+                  if (_loadingStatus != null)
+                    Center(
+                      child: Column(
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          Text(_loadingStatus!, style: AppTypography.body),
+                        ],
+                      ),
+                    )
                   else if (_extractedProjects.isNotEmpty)
                     ..._extractedProjects.asMap().entries.map((entry) {
                       final index = entry.key;
@@ -601,7 +611,7 @@ class _CrowdfundingImportScreenState extends State<CrowdfundingImportScreen> {
                 padding: const EdgeInsets.all(AppDimens.paddingM),
                 child: AppButton(
                   label: "Importer ${_extractedProjects.length} projets",
-                  onPressed: _isLoading ? null : _importProjects,
+                  onPressed: _loadingStatus != null ? null : _importProjects,
                   isFullWidth: true,
                 ),
               ),

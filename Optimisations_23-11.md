@@ -99,7 +99,7 @@ Les erreurs de taux de change sont silencieuses. L'utilisateur peut voir des val
     *   Ajouter un état d'erreur (`hasConversionError`, `failedCurrencies`).
     *   Stocker les paires de devises en échec lors du calcul.
 
-*   [ ] **UI** :
+*   [x] **UI** :
     *   Afficher une alerte visuelle (icône warning) dans le Dashboard si une erreur de conversion est présente.
     *   Permettre à l'utilisateur de relancer la récupération des taux.
 
@@ -112,7 +112,7 @@ Manque de guidage utilisateur sur les écrans vides (Plans d'épargne, Instituti
 
 **Tâches à accomplir :**
 
-*   [ ] **Création de Widgets** :
+*   [x] **Création de Widgets** :
     *   `EmptySavingsPlanWidget` avec bouton d'action.
     *   `EmptyCrowdfundingWidget` avec bouton d'import.
     *   Améliorer l'état vide de la liste des institutions.
@@ -126,6 +126,21 @@ Loader indéterminé lors des imports longs.
 
 **Tâches à accomplir :**
 
-*   [ ] **UI Import** :
+*   [x] **UI Import** :
     *   Ajouter une barre de progression réelle (X / Y projets traités).
     *   Afficher l'étape en cours ("Analyse...", "Sauvegarde...", "Mise à jour des prix...").
+
+---
+
+## 7. 🧪 Qualité : Tests Unitaires
+
+**Objectif :**
+S'assurer que le refactoring majeur (Architecture, Batch Import, Calculs) n'a pas introduit de régressions.
+
+**Tâches à accomplir :**
+
+*   [x] **Tests Providers** :
+    *   Tester `TransactionProvider` (ajout batch, notification).
+    *   Tester `PortfolioCalculationProvider` (calculs corrects, gestion erreurs conversion).
+*   [x] **Tests Services** :
+    *   Tester `CalculationService` (logique d'agrégation, fallback taux de change).
