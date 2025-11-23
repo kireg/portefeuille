@@ -71,14 +71,21 @@ class Portfolio {
   /// Ajoute ou met à jour un point d'historique pour la date d'aujourd'hui.
   /// Retourne true si une modification a eu lieu.
   bool addOrUpdateHistoryPoint(double value) {
+    // Protection : Si la valeur est 0 alors qu'on avait de la valeur avant, on ignore.
+    // Cela évite de polluer le graphique en cas d'erreur de chargement ou de réseau.
+    if (value == 0 && valueHistory.isNotEmpty && valueHistory.last.value > 1.0) {
+      return false;
+    }
+
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    
+    // Comparaison de date locale stricte (Année/Mois/Jour)
+    bool isSameDay(DateTime d1, DateTime d2) {
+      return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
+    }
 
     // Chercher si un point existe déjà pour aujourd'hui
-    final index = valueHistory.indexWhere((p) {
-      final pDate = DateTime(p.date.year, p.date.month, p.date.day);
-      return pDate.isAtSameMomentAs(today);
-    });
+    final index = valueHistory.indexWhere((p) => isSameDay(p.date, now));
 
     if (index != -1) {
       // Mise à jour si la valeur a changé significativement (> 0.01)

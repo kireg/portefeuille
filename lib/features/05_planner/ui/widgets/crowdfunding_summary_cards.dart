@@ -120,17 +120,20 @@ class CrowdfundingSummaryCards extends StatelessWidget {
     return AppCard(
       padding: const EdgeInsets.all(AppDimens.paddingM),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 8),
-              Expanded(
+              Flexible(
                 child: Text(
                   title,
                   style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
                   overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
               ),
             ],
@@ -139,12 +142,14 @@ class CrowdfundingSummaryCards extends StatelessWidget {
           Text(
             value,
             style: AppTypography.h2.copyWith(fontSize: 20),
+            textAlign: TextAlign.center,
           ),
           if (subtitle != null) ...[
             const SizedBox(height: 4),
             Text(
               subtitle,
               style: AppTypography.caption.copyWith(color: AppColors.success),
+              textAlign: TextAlign.center,
             ),
           ],
         ],

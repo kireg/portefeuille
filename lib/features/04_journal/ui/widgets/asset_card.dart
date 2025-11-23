@@ -1,15 +1,15 @@
 // lib/features/04_summary/ui/widgets/asset_card.dart
 
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/core/data/models/aggregated_asset.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
 
-class AssetCard extends StatelessWidget {
+class AssetCard extends StatefulWidget {
   final AggregatedAsset asset;
   final String baseCurrency;
   final VoidCallback onEditPrice;
@@ -24,218 +24,274 @@ class AssetCard extends StatelessWidget {
   });
 
   @override
+  State<AssetCard> createState() => _AssetCardState();
+}
+
+class _AssetCardState extends State<AssetCard> {
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    final isPositive = asset.profitAndLoss >= 0;
+    final isPositive = widget.asset.profitAndLoss >= 0;
     final pnlColor = isPositive ? AppColors.success : AppColors.error;
 
-    return AppCard(
-      padding: const EdgeInsets.all(AppDimens.paddingM),
-      child: Column(
-        children: [
-          // 1. En-tête
-          Row(
-            children: [
-              _buildAssetIcon(),
-              const SizedBox(width: AppDimens.paddingM),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(asset.name,
-                        style: AppTypography.bodyBold,
-                        overflow: TextOverflow.ellipsis),
-                    Text(asset.ticker, style: AppTypography.caption),
-                  ],
-                ),
-              ),
-              _buildSyncStatusBadge(asset.syncStatus),
-            ],
-          ),
-
-          const SizedBox(height: AppDimens.paddingM),
-          Divider(height: 1, color: AppColors.border),
-          const SizedBox(height: AppDimens.paddingM),
-
-          // 2. Grille d'infos
-          Row(
-            children: [
-              // Gauche : Quantité & PRU
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildInfoLabel('Quantité'),
-                    Text(CurrencyFormatter.formatQuantity(asset.quantity),
-                        style: AppTypography.body),
-                    const SizedBox(height: AppDimens.paddingS),
-                    _buildInfoLabel('PRU'),
-                    Text(
-                      CurrencyFormatter.format(asset.averagePrice, baseCurrency),
-                      style: AppTypography.body,
-                    ),
-                  ],
-                ),
-              ),
-              // Droite : Prix Actuel & Valeur
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    _buildInfoLabel('Prix Actuel'),
-                    // --- MODIFICATION ICI : InkWell pour effet visuel ---
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: onEditPrice,
-                        borderRadius: BorderRadius.circular(4),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                CurrencyFormatter.format(asset.currentPrice, baseCurrency),
-                                style: AppTypography.body
-                                    .copyWith(color: AppColors.primary),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(Icons.edit, size: 12, color: AppColors.primary),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppDimens.paddingS),
-                    _buildInfoLabel('Valeur Totale'),
-                    Text(
-                      CurrencyFormatter.format(asset.totalValue, baseCurrency),
-                      style: AppTypography.bodyBold,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: AppDimens.paddingM),
-
-          // 3. Pied de page : P/L & Rendement
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingS, vertical: 4), // Padding vertical réduit pour laisser place au InkWell
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(AppDimens.radiusS),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimens.radiusM),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.6), // Transparence
+            borderRadius: BorderRadius.circular(AppDimens.radiusM),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.1),
+              width: 1,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Partie P/L (Non cliquable)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // HEADER (Toujours visible)
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimens.paddingM),
                   child: Row(
                     children: [
-                      Icon(
-                        isPositive ? Icons.trending_up : Icons.trending_down,
-                        color: pnlColor,
-                        size: 16,
+                      _buildAssetIcon(),
+                      const SizedBox(width: AppDimens.paddingM),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(widget.asset.name,
+                                style: AppTypography.bodyBold,
+                                overflow: TextOverflow.ellipsis),
+                            Text(widget.asset.ticker, style: AppTypography.caption),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${isPositive ? '+' : ''}${CurrencyFormatter.format(asset.profitAndLoss, baseCurrency)}',
-                        style: AppTypography.bodyBold
-                            .copyWith(color: pnlColor, fontSize: 13),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            CurrencyFormatter.format(widget.asset.totalValue, widget.baseCurrency),
+                            style: AppTypography.bodyBold,
+                          ),
+                          Text(
+                            "${isPositive ? '+' : ''}${CurrencyFormatter.format(widget.asset.profitAndLoss, widget.baseCurrency)}",
+                            style: AppTypography.caption.copyWith(color: pnlColor),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: AppDimens.paddingS),
+                      Icon(
+                        _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                        color: AppColors.textSecondary,
                       ),
                     ],
                   ),
                 ),
+              ),
 
-                // --- MODIFICATION ICI : InkWell pour le rendement ---
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onEditYield,
-                    borderRadius: BorderRadius.circular(AppDimens.radiusS),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0), // Zone de clic confortable
-                      child: Row(
+              // BODY (Expandable)
+              AnimatedCrossFade(
+                firstChild: const SizedBox.shrink(),
+                secondChild: Column(
+                  children: [
+                    Divider(height: 1, color: AppColors.border.withValues(alpha: 0.5)),
+                    Padding(
+                      padding: const EdgeInsets.all(AppDimens.paddingM),
+                      child: Column(
                         children: [
-                          Text(
-                            'Rendement: ${(asset.estimatedAnnualYield * 100).toStringAsFixed(1)}%',
-                            style: AppTypography.caption
-                                .copyWith(color: AppColors.textSecondary),
+                          // Ligne 1 : Quantité & PRU
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildDetailRow(
+                                  "Quantité",
+                                  CurrencyFormatter.formatQuantity(widget.asset.quantity),
+                                ),
+                              ),
+                              Expanded(
+                                child: _buildDetailRow(
+                                  "PRU",
+                                  CurrencyFormatter.format(widget.asset.averagePrice, widget.baseCurrency),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.edit,
-                              size: 12, color: AppColors.textSecondary),
+                          const SizedBox(height: AppDimens.paddingM),
+                          // Ligne 2 : Prix Actuel & Rendement
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInfoLabel('Prix Actuel'),
+                                    InkWell(
+                                      onTap: widget.onEditPrice,
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 2),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              CurrencyFormatter.format(widget.asset.currentPrice, widget.baseCurrency),
+                                              style: AppTypography.body.copyWith(color: AppColors.primary),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            const Icon(Icons.edit, size: 14, color: AppColors.primary),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInfoLabel('Rendement Est.'),
+                                    InkWell(
+                                      onTap: widget.onEditYield,
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 2),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              "${widget.asset.estimatedAnnualYield.toStringAsFixed(2)}%",
+                                              style: AppTypography.body.copyWith(color: AppColors.primary),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            const Icon(Icons.edit, size: 14, color: AppColors.primary),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppDimens.paddingM),
+                          // Sync Status
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildInfoLabel("Statut Synchro"),
+                              _buildSyncStatusBadge(widget.asset.syncStatus),
+                            ],
+                          ),
                         ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+                crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 300),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
+  Widget _buildDetailRow(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildInfoLabel(label),
+        Text(value, style: AppTypography.body),
+      ],
+    );
+  }
+
   Widget _buildInfoLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: Text(label, style: AppTypography.caption.copyWith(fontSize: 10)),
+    return Text(
+      label.toUpperCase(),
+      style: AppTypography.caption.copyWith(
+        fontSize: 10,
+        letterSpacing: 1.0,
+        color: AppColors.textSecondary,
+      ),
     );
   }
 
   Widget _buildAssetIcon() {
-    final colorSeed = asset.ticker.hashCode;
-    final color = Color((0xFF000000 + (colorSeed & 0xFFFFFF))).withValues(alpha: 1.0);
-
     return Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(8),
       ),
-      alignment: Alignment.center,
-      child: Text(
-        asset.ticker
-            .substring(0, asset.ticker.length > 2 ? 2 : asset.ticker.length)
-            .toUpperCase(),
-        style: AppTypography.bodyBold.copyWith(color: color),
+      child: Center(
+        child: Text(
+          widget.asset.ticker.isNotEmpty ? widget.asset.ticker[0] : '?',
+          style: AppTypography.h3.copyWith(color: AppColors.primary),
+        ),
       ),
     );
   }
 
   Widget _buildSyncStatusBadge(SyncStatus status) {
     Color color;
-    IconData icon;
+    String text;
 
     switch (status) {
       case SyncStatus.synced:
         color = AppColors.success;
-        icon = Icons.check_circle;
+        text = 'SYNC';
         break;
       case SyncStatus.error:
         color = AppColors.error;
-        icon = Icons.error;
+        text = 'ERROR';
         break;
       case SyncStatus.manual:
-        color = AppColors.primary;
-        icon = Icons.edit;
+        color = AppColors.textSecondary;
+        text = 'MANUEL';
         break;
       case SyncStatus.never:
-      case SyncStatus.unsyncable:
         color = AppColors.textTertiary;
-        icon = Icons.circle_outlined;
+        text = 'JAMAIS';
         break;
+      default:
+        color = AppColors.textTertiary;
+        text = 'INCONNU';
     }
 
-    return Tooltip(
-      message: status.name,
-      child: Icon(icon, color: color, size: 18),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        text,
+        style: AppTypography.caption.copyWith(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }

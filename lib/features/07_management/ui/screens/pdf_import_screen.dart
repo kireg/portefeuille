@@ -42,6 +42,7 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
   bool _isLoading = false;
   String? _fileName;
   Account? _selectedAccount;
+  bool _showAccountError = false;
 
   Future<void> _pickPdf() async {
     final result = await FilePicker.platform.pickFiles(
@@ -119,6 +120,9 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
 
   Future<void> _validateImport() async {
     if (_selectedAccount == null) {
+      setState(() {
+        _showAccountError = true;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Veuillez sélectionner un compte')),
       );
@@ -316,7 +320,11 @@ class _PdfImportScreenState extends State<PdfImportScreen> {
                   // 1. Account Selection
                   PdfAccountSelector(
                     selectedAccount: _selectedAccount,
-                    onChanged: (val) => setState(() => _selectedAccount = val),
+                    hasError: _showAccountError,
+                    onChanged: (val) => setState(() {
+                      _selectedAccount = val;
+                      if (val != null) _showAccountError = false;
+                    }),
                   ),
 
                   const SizedBox(height: AppDimens.paddingM),

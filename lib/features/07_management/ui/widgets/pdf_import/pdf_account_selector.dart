@@ -11,11 +11,13 @@ import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 class PdfAccountSelector extends StatelessWidget {
   final Account? selectedAccount;
   final ValueChanged<Account?> onChanged;
+  final bool hasError;
 
   const PdfAccountSelector({
     super.key,
     required this.selectedAccount,
     required this.onChanged,
+    this.hasError = false,
   });
 
   @override
@@ -35,9 +37,15 @@ class PdfAccountSelector extends StatelessWidget {
             Text("Compte de destination", style: AppTypography.h3),
             const SizedBox(height: AppDimens.paddingS),
             DropdownButtonFormField<Account>(
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                enabledBorder: hasError 
+                    ? const OutlineInputBorder(borderSide: BorderSide(color: AppColors.error, width: 2))
+                    : null,
+                focusedBorder: hasError
+                    ? const OutlineInputBorder(borderSide: BorderSide(color: AppColors.error, width: 2))
+                    : null,
               ),
               value: selectedAccount,
               isExpanded: true,

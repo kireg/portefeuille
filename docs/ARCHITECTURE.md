@@ -2,7 +2,7 @@
 
 **Version**: 1.0.0  
 **Date de création**: 18 novembre 2025  
-**Dernière mise à jour**: 18 novembre 2025
+**Dernière mise à jour**: 23 novembre 2025
 
 ---
 
@@ -192,19 +192,27 @@ features/XX_feature_name/
 └── ui/
     ├── journal_tab.dart         # Onglet principal
     ├── views/
-    │   ├── synthese_view.dart   # Vue synthétique
+    │   ├── synthese_view.dart   # Vue synthétique (Glassmorphism)
     │   └── transactions_view.dart  # Liste des transactions
-    └── widgets/                 # Widgets spécifiques
+    └── widgets/
+        ├── asset_card.dart      # Carte actif (Expandable)
+        ├── empty_transactions_widget.dart # État vide avec actions
+        └── ...
 ```
 
 #### `05_planner` - Planificateur financier
-**Responsabilité** : Planification et projections
+**Responsabilité** : Planification et projections (Épargne & Crowdfunding)
 
 **Structure** :
 ```
 05_planner/
 └── ui/
-    └── planner_tab.dart         # Onglet planificateur (minimal pour l'instant)
+    ├── planner_tab.dart                # Onglet planificateur (Épargne)
+    ├── crowdfunding_tracking_tab.dart  # Onglet Crowdfunding
+    └── widgets/
+        ├── crowdfunding_planner_widget.dart   # Prochains paiements (filtrable)
+        ├── crowdfunding_timeline_widget.dart  # Calendrier projets (filtrable)
+        └── crowdfunding_summary_cards.dart    # Indicateurs clés
 ```
 
 #### `06_settings` - Paramètres

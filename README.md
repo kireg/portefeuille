@@ -51,6 +51,7 @@ Architecture révolutionnaire basée sur l'historique des transactions :
 - [cite_start]**Gestion multi-devises** : Support des transactions dans différentes devises avec conversion automatique [cite: 2680]
 - [cite_start]Taux de change historiques et conversions transparentes [cite: 2680]
 - [cite_start]Modification et suppression de transactions avec recalcul automatique [cite: 2680]
+- **Import PDF Intelligent** : Extraction automatique des transactions depuis vos relevés bancaires (avec validation visuelle et détection d'erreurs).
 
 ### 🌐 Mode En Ligne et Synchronisation des Prix
 - [cite_start]**Récupération automatique** des prix en temps réel via API [cite: 2680]
@@ -67,6 +68,13 @@ Architecture révolutionnaire basée sur l'historique des transactions :
 - [cite_start]**Calcul automatique** des plus/moins-values (P/L) et rendements [cite: 2681]
 - [cite_start]**Vue synthétique** des actifs avec tri et filtrage [cite: 2681]
 
+### 🏘️ Gestion Crowdfunding Immobilier
+- **Suivi dédié** des projets de crowdfunding immobilier
+- **Calcul automatique** des liquidités disponibles (Apport - Engagements)
+- **Calendrier des paiements** et des remboursements
+- **Filtrage par projet** pour une vision claire des flux de trésorerie
+- **Indicateurs de performance** (TRI, Durée restante)
+
 ### 📅 Planificateur d'Investissements
 - [cite_start]Création de **plans d'épargne programmés** (mensuels, trimestriels, annuels) [cite: 2681]
 - [cite_start]**Simulation** de croissance du portefeuille sur 5, 10, 20 ou 30 ans [cite: 2681]
@@ -82,6 +90,7 @@ Architecture révolutionnaire basée sur l'historique des transactions :
 - [cite_start]Stockage **100% local** des données (aucune connexion serveur) [cite: 2682]
 - [cite_start]**Clé API FMP** stockée de manière sécurisée (Keystore/Keychain/Credential Manager) [cite: 2682]
 - [cite_start]Aucune collecte de données personnelles [cite: 2682]
+- **Mode Discret** : Floutage des montants sensibles (soldes, totaux) pour une consultation en public (activable via l'icône œil).
 
 ### 🌐 Mode En Ligne et Synchronisation des Prix
 

@@ -201,6 +201,12 @@ class CrowdfundingService {
       // Or linked to a Crowdfunding Account
       final account = accounts.where((a) => a.id == t.accountId).firstOrNull;
       if (account != null && account.type == AccountType.crowdfunding) return true;
+
+      // Or specific Auto-Deposit from Import
+      if ((t.type == TransactionType.Deposit || t.type == TransactionType.Withdrawal) && 
+          (t.notes.contains("Apport auto") || t.notes.contains("Crowdfunding"))) {
+        return true;
+      }
       
       return false;
     }).toList();

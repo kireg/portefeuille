@@ -6,7 +6,7 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 
-class CrowdfundingTimelineWidget extends StatelessWidget {
+class CrowdfundingTimelineWidget extends StatefulWidget {
   final List<Asset> assets;
 
   const CrowdfundingTimelineWidget({
@@ -15,11 +15,108 @@ class CrowdfundingTimelineWidget extends StatelessWidget {
   });
 
   @override
+  State<CrowdfundingTimelineWidget> createState() => _CrowdfundingTimelineWidgetState();
+}
+
+class _CrowdfundingTimelineWidgetState extends State<CrowdfundingTimelineWidget> {
+  final Set<String> _selectedProjectIds = {};
+
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Filtrer par projet"),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: widget.assets.length,
+                  itemBuilder: (context, index) {
+                    final asset = widget.assets[index];
+                    final isSelected = _selectedProjectIds.contains(asset.id);
+                    return CheckboxListTile(
+                      title: Text(asset.name),
+                      value: isSelected,
+                      onChanged: (val) {
+                        setState(() {
+                          if (val == true) {
+                            _selectedProjectIds.add(asset.id);
+                          } else {
+                            _selectedProjectIds.remove(asset.id);
+                          }
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedProjectIds.clear();
+                    });
+                  },
+                  child: const Text("Tout effacer"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    this.setState(() {}); // Rebuild parent
+                  },
+                  child: const Text("OK"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (assets.isEmpty) return const SizedBox.shrink();
+    if (widget.assets.isEmpty) return const SizedBox.shrink();
+
+    // Filtrer
+    final filteredAssets = widget.assets.where((a) {
+      if (_selectedProjectIds.isEmpty) return true;
+      return _selectedProjectIds.contains(a.id);
+    }).toList();
+
+    if (filteredAssets.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Calendrier des Projets",
+                  style: AppTypography.h3,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.filter_list, color: AppColors.primary),
+                  onPressed: _showFilterDialog,
+                ),
+              ],
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.all(AppDimens.paddingM),
+            child: Center(child: Text("Aucun projet sélectionné.")),
+          ),
+        ],
+      );
+    }
 
     // Trier par date de fin estimée
-    final sortedAssets = List<Asset>.from(assets);
+    final sortedAssets = List<Asset>.from(filteredAssets);
     sortedAssets.sort((a, b) {
       final endA = _getEndDate(a);
       final endB = _getEndDate(b);
@@ -31,9 +128,21 @@ class CrowdfundingTimelineWidget extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
-          child: Text(
-            "Calendrier des Projets",
-            style: AppTypography.h3,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Calendrier des Projets",
+                style: AppTypography.h3,
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.filter_list,
+                  color: _selectedProjectIds.isNotEmpty ? AppColors.primary : AppColors.textSecondary,
+                ),
+                onPressed: _showFilterDialog,
+              ),
+            ],
           ),
         ),
         const SizedBox(height: AppDimens.paddingM),

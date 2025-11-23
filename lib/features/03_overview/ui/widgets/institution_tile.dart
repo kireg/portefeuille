@@ -10,6 +10,7 @@ import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_tile.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/privacy_blur.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
 import 'package:portefeuille/features/00_app/services/modal_service.dart';
@@ -120,9 +121,11 @@ class InstitutionTile extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Valeur Totale
-                  Text(
-                    CurrencyFormatter.format(institutionTotalValue, baseCurrency),
-                    style: AppTypography.bodyBold,
+                  PrivacyBlur(
+                    child: Text(
+                      CurrencyFormatter.format(institutionTotalValue, baseCurrency),
+                      style: AppTypography.bodyBold,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   // Ligne P/L (Montant + %)
@@ -135,11 +138,13 @@ class InstitutionTile extends StatelessWidget {
                         size: 16,
                       ),
                       // CORRECTION ICI : Suppression de compact: true
-                      Text(
-                        CurrencyFormatter.format(institutionTotalPL, baseCurrency),
-                        style: AppTypography.caption.copyWith(
-                          color: plColor,
-                          fontWeight: FontWeight.bold,
+                      PrivacyBlur(
+                        child: Text(
+                          CurrencyFormatter.format(institutionTotalPL, baseCurrency),
+                          style: AppTypography.caption.copyWith(
+                            color: plColor,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 4),
