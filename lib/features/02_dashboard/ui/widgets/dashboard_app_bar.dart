@@ -247,7 +247,13 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
                 Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
                     size: 18, color: isSelected ? AppColors.primary : AppColors.textSecondary),
                 const SizedBox(width: 12),
-                Text(portfolio.name, style: isSelected ? AppTypography.bodyBold : AppTypography.body),
+                Expanded(
+                  child: Text(
+                    portfolio.name,
+                    style: isSelected ? AppTypography.bodyBold : AppTypography.body,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
           );
@@ -296,6 +302,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
           duration: const Duration(seconds: 4),
           showCloseIcon: true,
           behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.only(bottom: 90, left: 16, right: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radiusS)),
         ),
       ).closed.then((_) {

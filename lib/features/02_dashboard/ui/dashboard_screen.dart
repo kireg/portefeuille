@@ -81,8 +81,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         label: 'Plan',
       ),
       const AppNavItem(
-        icon: Icons.rocket_launch_outlined,
-        selectedIcon: Icons.rocket_launch,
+        icon: Icons.home_work_outlined,
+        selectedIcon: Icons.home_work,
         label: 'Crowd',
       ),
       const AppNavItem(

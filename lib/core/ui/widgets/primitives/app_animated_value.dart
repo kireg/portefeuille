@@ -28,8 +28,10 @@ class _AppAnimatedValueState extends State<AppAnimatedValue> with SingleTickerPr
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
-    // On commence l'animation depuis 0 ou une valeur proche pour l'effet d'entrée
-    _animation = Tween<double>(begin: 0, end: widget.value).animate(
+    // MODIFICATION : On ne force plus l'animation depuis 0 à l'initialisation
+    // pour éviter l'effet de "reset" lors des rebuilds (ex: toggle privacy).
+    // L'animation se fera uniquement si la valeur change via didUpdateWidget.
+    _animation = Tween<double>(begin: widget.value, end: widget.value).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutExpo),
     );
     _controller.forward();
