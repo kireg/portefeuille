@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:provider/provider.dart';
 
 // Core UI

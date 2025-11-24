@@ -153,6 +153,14 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     );
   }
 
+  void _openSettings(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const SettingsScreen(),
+      ),
+    );
+  }
+
   // ... (Le reste des méthodes _buildStatusIndicator, _buildPortfolioSelector, etc. reste identique) ...
   // Je ne répète pas les fonctions privées inchangées pour alléger la réponse,
   // mais elles doivent rester dans la classe _DashboardAppBarState.

@@ -45,4 +45,13 @@ class ApiService {
     _exchangeRateCacheTimestamps.clear();
     debugPrint("ℹ️ Caches de l'ApiService vidés (prix, recherche, taux).");
   }
+
+  /// Récupère le prix pour un ticker.
+  Future<PriceResult> getPrice(String ticker) => getPriceImpl(ticker);
+
+  /// Recherche un ticker ou un ISIN
+  Future<List<TickerSuggestion>> searchTicker(String query) => searchTickerImpl(query);
+
+  /// Récupère le taux de change entre deux devises.
+  Future<double> getExchangeRate(String from, String to) => getExchangeRateImpl(from, to);
 }

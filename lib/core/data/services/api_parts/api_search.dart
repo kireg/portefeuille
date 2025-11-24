@@ -2,7 +2,7 @@ part of '../api_service.dart';
 
 extension ApiServiceSearch on ApiService {
   /// Recherche un ticker ou un ISIN
-  Future<List<TickerSuggestion>> searchTicker(String query) async {
+  Future<List<TickerSuggestion>> searchTickerImpl(String query) async {
     final timestamp = _searchCacheTimestamps[query];
     if (timestamp != null &&
         DateTime.now().difference(timestamp) < const Duration(hours: 24)) {

@@ -62,7 +62,7 @@ extension ApiServiceExchange on ApiService {
   }
 
   /// Récupère le taux de change entre deux devises.
-  Future<double> getExchangeRate(String from, String to) async {
+  Future<double> getExchangeRateImpl(String from, String to) async {
     debugPrint("\n🔄 getExchangeRate appelé: $from → $to");
     // Si les devises sont identiques, le taux est 1
     if (from == to) {

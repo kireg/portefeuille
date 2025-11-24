@@ -2,7 +2,7 @@ part of '../api_service.dart';
 
 extension ApiServicePrice on ApiService {
   /// Récupère le prix pour un ticker.
-  Future<PriceResult> getPrice(String ticker) async {
+  Future<PriceResult> getPriceImpl(String ticker) async {
     final errors = <String, String>{};
 
     try {
