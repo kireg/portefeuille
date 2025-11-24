@@ -155,7 +155,7 @@ class EmptyTransactionsWidget extends StatelessWidget {
                       if (onImportCsv != null)
                         _ActionCard(
                           title: "Import CSV",
-                          subtitle: "Revolut, etc.",
+                          subtitle: "Exports bancaires",
                           icon: Icons.grid_on,
                           color: Colors.blueAccent,
                           onTap: onImportCsv!,

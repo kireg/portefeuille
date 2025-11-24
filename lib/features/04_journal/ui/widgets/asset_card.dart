@@ -8,6 +8,7 @@ import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/core/data/models/aggregated_asset.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AssetCard extends StatefulWidget {
   final AggregatedAsset asset;
@@ -198,6 +199,53 @@ class _AssetCardState extends State<AssetCard> {
                               _buildSyncStatusBadge(widget.asset.syncStatus),
                             ],
                           ),
+                          const SizedBox(height: AppDimens.paddingM),
+                          // Accounts
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildInfoLabel("Comptes"),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  alignment: WrapAlignment.end,
+                                  children: widget.asset.accountNames.map((name) => Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surfaceLight,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: AppColors.border),
+                                    ),
+                                    child: Text(name, style: AppTypography.caption),
+                                  )).toList(),
+                                ),
+                              ),
+                            ],
+                          ),
+                          
+                          // Search Ticker (if needed)
+                          if (widget.asset.syncStatus != SyncStatus.synced)
+                            Padding(
+                              padding: const EdgeInsets.only(top: AppDimens.paddingM),
+                              child: InkWell(
+                                onTap: () async {
+                                  final url = Uri.parse("https://finance.yahoo.com/lookup?s=${widget.asset.ticker}");
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                                  }
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.search, size: 16, color: AppColors.primary),
+                                    const SizedBox(width: 4),
+                                    Text("Rechercher le ticker (Yahoo)", style: AppTypography.caption.copyWith(color: AppColors.primary)),
+                                  ],
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),

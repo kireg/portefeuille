@@ -21,6 +21,8 @@ import 'package:portefeuille/features/07_management/ui/screens/pdf_import_screen
 import 'package:portefeuille/features/07_management/ui/screens/ai_import_config_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/crowdfunding_import_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/csv_import_screen.dart';
+import 'package:portefeuille/features/00_app/services/institution_service.dart';
+import 'package:portefeuille/core/data/models/institution_metadata.dart';
 
 // New Widgets & Models
 import 'package:portefeuille/features/04_journal/ui/models/transaction_group.dart';
@@ -37,8 +39,17 @@ class TransactionsView extends StatefulWidget {
 }
 
 class _TransactionsViewState extends State<TransactionsView> {
-  TransactionSortOption _sortOption = TransactionSortOption.dateDesc;
+  TransactionSortOption _sortOption = TransactionSortOption.institution;
   final Set<String> _selectedIds = {};
+  final InstitutionService _institutionService = InstitutionService();
+
+  @override
+  void initState() {
+    super.initState();
+    _institutionService.loadInstitutions().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   bool get _isSelectionMode => _selectedIds.isNotEmpty;
 
@@ -102,7 +113,8 @@ class _TransactionsViewState extends State<TransactionsView> {
   Map<String, TransactionGroup> _groupTransactions(
       List<Transaction> transactions,
       Map<String, Account> accountsMap,
-      Map<String, String> accountIdToInstitutionName
+      Map<String, String> accountIdToInstitutionName,
+      Map<String, String?> institutionNameToLogo,
   ) {
     final groups = <String, TransactionGroup>{};
 
@@ -110,6 +122,7 @@ class _TransactionsViewState extends State<TransactionsView> {
       String key;
       String title;
       String? subtitle;
+      String? logoPath;
 
       switch (_sortOption) {
         case TransactionSortOption.dateDesc:
@@ -138,6 +151,7 @@ class _TransactionsViewState extends State<TransactionsView> {
           final institutionName = accountIdToInstitutionName[transaction.accountId] ?? 'Inconnu';
           key = institutionName;
           title = institutionName;
+          logoPath = institutionNameToLogo[institutionName];
           break;
 
         case TransactionSortOption.account:
@@ -147,6 +161,7 @@ class _TransactionsViewState extends State<TransactionsView> {
           key = accountName;
           title = accountName;
           subtitle = institutionName;
+          logoPath = institutionNameToLogo[institutionName];
           break;
 
         case TransactionSortOption.type:
@@ -164,6 +179,7 @@ class _TransactionsViewState extends State<TransactionsView> {
         groups[key] = TransactionGroup(
           title: title,
           subtitle: subtitle,
+          logoPath: logoPath,
           transactions: [],
           totalAmount: 0,
         );
@@ -215,41 +231,65 @@ class _TransactionsViewState extends State<TransactionsView> {
     );
   }
 
-  void _openAddTransactionModal() {
+  void _checkAndOpen(VoidCallback openMethod) {
+    final provider = Provider.of<PortfolioProvider>(context, listen: false);
+    final hasAccounts = provider.activePortfolio?.institutions.any((i) => i.accounts.isNotEmpty) ?? false;
+
+    if (!hasAccounts) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text("Aucun compte", style: AppTypography.h3),
+          content: Text("Vous devez créer un compte avant d'importer des transactions.", style: AppTypography.body),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    openMethod();
+  }
+
+  void _openAddTransactionModal() => _checkAndOpen(() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => const AddTransactionScreen(),
     );
-  }
+  });
 
-  void _openPdfImport() {
+  void _openPdfImport() => _checkAndOpen(() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const PdfImportScreen()),
     );
-  }
+  });
 
-  void _openCsvImport() {
+  void _openCsvImport() => _checkAndOpen(() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const CsvImportScreen()),
     );
-  }
+  });
 
-  void _openAiImport() {
+  void _openAiImport() => _checkAndOpen(() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AiImportConfigScreen()),
     );
-  }
+  });
 
-  void _openCrowdfundingImport() {
+  void _openCrowdfundingImport() => _checkAndOpen(() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const CrowdfundingImportScreen()),
     );
-  }
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -264,8 +304,24 @@ class _TransactionsViewState extends State<TransactionsView> {
 
         final accountsMap = <String, Account>{};
         final accountIdToInstitutionName = <String, String>{};
+        final institutionNameToLogo = <String, String?>{};
         final transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
+        
+        // Build map of institution name to logo
         for (var inst in portfolio.institutions) {
+           // Find metadata for this institution
+           final metadataList = _institutionService.search(inst.name);
+           // Exact match or first match? search returns contains.
+           // Let's try to find exact match first
+           InstitutionMetadata? meta;
+           try {
+             meta = metadataList.firstWhere((m) => m.name.toLowerCase() == inst.name.toLowerCase());
+           } catch (_) {
+             if (metadataList.isNotEmpty) meta = metadataList.first;
+           }
+           
+           institutionNameToLogo[inst.name] = meta?.logoAsset;
+
           for (var acc in inst.accounts) {
             accountsMap[acc.id] = acc;
             accountIdToInstitutionName[acc.id] = inst.name;
@@ -277,7 +333,7 @@ class _TransactionsViewState extends State<TransactionsView> {
             .expand((acc) => acc.transactions)
             .toList();
 
-        final groupedTransactions = _groupTransactions(allTransactions, accountsMap, accountIdToInstitutionName);
+        final groupedTransactions = _groupTransactions(allTransactions, accountsMap, accountIdToInstitutionName, institutionNameToLogo);
         final sortedGroupKeys = groupedTransactions.keys.toList();
 
         return AppScreen(

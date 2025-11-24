@@ -113,33 +113,35 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
           withShadow: true,
           backgroundColor: AppColors.surface.withValues(alpha: 0.85),
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingS),
-          child: Stack(
-            alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // --- Sélecteur de Portefeuille (Centré) ---
-              _buildPortfolioSelector(portfolioProvider, portfolio),
+              // --- Sélecteur de Portefeuille (Aligné à gauche) ---
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _buildPortfolioSelector(portfolioProvider, portfolio),
+                ),
+              ),
 
               // --- Statut + Settings (Aligné à droite) ---
-              Positioned(
-                right: 0,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildStatusIndicator(settingsProvider, portfolioProvider),
-                    IconButton(
-                      icon: Icon(
-                        settingsProvider.isPrivacyMode ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: AppColors.textSecondary,
-                        size: 22,
-                      ),
-                      onPressed: () => settingsProvider.togglePrivacyMode(),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildStatusIndicator(settingsProvider, portfolioProvider),
+                  IconButton(
+                    icon: Icon(
+                      settingsProvider.isPrivacyMode ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: AppColors.textSecondary,
+                      size: 22,
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 22),
-                      onPressed: () => _openSettings(context),
-                    ),
-                  ],
-                ),
+                    onPressed: () => settingsProvider.togglePrivacyMode(),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 22),
+                    onPressed: () => _openSettings(context),
+                  ),
+                ],
               ),
             ],
           ),

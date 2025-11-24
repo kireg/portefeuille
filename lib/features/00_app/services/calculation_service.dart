@@ -124,9 +124,12 @@ class CalculationService {
     final aggregatedValueByType = <AssetType, double>{};
     final assetsByTicker = <String, List<Asset>>{};
     final ratesByTicker = <String, List<double>>{};
+    final accountIdToName = <String, String>{};
+    final assetToAccountId = <Asset, String>{};
 
     for (final inst in portfolio.institutions) {
       for (final acc in inst.accounts) {
+        accountIdToName[acc.id] = acc.name;
         final rate = rates[acc.activeCurrency] ?? 1.0;
 
         // Calculs par Compte
@@ -171,6 +174,7 @@ class CalculationService {
 
           (assetsByTicker[asset.ticker] ??= []).add(asset);
           (ratesByTicker[asset.ticker] ??= []).add(rate);
+          assetToAccountId[asset] = acc.id;
         }
       }
     }
@@ -181,6 +185,8 @@ class CalculationService {
       ratesByTicker: ratesByTicker,
       targetCurrency: targetCurrency,
       allMetadata: allMetadata,
+      accountIdToName: accountIdToName,
+      assetToAccountId: assetToAccountId,
     );
 
     // Calcul final du rendement
@@ -208,6 +214,8 @@ class CalculationService {
     required Map<String, List<double>> ratesByTicker,
     required String targetCurrency,
     required Map<String, AssetMetadata> allMetadata,
+    required Map<String, String> accountIdToName,
+    required Map<Asset, String> assetToAccountId,
   }) {
     final aggregatedAssets = <AggregatedAsset>[];
 
@@ -249,6 +257,11 @@ class CalculationService {
       final finalPLPercentage =
       (aggTotalInvested > 0) ? aggTotalPL / aggTotalInvested : 0.0;
 
+      final accountNames = assets.map((a) {
+        final accId = assetToAccountId[a];
+        return (accId != null ? accountIdToName[accId] : null) ?? 'Inconnu';
+      }).toSet().toList();
+
       if (aggQuantity > 0) {
         final firstAsset = assets.first;
         aggregatedAssets.add(AggregatedAsset(
@@ -265,6 +278,7 @@ class CalculationService {
           assetCurrency: firstAsset.priceCurrency,
           baseCurrency: targetCurrency,
           type: firstAsset.type,
+          accountNames: accountNames,
         ));
       }
     });

@@ -17,6 +17,7 @@ import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart'; // AJOUT
+import 'package:portefeuille/core/data/models/sync_status.dart'; // AJOUT
 
 // Widgets & Dialogs refactorisés
 import 'package:portefeuille/features/04_journal/ui/dialogs/asset_dialogs.dart';
@@ -32,6 +33,7 @@ class SyntheseView extends StatefulWidget {
 
 class _SyntheseViewState extends State<SyntheseView> {
   final Set<AssetType> _selectedFilters = {};
+  bool? _syncFilter; // null: all, true: synced, false: not synced
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +53,12 @@ class _SyntheseViewState extends State<SyntheseView> {
         // Filtrage
         if (_selectedFilters.isNotEmpty) {
           aggregatedAssets = aggregatedAssets.where((a) => _selectedFilters.contains(a.type)).toList();
+        }
+        if (_syncFilter != null) {
+          aggregatedAssets = aggregatedAssets.where((a) {
+            final isSynced = a.syncStatus == SyncStatus.synced;
+            return _syncFilter == true ? isSynced : !isSynced;
+          }).toList();
         }
 
         // État Vide (si aucun actif au total, pas juste après filtre)
@@ -83,30 +91,41 @@ class _SyntheseViewState extends State<SyntheseView> {
                               scrollDirection: Axis.horizontal,
                               padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
                               child: Row(
-                                children: AssetType.values.map((type) {
-                                  final isSelected = _selectedFilters.contains(type);
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 8.0),
-                                    child: FilterChip(
-                                      label: Text(type.displayName),
-                                      selected: isSelected,
-                                      onSelected: (selected) {
-                                        setState(() {
-                                          if (selected) {
-                                            _selectedFilters.add(type);
-                                          } else {
-                                            _selectedFilters.remove(type);
-                                          }
-                                        });
-                                      },
-                                      selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                                      checkmarkColor: AppColors.primary,
-                                      labelStyle: TextStyle(
-                                        color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                                children: [
+                                  FilterChip(
+                                    label: const Text("Synchronisés"),
+                                    selected: _syncFilter == true,
+                                    onSelected: (selected) => setState(() => _syncFilter = selected ? true : null),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  FilterChip(
+                                    label: const Text("Non Synchronisés"),
+                                    selected: _syncFilter == false,
+                                    onSelected: (selected) => setState(() => _syncFilter = selected ? false : null),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(width: 1, height: 24, color: AppColors.border),
+                                  const SizedBox(width: 8),
+                                  ...AssetType.values.map((type) {
+                                    final isSelected = _selectedFilters.contains(type);
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 8.0),
+                                      child: FilterChip(
+                                        label: Text(type.displayName),
+                                        selected: isSelected,
+                                        onSelected: (selected) {
+                                          setState(() {
+                                            if (selected) {
+                                              _selectedFilters.add(type);
+                                            } else {
+                                              _selectedFilters.remove(type);
+                                            }
+                                          });
+                                        },
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
+                                    );
+                                  }),
+                                ],
                               ),
                             ),
                           ],

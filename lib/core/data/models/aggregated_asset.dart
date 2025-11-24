@@ -43,6 +43,9 @@ class AggregatedAsset {
   /// Type de l'actif
   final AssetType type;
 
+  /// Liste des noms de comptes où cet actif est présent
+  final List<String> accountNames;
+
   AggregatedAsset({
     required this.ticker,
     required this.name,
@@ -57,6 +60,7 @@ class AggregatedAsset {
     required this.assetCurrency,
     required this.baseCurrency,
     this.type = AssetType.Other,
+    this.accountNames = const [],
   });
 
   SyncStatus get syncStatus => metadata?.syncStatus ?? SyncStatus.never;

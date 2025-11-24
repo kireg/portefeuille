@@ -38,6 +38,9 @@ class TransactionGroupWidget extends StatelessWidget {
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
             initiallyExpanded: false,
+            leading: group.logoPath != null
+                ? Image.asset(group.logoPath!, width: 32, height: 32)
+                : null,
             title: Text(
               group.title,
               style: AppTypography.h3.copyWith(fontSize: 18),
