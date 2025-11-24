@@ -105,31 +105,19 @@ class TransactionFilterBar extends StatelessWidget {
               ),
 
               // Tri (Droite)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Trier par', style: AppTypography.body),
-                  const SizedBox(width: AppDimens.paddingS),
-                  DropdownButtonHideUnderline(
-                    child: DropdownButton<TransactionSortOption>(
-                      value: sortOption,
-                      dropdownColor: AppColors.surfaceLight,
-                      icon: const Icon(Icons.sort, color: AppColors.primary),
-                      style: AppTypography.bodyBold,
-                      items: const [
-                        DropdownMenuItem(value: TransactionSortOption.dateDesc, child: Text('Date (Récent)')),
-                        DropdownMenuItem(value: TransactionSortOption.dateAsc, child: Text('Date (Ancien)')),
-                        DropdownMenuItem(value: TransactionSortOption.amountDesc, child: Text('Montant (Haut)')),
-                        DropdownMenuItem(value: TransactionSortOption.amountAsc, child: Text('Montant (Bas)')),
-                        DropdownMenuItem(value: TransactionSortOption.type, child: Text('Type')),
-                        DropdownMenuItem(value: TransactionSortOption.institution, child: Text('Institution')),
-                        DropdownMenuItem(value: TransactionSortOption.account, child: Text('Compte')),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) onSortChanged(value);
-                      },
-                    ),
-                  ),
+              PopupMenuButton<TransactionSortOption>(
+                icon: const Icon(Icons.sort, color: AppColors.primary),
+                tooltip: 'Trier par',
+                initialValue: sortOption,
+                onSelected: onSortChanged,
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: TransactionSortOption.dateDesc, child: Text('Date (Récent)')),
+                  const PopupMenuItem(value: TransactionSortOption.dateAsc, child: Text('Date (Ancien)')),
+                  const PopupMenuItem(value: TransactionSortOption.amountDesc, child: Text('Montant (Haut)')),
+                  const PopupMenuItem(value: TransactionSortOption.amountAsc, child: Text('Montant (Bas)')),
+                  const PopupMenuItem(value: TransactionSortOption.type, child: Text('Type')),
+                  const PopupMenuItem(value: TransactionSortOption.institution, child: Text('Institution')),
+                  const PopupMenuItem(value: TransactionSortOption.account, child: Text('Compte')),
                 ],
               ),
             ],

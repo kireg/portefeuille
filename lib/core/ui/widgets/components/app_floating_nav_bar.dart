@@ -52,10 +52,12 @@ class AppFloatingNavBar extends StatelessWidget {
                 final item = entry.value;
                 final isSelected = currentIndex == index;
 
-                return _buildNavItem(context, item, isSelected, () {
-                  HapticFeedback.selectionClick();
-                  onTap(index);
-                });
+                return Flexible(
+                  child: _buildNavItem(context, item, isSelected, () {
+                    HapticFeedback.selectionClick();
+                    onTap(index);
+                  }),
+                );
               }).toList(),
             ),
           ),
