@@ -9,6 +9,8 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 
+enum ChartTimeRange { day, month, year, max }
+
 class PortfolioHistoryChart extends StatefulWidget {
   const PortfolioHistoryChart({super.key});
 
@@ -17,6 +19,8 @@ class PortfolioHistoryChart extends StatefulWidget {
 }
 
 class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
+  ChartTimeRange _selectedRange = ChartTimeRange.max;
+
   @override
   Widget build(BuildContext context) {
     // Calcul responsive de la hauteur : 25% de l'écran, borné entre 200 et 350px
@@ -26,39 +30,127 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
 
     return Selector<PortfolioProvider, List<PortfolioValueHistoryPoint>>(
       selector: (context, provider) => provider.activePortfolio?.valueHistory ?? [],
-      builder: (context, history, child) {
-
-        if (history.isEmpty) {
-          return _buildPlaceholder("Pas encore d'historique.", chartHeight);
-        }
-        if (history.length < 2) {
-          return _buildPlaceholder("Données insuffisantes pour le graphique.", chartHeight);
-        }
+      builder: (context, fullHistory, child) {
+        
+        // Filtrage des données selon la période sélectionnée
+        final history = _filterHistory(fullHistory, _selectedRange);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // En-tête avec Titre et Filtres
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-              child: Text(
-                'Évolution',
-                style: AppTypography.h3,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Évolution',
+                    style: AppTypography.h3,
+                  ),
+                  _buildTimeRangeSelector(),
+                ],
               ),
             ),
-            // Remplacement de AspectRatio par SizedBox avec hauteur dynamique uniforme
-            SizedBox(
-              height: chartHeight,
-              width: double.infinity,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 12, 24, 10),
-                child: LineChart(
-                  _mainData(history, currencyCode),
+            
+            if (history.isEmpty)
+              _buildPlaceholder("Pas de données pour cette période.", chartHeight)
+            else if (history.length < 2 && _selectedRange != ChartTimeRange.day)
+              _buildPlaceholder("Données insuffisantes pour le graphique.", chartHeight)
+            else
+              // Remplacement de AspectRatio par SizedBox avec hauteur dynamique uniforme
+              SizedBox(
+                height: chartHeight,
+                width: double.infinity,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 12, 24, 10),
+                  child: LineChart(
+                    _mainData(history, currencyCode),
+                  ),
                 ),
               ),
-            ),
           ],
         );
       },
+    );
+  }
+
+  List<PortfolioValueHistoryPoint> _filterHistory(
+      List<PortfolioValueHistoryPoint> fullHistory, ChartTimeRange range) {
+    if (fullHistory.isEmpty) return [];
+    if (range == ChartTimeRange.max) return List.from(fullHistory);
+
+    final now = DateTime.now();
+    DateTime cutoff;
+
+    switch (range) {
+      case ChartTimeRange.day:
+        cutoff = now.subtract(const Duration(days: 1));
+        break;
+      case ChartTimeRange.month:
+        cutoff = now.subtract(const Duration(days: 30));
+        break;
+      case ChartTimeRange.year:
+        cutoff = now.subtract(const Duration(days: 365));
+        break;
+      default:
+        return fullHistory;
+    }
+
+    final filtered = fullHistory.where((p) => p.date.isAfter(cutoff)).toList();
+    
+    // Si on a moins de 2 points pour "Jour", on essaie d'ajouter le dernier point connu AVANT la période
+    // pour avoir une ligne de continuité (sauf si aucun point avant).
+    if (filtered.length < 2 && range != ChartTimeRange.max) {
+       final pointsBefore = fullHistory.where((p) => p.date.isBefore(cutoff) || p.date.isAtSameMomentAs(cutoff)).toList();
+       if (pointsBefore.isNotEmpty) {
+         // On ajoute le dernier point d'avant comme point de départ "fictif" à la limite du cutoff
+         // pour que le graphe ne soit pas vide.
+         filtered.insert(0, pointsBefore.last);
+       }
+    }
+    
+    return filtered;
+  }
+
+  Widget _buildTimeRangeSelector() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildRangeButton('1J', ChartTimeRange.day),
+          _buildRangeButton('1M', ChartTimeRange.month),
+          _buildRangeButton('1A', ChartTimeRange.year),
+          _buildRangeButton('Max', ChartTimeRange.max),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRangeButton(String label, ChartTimeRange range) {
+    final isSelected = _selectedRange == range;
+    return InkWell(
+      onTap: () => setState(() => _selectedRange = range),
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.caption.copyWith(
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
     );
   }
 
