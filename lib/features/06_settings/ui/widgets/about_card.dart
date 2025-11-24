@@ -76,12 +76,9 @@ class AboutSheet extends StatelessWidget {
           _buildSection(
             'Banques supportées (Import PDF)',
             [
+              'Boursobanque',
+              'Revolut',
               'Trade Republic',
-              'Boursorama Banque',
-              'Fortuneo',
-              'Degiro',
-              'Interactive Brokers',
-              'Binance',
             ],
           ),
           const SizedBox(height: AppDimens.paddingM),

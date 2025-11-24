@@ -67,7 +67,9 @@ class TransactionGroupWidget extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingS, vertical: 4),
                 child: GestureDetector(
                   onLongPress: () => onToggleSelection(transaction.id),
-                  onTap: isSelectionMode ? () => onToggleSelection(transaction.id) : null,
+                  onTap: isSelectionMode 
+                      ? () => onToggleSelection(transaction.id) 
+                      : () => onEdit(transaction), // Direct edit on tap
                   child: Stack(
                     children: [
                       TransactionListItem(

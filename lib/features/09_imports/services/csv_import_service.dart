@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:portefeuille/features/07_management/services/pdf/statement_parser.dart';
-import 'package:portefeuille/features/07_management/services/csv/parsers/revolut_parser.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
+import 'package:portefeuille/features/09_imports/services/csv/parsers/revolut_parser.dart';
 
 class CsvImportService {
   final List<StatementParser> _parsers = [

@@ -1,6 +1,6 @@
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
-import 'package:portefeuille/features/07_management/services/pdf/statement_parser.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
 
 class BoursoramaParser implements StatementParser {
   @override

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/features/07_management/services/excel/parsed_crowdfunding_project.dart';
+import 'package:portefeuille/features/09_imports/services/excel/parsed_crowdfunding_project.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/repayment_type.dart'; // Added import
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';

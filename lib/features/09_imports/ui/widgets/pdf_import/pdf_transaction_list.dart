@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
-import 'package:portefeuille/features/07_management/services/pdf/statement_parser.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';

@@ -81,8 +81,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         label: 'Plan',
       ),
       const AppNavItem(
-        icon: Icons.rocket_launch_outlined,
-        selectedIcon: Icons.rocket_launch,
+        icon: Icons.apartment_outlined,
+        selectedIcon: Icons.apartment,
         label: 'Crowd',
       ),
       const AppNavItem(
@@ -97,6 +97,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       icon: Icons.receipt_long_outlined,
       selectedIcon: Icons.receipt_long,
       label: 'Journal',
+    ));
+
+    tabs.add(const SettingsScreen());
+    navItems.add(const AppNavItem(
+      icon: Icons.settings_outlined,
+      selectedIcon: Icons.settings,
+      label: 'Paramètres',
     ));
 
     // Sécurité pour l'index

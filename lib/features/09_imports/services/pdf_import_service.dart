@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:flutter/foundation.dart';
-import 'package:portefeuille/features/07_management/services/pdf/statement_parser.dart';
-import 'package:portefeuille/features/07_management/services/pdf/parsers/trade_republic_parser.dart';
-import 'package:portefeuille/features/07_management/services/pdf/parsers/boursorama_parser.dart';
-import 'package:portefeuille/features/07_management/services/csv/parsers/revolut_parser.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/parsers/trade_republic_parser.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/parsers/boursorama_parser.dart';
+import 'package:portefeuille/features/09_imports/services/csv/parsers/revolut_parser.dart';
 
 class PdfImportService {
   final List<StatementParser> _parsers = [

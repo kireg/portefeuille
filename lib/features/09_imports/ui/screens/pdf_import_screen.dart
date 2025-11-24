@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
-import 'package:portefeuille/features/07_management/services/pdf_import_service.dart';
-import 'package:portefeuille/features/07_management/services/pdf/statement_parser.dart';
+import 'package:portefeuille/features/09_imports/services/pdf_import_service.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
@@ -21,11 +21,11 @@ import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
 
-import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_header.dart';
-import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_account_selector.dart';
-import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_file_picker.dart';
-import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_transaction_list.dart';
-import 'package:portefeuille/features/07_management/ui/widgets/pdf_import/pdf_edit_dialog.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/pdf_import/pdf_header.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/pdf_import/pdf_account_selector.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/pdf_import/pdf_file_picker.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/pdf_import/pdf_transaction_list.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/pdf_import/pdf_edit_dialog.dart';
 
 class PdfImportScreen extends StatefulWidget {
   const PdfImportScreen({super.key});

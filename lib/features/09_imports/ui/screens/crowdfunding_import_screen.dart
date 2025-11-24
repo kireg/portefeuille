@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
-import 'package:portefeuille/features/07_management/services/excel/la_premiere_brique_parser.dart';
-import 'package:portefeuille/features/07_management/services/excel/parsed_crowdfunding_project.dart';
+import 'package:portefeuille/features/09_imports/services/excel/la_premiere_brique_parser.dart';
+import 'package:portefeuille/features/09_imports/services/excel/parsed_crowdfunding_project.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
@@ -17,11 +17,11 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
-import 'package:portefeuille/features/07_management/ui/widgets/crowdfunding_import/crowdfunding_header.dart';
-import 'package:portefeuille/features/07_management/ui/widgets/crowdfunding_import/crowdfunding_account_selector.dart';
-import 'package:portefeuille/features/07_management/ui/widgets/crowdfunding_import/crowdfunding_file_picker.dart';
-import 'package:portefeuille/features/07_management/ui/widgets/crowdfunding_import/crowdfunding_project_list.dart';
-import 'package:portefeuille/features/07_management/ui/widgets/crowdfunding_import/crowdfunding_edit_dialog.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/crowdfunding_import/crowdfunding_header.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/crowdfunding_import/crowdfunding_account_selector.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/crowdfunding_import/crowdfunding_file_picker.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/crowdfunding_import/crowdfunding_project_list.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/crowdfunding_import/crowdfunding_edit_dialog.dart';
 
 class CrowdfundingImportScreen extends StatefulWidget {
   const CrowdfundingImportScreen({super.key});

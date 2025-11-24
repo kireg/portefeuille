@@ -15,7 +15,7 @@ import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart'; // Usage
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
-import 'package:portefeuille/features/07_management/ui/screens/import_transaction_screen.dart';
+import 'package:portefeuille/features/09_imports/ui/screens/import_transaction_screen.dart';
 
 
 class AiImportConfigScreen extends StatefulWidget {

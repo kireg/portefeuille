@@ -15,8 +15,8 @@ import 'package:portefeuille/core/data/models/transaction.dart' as model;
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 
-import 'package:portefeuille/features/07_management/models/draft_transaction.dart';
-import 'package:portefeuille/features/07_management/ui/widgets/draft_transaction_card.dart';
+import 'package:portefeuille/features/09_imports/models/draft_transaction.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/draft_transaction_card.dart';
 
 class AiTransactionReviewScreen extends StatefulWidget {
   final String accountId;
