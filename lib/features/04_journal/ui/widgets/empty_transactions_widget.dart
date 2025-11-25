@@ -6,19 +6,11 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 
 class EmptyTransactionsWidget extends StatelessWidget {
-  final VoidCallback? onAdd;
-  final VoidCallback? onImportPdf;
-  final VoidCallback? onImportCsv;
-  final VoidCallback? onImportCrowdfunding;
-  final VoidCallback? onImportAi;
+  final VoidCallback? onImportHub;
 
   const EmptyTransactionsWidget({
     super.key,
-    this.onAdd,
-    this.onImportPdf,
-    this.onImportCsv,
-    this.onImportCrowdfunding,
-    this.onImportAi,
+    this.onImportHub,
   });
 
   void _showHelpDialog(BuildContext context) {
@@ -122,65 +114,21 @@ class EmptyTransactionsWidget extends StatelessWidget {
             ),
             const SizedBox(height: AppDimens.paddingXL),
             
-            // Grid of Actions
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final width = constraints.maxWidth > 600 ? 600.0 : constraints.maxWidth;
-                return SizedBox(
-                  width: width,
-                  child: GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: AppDimens.paddingM,
-                    crossAxisSpacing: AppDimens.paddingM,
-                    childAspectRatio: 1.5,
-                    children: [
-                      if (onAdd != null)
-                        _ActionCard(
-                          title: "Manuel",
-                          subtitle: "Saisie unitaire",
-                          icon: Icons.add_circle_outline,
-                          color: AppColors.primary,
-                          onTap: onAdd!,
-                        ),
-                      if (onImportPdf != null)
-                        _ActionCard(
-                          title: "Import PDF",
-                          subtitle: "Relevés bancaires",
-                          icon: Icons.picture_as_pdf_outlined,
-                          color: Colors.redAccent,
-                          onTap: onImportPdf!,
-                        ),
-                      if (onImportCsv != null)
-                        _ActionCard(
-                          title: "Import CSV",
-                          subtitle: "Exports bancaires",
-                          icon: Icons.grid_on,
-                          color: Colors.blueAccent,
-                          onTap: onImportCsv!,
-                        ),
-                      if (onImportCrowdfunding != null)
-                        _ActionCard(
-                          title: "Crowdfunding",
-                          subtitle: "Excel / Suivi",
-                          icon: Icons.apartment_outlined,
-                          color: Colors.orangeAccent,
-                          onTap: onImportCrowdfunding!,
-                        ),
-                      if (onImportAi != null)
-                        _ActionCard(
-                          title: "Assistant IA",
-                          subtitle: "Texte libre / CSV",
-                          icon: Icons.auto_awesome_outlined,
-                          color: Colors.purpleAccent,
-                          onTap: onImportAi!,
-                        ),
-                    ],
+            // Single Action for Hub
+            if (onImportHub != null)
+              Center(
+                child: SizedBox(
+                  width: 300,
+                  height: 150,
+                  child: _ActionCard(
+                    title: "Ajouter / Importer",
+                    subtitle: "Saisie manuelle ou Import de fichier",
+                    icon: Icons.add_circle_outline,
+                    color: AppColors.primary,
+                    onTap: onImportHub!,
                   ),
-                );
-              }
-            ),
+                ),
+              ),
 
             const SizedBox(height: AppDimens.paddingL),
             
