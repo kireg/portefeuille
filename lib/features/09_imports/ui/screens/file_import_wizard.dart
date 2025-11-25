@@ -1,3 +1,20 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:uuid/uuid.dart';
+import 'package:portefeuille/core/data/models/transaction.dart';
+import 'package:portefeuille/core/data/models/transaction_type.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
+import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/parsers/boursorama_parser.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/parsers/trade_republic_parser.dart';
+import 'package:portefeuille/features/09_imports/services/csv/parsers/revolut_parser.dart';
+import 'package:portefeuille/features/09_imports/services/excel/la_premiere_brique_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
@@ -18,6 +35,12 @@ class _FileImportWizardState extends State<FileImportWizard> {
   int _currentStep = 0;
   PlatformFile? _selectedFile;
   String? _selectedSourceId;
+
+  // Step 3: Validation & Parsing
+  bool _isParsing = false;
+  String? _parsingError;
+  List<ParsedTransaction>? _parsedTransactions;
+  String? _selectedAccountId;
 
   // Step 1: File Selection
   Future<void> _pickFile() async {
@@ -63,6 +86,15 @@ class _FileImportWizardState extends State<FileImportWizard> {
       setState(() {
         _currentStep++;
       });
+      
+      if (_currentStep == 2) {
+        _parseFile();
+      }
+    } else if (_currentStep == 2) {
+      _saveTransactions();
+    } else if (_currentStep == 2) {
+      // Trigger parsing on final step
+      _parseFile();
     }
   }
 
@@ -73,6 +105,115 @@ class _FileImportWizardState extends State<FileImportWizard> {
       });
     } else {
       Navigator.pop(context);
+    }
+  }
+
+  Future<void> _parseFile() async {
+    if (_selectedFile == null || _selectedSourceId == null) return;
+
+    setState(() {
+      _isParsing = true;
+      _parsingError = null;
+      _parsedTransactions = null;
+    });
+
+    try {
+      final file = _selectedFile!;
+      final sourceId = _selectedSourceId!;
+      List<ParsedTransaction> results = [];
+
+      if (sourceId == 'la_premiere_brique') {
+         final parser = LaPremiereBriqueParser();
+         final projects = await parser.parse(file);
+         // Convert to ParsedTransaction
+         results = projects.map((p) => ParsedTransaction(
+            date: p.investmentDate ?? DateTime.now(),
+            type: TransactionType.Buy,
+            assetName: p.projectName,
+            quantity: p.investedAmount, 
+            price: 1.0,
+            amount: p.investedAmount,
+            fees: 0,
+            currency: 'EUR',
+            assetType: AssetType.RealEstateCrowdfunding,
+         )).toList();
+      } else {
+         // Text based parsers
+         String text = await _extractText(file);
+         StatementParser? parser;
+         
+         switch (sourceId) {
+           case 'boursorama':
+             parser = BoursoramaParser();
+             break;
+           case 'revolut':
+             parser = RevolutParser();
+             break;
+           case 'trade_republic':
+             parser = TradeRepublicParser();
+             break;
+         }
+         
+         if (parser != null) {
+           results = parser.parse(text);
+         }
+      }
+
+      setState(() {
+        _parsedTransactions = results;
+        _isParsing = false;
+      });
+
+    } catch (e) {
+      setState(() {
+        _parsingError = e.toString();
+        _isParsing = false;
+      });
+    }
+  }
+
+  Future<String> _extractText(PlatformFile file) async {
+    if (file.extension?.toLowerCase() == 'pdf') {
+       final PdfDocument document = PdfDocument(inputBytes: file.bytes ?? await File(file.path!).readAsBytes());
+       String text = PdfTextExtractor(document).extractText();
+       document.dispose();
+       return text;
+    } else {
+       final bytes = file.bytes ?? await File(file.path!).readAsBytes();
+       return utf8.decode(bytes);
+    }
+  }
+
+  Future<void> _saveTransactions() async {
+    if (_parsedTransactions == null || _selectedAccountId == null) return;
+
+    final portfolioProvider = context.read<PortfolioProvider>();
+    
+    for (final parsed in _parsedTransactions!) {
+      final transaction = Transaction(
+        id: const Uuid().v4(),
+        accountId: _selectedAccountId!,
+        type: parsed.type,
+        date: parsed.date,
+        assetTicker: parsed.ticker,
+        assetName: parsed.assetName,
+        quantity: parsed.quantity,
+        price: parsed.price,
+        amount: parsed.amount,
+        fees: parsed.fees,
+        notes: "Importé depuis ${_selectedSourceId}",
+        assetType: parsed.assetType,
+        priceCurrency: parsed.currency,
+      );
+      
+      await portfolioProvider.addTransaction(transaction);
+    }
+
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${_parsedTransactions!.length} transactions importées avec succès')),
+      );
     }
   }
 
@@ -206,17 +347,151 @@ class _FileImportWizardState extends State<FileImportWizard> {
           },
         );
       case 2:
-        return const Center(child: Text("Étape 3 : Validation (À venir)"));
+        return _buildValidationStep();
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  Widget _buildValidationStep() {
+    if (_isParsing) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text("Analyse du fichier en cours..."),
+          ],
+        ),
+      );
+    }
+
+    if (_parsingError != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              "Erreur lors de l'analyse",
+              style: AppTypography.h3.copyWith(color: AppColors.error),
+            ),
+            const SizedBox(height: 8),
+            Text(_parsingError!, textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            AppButton(
+              label: "Réessayer",
+              onPressed: _parseFile,
+              type: AppButtonType.secondary,
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_parsedTransactions == null || _parsedTransactions!.isEmpty) {
+      return const Center(child: Text("Aucune transaction trouvée."));
+    }
+
+    // Account Selection
+    final portfolioProvider = context.watch<PortfolioProvider>();
+    final activePortfolio = portfolioProvider.activePortfolio;
+    final List<DropdownMenuItem<String>> accountItems = [];
+    if (activePortfolio != null) {
+      for (final institution in activePortfolio.institutions) {
+        for (final account in institution.accounts) {
+          accountItems.add(
+            DropdownMenuItem(
+              value: account.id,
+              child: Text("${institution.name} - ${account.name}"),
+            ),
+          );
+        }
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Validation", style: AppTypography.h2),
+        const SizedBox(height: 8),
+        Text(
+          "${_parsedTransactions!.length} transactions trouvées.",
+          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 24),
+        
+        AppDropdown<String>(
+          label: "Compte de destination",
+          value: _selectedAccountId,
+          items: accountItems,
+          onChanged: (val) => setState(() => _selectedAccountId = val),
+          hint: "Sélectionner un compte",
+        ),
+        
+        const SizedBox(height: 16),
+        Expanded(
+          child: ListView.separated(
+            itemCount: _parsedTransactions!.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final tx = _parsedTransactions![index];
+              return AppCard(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (tx.type == TransactionType.Buy || tx.type == TransactionType.Deposit) 
+                            ? AppColors.success.withValues(alpha: 0.1)
+                            : AppColors.error.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        (tx.type == TransactionType.Buy || tx.type == TransactionType.Deposit) 
+                            ? Icons.arrow_downward 
+                            : Icons.arrow_upward,
+                        color: (tx.type == TransactionType.Buy || tx.type == TransactionType.Deposit) 
+                            ? AppColors.success 
+                            : AppColors.error,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(tx.assetName, style: AppTypography.bodyBold),
+                          Text(
+                            "${tx.date.day}/${tx.date.month}/${tx.date.year}",
+                            style: AppTypography.caption,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      "${tx.amount.toStringAsFixed(2)} ${tx.currency}",
+                      style: AppTypography.bodyBold,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildFooter() {
     bool canGoNext = false;
     if (_currentStep == 0 && _selectedFile != null) canGoNext = true;
     if (_currentStep == 1 && _selectedSourceId != null) canGoNext = true;
-    if (_currentStep == 2) canGoNext = true; // TODO: Check validation status
+    if (_currentStep == 2 && _selectedAccountId != null && _parsedTransactions != null && _parsedTransactions!.isNotEmpty) canGoNext = true;
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
