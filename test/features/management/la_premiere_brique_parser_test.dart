@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:excel/excel.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:portefeuille/features/09_imports/services/excel/la_premiere_brique_parser.dart';
 
@@ -71,7 +72,13 @@ void main() {
 
     // 2. Run Parser
     final parser = LaPremiereBriqueParser();
-    final projects = await parser.parse(file);
+    final platformFile = PlatformFile(
+      name: 'test.xlsx',
+      size: file.lengthSync(),
+      path: file.path,
+      bytes: file.readAsBytesSync(),
+    );
+    final projects = await parser.parse(platformFile);
 
     // 3. Assertions
     expect(projects.length, 2);

@@ -23,6 +23,8 @@ class SyncStatusAdapter extends TypeAdapter<SyncStatus> {
         return SyncStatus.never;
       case 4:
         return SyncStatus.unsyncable;
+      case 5:
+        return SyncStatus.pendingValidation;
       default:
         return SyncStatus.synced;
     }

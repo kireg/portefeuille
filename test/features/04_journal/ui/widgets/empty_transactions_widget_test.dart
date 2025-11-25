@@ -4,6 +4,10 @@ import 'package:portefeuille/features/04_journal/ui/widgets/empty_transactions_w
 
 void main() {
   testWidgets('EmptyTransactionsWidget displays correct text and cards', (WidgetTester tester) async {
+    // Set a larger screen size to avoid overflow
+    tester.view.physicalSize = const Size(1080, 1920);
+    tester.view.devicePixelRatio = 1.0;
+
     // Arrange
     bool importHubPressed = false;
     
@@ -20,8 +24,12 @@ void main() {
 
     // Assert
     expect(find.text('Aucune transaction'), findsOneWidget);
-    expect(find.textContaining('assurez-vous d\'avoir créé un compte'), findsOneWidget);
-    expect(find.textContaining('importer plusieurs transactions'), findsOneWidget);
+    expect(find.text('Commencez par alimenter votre journal.'), findsOneWidget);
+    expect(find.text('Ajouter / Importer'), findsOneWidget);
+    
+    // Reset size
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
   });
 
   testWidgets('EmptyTransactionsWidget works without callback', (WidgetTester tester) async {
