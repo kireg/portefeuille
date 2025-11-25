@@ -65,10 +65,17 @@ void main() {
       final point2 = history.firstWhere((p) => p.date.year == date2.year && p.date.month == date2.month && p.date.day == date2.day);
       expect(point2.value, 1650.0);
       
-      // Check value between date1 and date2 (should be 10 * 100 = 1000)
+      // Check value between date1 and date2 (should be interpolated)
+      // date1: 1000 (price 100)
+      // date2: 1650 (price 110, qty 15)
+      // But wait, at date2 we buy 5 more.
+      // Between date1 and date2, quantity is 10.
+      // Price interpolates from 100 to 110 over 5 days.
+      // At date1 + 2 days: Price = 100 + (110-100)*(2/5) = 104.
+      // Value = 10 * 104 = 1040.
       final dateBetween = date1.add(const Duration(days: 2));
       final pointBetween = history.firstWhere((p) => p.date.year == dateBetween.year && p.date.month == dateBetween.month && p.date.day == dateBetween.day);
-      expect(pointBetween.value, 1000.0);
+      expect(pointBetween.value, 1040.0);
     });
   });
 }
