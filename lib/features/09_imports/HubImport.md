@@ -67,7 +67,8 @@ Un assistant étape par étape pour guider l'import de fichiers :
     - *Note : Intégré directement dans `_buildValidationStep()` du Wizard pour une UX fluide.*
 - [x] **Tâche 3.2 :** Gérer la persistance (enregistrement en base de données).
     - *Note : Implémenté dans `_saveTransactions()` via `PortfolioProvider.addTransaction()`.*
-- [ ] **Tâche 3.3 :** Nettoyage : Supprimer les anciens écrans d'import individuels (`CsvImportScreen`, `PdfImportScreen`) une fois le Wizard validé.
+- [x] **Tâche 3.3 :** Nettoyage : Supprimer les anciens écrans d'import individuels (`CsvImportScreen`, `PdfImportScreen`) une fois le Wizard validé.
+    - *Note : Fichiers supprimés : `csv_import_screen.dart`, `pdf_import_screen.dart`, `crowdfunding_import_screen.dart` et leurs widgets associés.*
 
 ### Phase 4 : Intelligence & UX (Futur)
 *Objectif : Améliorer l'automatisation.*

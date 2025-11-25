@@ -3,7 +3,6 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_icon_button.dart';
 import 'package:portefeuille/features/04_journal/ui/models/transaction_sort_option.dart';
 
 class TransactionFilterBar extends StatelessWidget {

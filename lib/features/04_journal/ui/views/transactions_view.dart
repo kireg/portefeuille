@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:provider/provider.dart';
 
 // Core UI
@@ -16,7 +15,6 @@ import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 import 'package:portefeuille/features/07_management/ui/screens/edit_transaction_screen.dart';
-import 'package:portefeuille/features/07_management/ui/screens/add_transaction_screen.dart';
 import 'package:portefeuille/features/09_imports/ui/screens/import_hub_screen.dart';
 import 'package:portefeuille/features/00_app/services/institution_service.dart';
 import 'package:portefeuille/core/data/models/institution_metadata.dart';
@@ -251,14 +249,6 @@ class _TransactionsViewState extends State<TransactionsView> {
     }
     openMethod();
   }
-
-  void _openAddTransactionModal() => _checkAndOpen(() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => const AddTransactionScreen(),
-    );
-  });
 
   void _openImportHub() => _checkAndOpen(() {
     showModalBottomSheet(

@@ -9,7 +9,7 @@ import 'package:portefeuille/features/07_management/ui/screens/add_institution_s
 import 'package:portefeuille/features/07_management/ui/screens/add_account_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_transaction_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_savings_plan_screen.dart';
-import 'package:portefeuille/features/09_imports/ui/screens/crowdfunding_import_screen.dart';
+import 'package:portefeuille/features/09_imports/ui/screens/import_hub_screen.dart';
 
 class ModalService {
   ModalService._();
@@ -46,6 +46,10 @@ class ModalService {
   }
 
   static Future<void> showImportCrowdfunding(BuildContext context) async {
-    await _show<void>(context, const CrowdfundingImportScreen());
+    await _show<void>(context, const ImportHubScreen());
+  }
+
+  static Future<void> showImportHub(BuildContext context) async {
+    await _show<void>(context, const ImportHubScreen());
   }
 }

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:uuid/uuid.dart';
@@ -8,6 +7,7 @@ import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
@@ -184,27 +184,25 @@ class _FileImportWizardState extends State<FileImportWizard> {
   Future<void> _saveTransactions() async {
     if (_parsedTransactions == null || _selectedAccountId == null) return;
 
-    final portfolioProvider = context.read<PortfolioProvider>();
+    final transactionProvider = context.read<TransactionProvider>();
     
-    for (final parsed in _parsedTransactions!) {
-      final transaction = Transaction(
-        id: const Uuid().v4(),
-        accountId: _selectedAccountId!,
-        type: parsed.type,
-        date: parsed.date,
-        assetTicker: parsed.ticker,
-        assetName: parsed.assetName,
-        quantity: parsed.quantity,
-        price: parsed.price,
-        amount: parsed.amount,
-        fees: parsed.fees,
-        notes: "Importé depuis ${_selectedSourceId}",
-        assetType: parsed.assetType,
-        priceCurrency: parsed.currency,
-      );
-      
-      await portfolioProvider.addTransaction(transaction);
-    }
+    final transactions = _parsedTransactions!.map((parsed) => Transaction(
+      id: const Uuid().v4(),
+      accountId: _selectedAccountId!,
+      type: parsed.type,
+      date: parsed.date,
+      assetTicker: parsed.ticker,
+      assetName: parsed.assetName,
+      quantity: parsed.quantity,
+      price: parsed.price,
+      amount: parsed.amount,
+      fees: parsed.fees,
+      notes: "Importé depuis $_selectedSourceId",
+      assetType: parsed.assetType,
+      priceCurrency: parsed.currency,
+    )).toList();
+    
+    await transactionProvider.addTransactions(transactions);
 
     if (mounted) {
       Navigator.pop(context);
@@ -425,7 +423,6 @@ class _FileImportWizardState extends State<FileImportWizard> {
           value: _selectedAccountId,
           items: accountItems,
           onChanged: (val) => setState(() => _selectedAccountId = val),
-          hint: "Sélectionner un compte",
         ),
         
         const SizedBox(height: 16),
