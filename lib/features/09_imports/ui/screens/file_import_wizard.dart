@@ -92,9 +92,6 @@ class _FileImportWizardState extends State<FileImportWizard> {
       }
     } else if (_currentStep == 2) {
       _saveTransactions();
-    } else if (_currentStep == 2) {
-      // Trigger parsing on final step
-      _parseFile();
     }
   }
 

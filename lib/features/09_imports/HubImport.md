@@ -56,15 +56,17 @@ Un assistant étape par étape pour guider l'import de fichiers :
 - [x] **Tâche 2.2 : Étape 2 - Sélection Source.**
     - Créer une liste déroulante ou une grille de choix (Bourso, Revolut, Trade Republic, LPB, Autre).
     - Quand on clique sur "Autre", on accède à l'écran actuel ai_import (en BottomSheet).
-- [ ] **Tâche 2.3 : Étape 3 - Orchestration.**
+- [x] **Tâche 2.3 : Étape 3 - Orchestration.**
     - Au clic sur "Analyser", instancier le bon Parser en fonction de la source choisie.
     - Appeler la méthode `parse()` du service correspondant.
 
 ### Phase 3 : Validation & Enregistrement
 *Objectif : Connecter le résultat du parsing à l'écran de validation existant.*
 
-- [ ] **Tâche 3.1 :** Réutiliser ou adapter `ImportTransactionScreen` (ou l'écran de prévisualisation existant) pour afficher les résultats du Wizard.
-- [ ] **Tâche 3.2 :** Gérer la persistance (enregistrement en base de données).
+- [x] **Tâche 3.1 :** Réutiliser ou adapter `ImportTransactionScreen` (ou l'écran de prévisualisation existant) pour afficher les résultats du Wizard.
+    - *Note : Intégré directement dans `_buildValidationStep()` du Wizard pour une UX fluide.*
+- [x] **Tâche 3.2 :** Gérer la persistance (enregistrement en base de données).
+    - *Note : Implémenté dans `_saveTransactions()` via `PortfolioProvider.addTransaction()`.*
 - [ ] **Tâche 3.3 :** Nettoyage : Supprimer les anciens écrans d'import individuels (`CsvImportScreen`, `PdfImportScreen`) une fois le Wizard validé.
 
 ### Phase 4 : Intelligence & UX (Futur)
