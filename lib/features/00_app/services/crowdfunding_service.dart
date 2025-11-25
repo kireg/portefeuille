@@ -86,8 +86,8 @@ class CrowdfundingService {
       
       if (assetId != null) {
         if (tx.type == TransactionType.Buy) {
-          // Buy amount is negative, so we negate it to get positive invested capital
-          activeProjects[assetId] = (activeProjects[assetId] ?? 0) - amount;
+          // Buy amount is positive (investment cost)
+          activeProjects[assetId] = (activeProjects[assetId] ?? 0) + amount;
         } else if (tx.type == TransactionType.CapitalRepayment) {
           activeProjects[assetId] = (activeProjects[assetId] ?? 0) - amount;
           if (activeProjects[assetId]! < 0.01) activeProjects[assetId] = 0;
@@ -240,15 +240,15 @@ class CrowdfundingService {
           break;
           
         case TransactionType.Buy:
-          // Buy amount is negative.
-          // Liquidity decreases: adding negative amount is correct (e.g. 1000 + (-100) = 900)
-          liquidity += amount;
-          // Invested Capital increases: subtracting negative amount (e.g. 0 - (-100) = 100)
-          investedCapital -= amount;
+          // Buy amount is usually positive in input, representing the cost.
+          // Liquidity decreases: subtract amount
+          liquidity -= amount;
+          // Invested Capital increases: add amount
+          investedCapital += amount;
           
           final assetId = tx.assetTicker;
           if (assetId != null) {
-            activeProjects[assetId] = (activeProjects[assetId] ?? 0) - amount;
+            activeProjects[assetId] = (activeProjects[assetId] ?? 0) + amount;
           }
           break;
 

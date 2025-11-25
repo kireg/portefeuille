@@ -1,7 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'dart:convert'; // Pour utf8
 // Pour Uint8List
 import 'package:flutter/foundation.dart'; // Pour kIsWeb
@@ -18,6 +17,7 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/core/utils/downloader/downloader.dart';
+import 'package:portefeuille/core/utils/io_helper.dart';
 
 class BackupCard extends StatefulWidget {
   const BackupCard({super.key});
@@ -46,7 +46,7 @@ class _BackupCardState extends State<BackupCard> {
             const SnackBar(content: Text('Sauvegarde téléchargée')),
           );
         }
-      } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      } else if (getIOHelper().isDesktop) {
         // Desktop: Save File Dialog
         String? outputFile = await FilePicker.platform.saveFile(
           dialogTitle: 'Enregistrer la sauvegarde',
@@ -60,8 +60,7 @@ class _BackupCardState extends State<BackupCard> {
           if (!outputFile.toLowerCase().endsWith('.json')) {
             outputFile = '$outputFile.json';
           }
-          final file = File(outputFile);
-          await file.writeAsString(jsonString);
+          await getIOHelper().writeFileAsString(outputFile, jsonString);
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Sauvegarde enregistrée : $outputFile')),
@@ -71,9 +70,9 @@ class _BackupCardState extends State<BackupCard> {
       } else {
         // Mobile: Share
         final tempDir = await getTemporaryDirectory();
-        final file = File('${tempDir.path}/backup.json');
-        await file.writeAsString(jsonString);
-        await Share.shareXFiles([XFile(file.path)], subject: 'Sauvegarde Portefeuille');
+        final path = '${tempDir.path}/backup.json';
+        await getIOHelper().writeFileAsString(path, jsonString);
+        await Share.shareXFiles([XFile(path)], subject: 'Sauvegarde Portefeuille');
       }
     } catch (e) {
       if (mounted) {
@@ -104,20 +103,44 @@ class _BackupCardState extends State<BackupCard> {
         if (bytes == null) throw Exception("Fichier vide ou illisible");
         jsonString = utf8.decode(bytes);
       } else {
-        final file = File(result.files.single.path!);
-        jsonString = await file.readAsString();
+        final path = result.files.single.path!;
+        jsonString = await getIOHelper().readFileAsString(path);
       }
 
       if (!mounted) return;
       await context.read<PortfolioProvider>().importDataFromJson(jsonString);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Import réussi')));
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur import')));
+    } catch (e, stackTrace) {
+      debugPrint('Erreur import: $e\n$stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur import: ${e.toString().replaceAll('Exception:', '')}'),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Détails',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Erreur détaillée'),
+                    content: SingleChildScrollView(child: Text('$e\n$stackTrace')),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isBusy = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

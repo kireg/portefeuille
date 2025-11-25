@@ -19,6 +19,9 @@ class BackupService {
   final FlutterSecureStorage _secureStorage;
 
   // Clés des Box (doivent correspondre à votre main.dart)
+  // NOTE: _allBoxNames n'est plus utilisé pour l'itération générique,
+  // mais gardé en référence ou pour d'autres usages futurs.
+  // ignore: unused_field
   final List<String> _allBoxNames = [
     AppConstants.kPortfolioBoxName,
     AppConstants.kTransactionBoxName,
@@ -82,39 +85,66 @@ class BackupService {
       final backupData = AppDataBackup.fromJson(jsonMap);
 
       // 2. Vider TOUTES les box
-      for (final boxName in _allBoxNames) {
-        await Hive.box(boxName).clear();
+      // NOTE: Sur le Web, il est CRITIQUE d'utiliser le bon type générique <T> correspondant
+      // à l'ouverture de la box (Hive.openBox<T>). Sinon, Hive lance une erreur
+      // "Box is already open and of type Box<T>".
+      
+      await Hive.box<Portfolio>(AppConstants.kPortfolioBoxName).clear();
+      await Hive.box<Transaction>(AppConstants.kTransactionBoxName).clear();
+      await Hive.box<AssetMetadata>(AppConstants.kAssetMetadataBoxName).clear();
+      await Hive.box<PriceHistoryPoint>(AppConstants.kPriceHistoryBoxName).clear();
+      await Hive.box<ExchangeRateHistory>(AppConstants.kExchangeRateHistoryBoxName).clear();
+      await Hive.box<SyncLog>(AppConstants.kSyncLogsBoxName).clear();
+      await Hive.box(AppConstants.kSettingsBoxName).clear(); // Settings est ouvert sans type (dynamic)
+
+      // 3. Vider la clé API (Safe)
+      try {
+        await _secureStorage.delete(key: _kFmpApiKey);
+      } catch (e) {
+        debugPrint("⚠️ Warning: Impossible de supprimer la clé API du SecureStorage: $e");
       }
 
-      // 3. Vider la clé API
-      await _secureStorage.delete(key: _kFmpApiKey);
-
       // 4. Remplir les box avec les nouvelles données
-      // Utiliser 'putAll' ou 'addAll' pour de meilleures performances
-      await Hive.box<Portfolio>(AppConstants.kPortfolioBoxName)
-          .addAll(backupData.portfolios);
+      // On réutilise les types explicites pour éviter les erreurs de type sur le Web.
+      if (backupData.portfolios.isNotEmpty) {
+        await Hive.box<Portfolio>(AppConstants.kPortfolioBoxName).addAll(backupData.portfolios);
+      }
 
-      await Hive.box<Transaction>(AppConstants.kTransactionBoxName)
-          .addAll(backupData.transactions);
+      if (backupData.transactions.isNotEmpty) {
+        await Hive.box<Transaction>(AppConstants.kTransactionBoxName).addAll(backupData.transactions);
+      }
 
-      await Hive.box<AssetMetadata>(AppConstants.kAssetMetadataBoxName)
-          .addAll(backupData.assetMetadata);
+      if (backupData.assetMetadata.isNotEmpty) {
+        await Hive.box<AssetMetadata>(AppConstants.kAssetMetadataBoxName).addAll(backupData.assetMetadata);
+      }
 
-      await Hive.box<PriceHistoryPoint>(AppConstants.kPriceHistoryBoxName)
-          .addAll(backupData.priceHistory);
+      if (backupData.priceHistory.isNotEmpty) {
+        await Hive.box<PriceHistoryPoint>(AppConstants.kPriceHistoryBoxName).addAll(backupData.priceHistory);
+      }
 
-      await Hive.box<ExchangeRateHistory>(AppConstants.kExchangeRateHistoryBoxName)
-          .addAll(backupData.exchangeRateHistory);
+      if (backupData.exchangeRateHistory.isNotEmpty) {
+        await Hive.box<ExchangeRateHistory>(AppConstants.kExchangeRateHistoryBoxName).addAll(backupData.exchangeRateHistory);
+      }
 
-      await Hive.box<SyncLog>(AppConstants.kSyncLogsBoxName)
-          .addAll(backupData.syncLogs);
+      if (backupData.syncLogs.isNotEmpty) {
+        await Hive.box<SyncLog>(AppConstants.kSyncLogsBoxName).addAll(backupData.syncLogs);
+      }
 
-      await Hive.box(AppConstants.kSettingsBoxName)
-          .putAll(backupData.settings);
+      if (backupData.settings.isNotEmpty) {
+        await Hive.box(AppConstants.kSettingsBoxName).putAll(backupData.settings);
+      }
 
-      // 5. Ré-écrire la clé API si elle existe
+      if (backupData.settings.isNotEmpty) {
+        await Hive.box(AppConstants.kSettingsBoxName).putAll(backupData.settings);
+      }
+
+      // 5. Ré-écrire la clé API si elle existe (Safe)
       if (backupData.fmpApiKey != null && backupData.fmpApiKey!.isNotEmpty) {
-        await _secureStorage.write(key: _kFmpApiKey, value: backupData.fmpApiKey);
+        try {
+          await _secureStorage.write(key: _kFmpApiKey, value: backupData.fmpApiKey);
+        } catch (e) {
+          debugPrint("⚠️ Warning: Impossible d'écrire la clé API dans SecureStorage: $e");
+        }
       }
 
     } catch (e) {
