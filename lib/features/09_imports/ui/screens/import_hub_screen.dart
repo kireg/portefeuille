@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/features/09_imports/ui/screens/file_import_wizard.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_transaction_screen.dart';
 
 class ImportHubScreen extends StatelessWidget {
@@ -57,9 +58,10 @@ class ImportHubScreen extends StatelessWidget {
                     color: AppColors.primary,
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const AddTransactionScreen()),
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (context) => const AddTransactionScreen(),
                       );
                     },
                   ),
@@ -73,10 +75,12 @@ class ImportHubScreen extends StatelessWidget {
                     icon: Icons.upload_file,
                     color: AppColors.accent,
                     onTap: () {
-                      // TODO: Navigate to FileImportWizard
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Assistant d\'import bientôt disponible')),
+                      Navigator.pop(context); // Close Hub
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const FileImportWizard(),
                       );
                     },
                   ),

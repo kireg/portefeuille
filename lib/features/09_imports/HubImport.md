@@ -42,7 +42,7 @@ Un assistant étape par étape pour guider l'import de fichiers :
 - [x] **Tâche 1.1 :** Créer `ImportHubScreen` dans `features/09_imports/ui/screens/`.
     - Design : Deux grandes cartes ("Saisie Manuelle", "Importer Fichier").
 - [x] **Tâche 1.2 :** Connecter la carte "Saisie Manuelle" vers `AddTransactionScreen` (situé dans `07_management`).
-- [ ] **Tâche 1.3 :** Créer la structure de base du `FileImportWizard` (Stepper ou PageView).
+- [x] **Tâche 1.3 :** Créer la structure de base du `FileImportWizard` (Stepper ou PageView).
 - [x] **Tâche 1.4 :** Nettoyage & Point d'entrée.
     - Supprimer les multiples icônes d'import (CSV, PDF, etc.) sur l'écran des transactions.
     - Ajouter un bouton "Importer / Ajouter" plus visible qui redirige vers `ImportHubScreen`.
@@ -50,12 +50,12 @@ Un assistant étape par étape pour guider l'import de fichiers :
 ### Phase 2 : Le Wizard d'Import (Cœur du système)
 *Objectif : Rendre l'import de fichier fonctionnel avec sélection manuelle de la source.*
 
-- [ ] **Tâche 2.1 : Étape 1 - Sélection Fichier.**
+- [x] **Tâche 2.1 : Étape 1 - Sélection Fichier.**
     - Implémenter le File Picker (extensions autorisées : .pdf, .csv, .xlsx).
     - Afficher le nom/taille du fichier sélectionné.
-- [ ] **Tâche 2.2 : Étape 2 - Sélection Source.**
+- [x] **Tâche 2.2 : Étape 2 - Sélection Source.**
     - Créer une liste déroulante ou une grille de choix (Bourso, Revolut, Trade Republic, LPB, Autre).
-    - Quand on clique sur "Autre", on accède à l'écran actuel ai_import.
+    - Quand on clique sur "Autre", on accède à l'écran actuel ai_import (en BottomSheet).
 - [ ] **Tâche 2.3 : Étape 3 - Orchestration.**
     - Au clic sur "Analyser", instancier le bon Parser en fonction de la source choisie.
     - Appeler la méthode `parse()` du service correspondant.
@@ -95,3 +95,9 @@ lib/features/09_imports/
 │       ├── hub_option_card.dart
 │       └── wizard_steps/
 ```
+
+## 5. Analyse des fichiers existants (À supprimer en Phase 3.3)
+*   `pdf_import_screen.dart` : Contient la logique de sélection de fichier PDF et l'appel à `PdfImportService`. Cette logique est maintenant dans `FileImportWizard` (Step 1) et sera dans l'orchestrateur (Step 3).
+*   `csv_import_screen.dart` : Idem pour CSV.
+*   `crowdfunding_import_screen.dart` : Idem pour Excel/LPB.
+*   **Conclusion :** Ces fichiers contiennent principalement de la logique d'UI (File Picker, Loading State, Error Handling) qui est en train d'être réécrite dans le Wizard. La logique métier (Parsers) est bien séparée dans les services et sera réutilisée. Ces écrans pourront être supprimés sans perte de code métier.

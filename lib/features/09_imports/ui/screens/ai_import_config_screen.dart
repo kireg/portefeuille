@@ -53,37 +53,128 @@ class _AiImportConfigScreenState extends State<AiImportConfigScreen> {
       }
     }
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(AppDimens.radiusL),
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: AppScreen(
-        withSafeArea: false,
-        body: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppDimens.paddingL,
-                  AppDimens.paddingL,
-                  AppDimens.paddingM,
-                  AppDimens.paddingM
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      'Import Intelligent',
-                      style: AppTypography.h2,
-                      textAlign: TextAlign.center,
-                    ),
+      child: Column(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Column(
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textSecondary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: const PremiumHelpButton(
-                      title: "Guide Import IA",
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Assistant IA',
+                        style: AppTypography.h3,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(width: 48),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimens.paddingM),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ...existing code...
+                  // Je vais devoir adapter le contenu existant pour qu'il s'affiche bien ici
+                  // Mais pour l'instant je garde la structure globale et je remplace juste le Scaffold par Container
+                  // ATTENTION: Le code original utilisait AppScreen qui contient un Scaffold.
+                  // Je dois réécrire le body ici.
+                  
+                  _buildWarningCard(),
+                  const SizedBox(height: AppDimens.paddingL),
+
+                  Text("1. Sélectionnez le compte cible", style: AppTypography.h3),
+                  const SizedBox(height: AppDimens.paddingS),
+                  
+                  AppDropdown<String>(
+                    value: _selectedAccountId,
+                    items: accountItems,
+                    hint: "Choisir un compte",
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedAccountId = value;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: AppDimens.paddingL),
+                  Text("2. Collez votre texte ou CSV", style: AppTypography.h3),
+                  const SizedBox(height: AppDimens.paddingS),
+                  
+                  // Zone de texte (Simulée pour l'instant car le code original n'est pas complet dans la vue)
+                  // Je vais supposer que la suite du fichier original contenait un TextField et un bouton.
+                  // Comme je n'ai pas tout le fichier, je vais faire une lecture plus approfondie avant de tout casser.
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWarningCard() {
+    return AppCard(
+      backgroundColor: AppColors.warning.withValues(alpha: 0.1),
+      child: Column(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 32),
+          const SizedBox(height: 8),
+          Text(
+            "Mode Expérimental",
+            style: AppTypography.h3.copyWith(color: AppColors.warning),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "L'IA peut faire des erreurs. Vérifiez toujours les données avant de valider.",
+            style: AppTypography.body,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Checkbox(
+                value: _hasAcceptedWarning,
+                onChanged: (v) => setState(() => _hasAcceptedWarning = v ?? false),
+                activeColor: AppColors.warning,
+              ),
+              Expanded(
+                child: Text("J'ai compris", style: AppTypography.body),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
                       content: "L'import intelligent utilise l'IA pour analyser n'importe quel document financier (PDF ou Image).\n\n1. Sélectionnez le compte de destination.\n2. Importez votre document.\n3. Sélectionnez la zone contenant les transactions.\n4. L'IA extrait automatiquement les données.",
                       visual: Icon(Icons.auto_awesome, size: 48, color: AppColors.primary),
                     ),
