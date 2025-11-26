@@ -6,9 +6,11 @@ import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.d
 import 'package:portefeuille/features/09_imports/services/pdf/parsers/trade_republic_parser.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/parsers/boursorama_parser.dart';
 import 'package:portefeuille/features/09_imports/services/csv/parsers/revolut_parser.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/parsers/trade_republic_account_statement_parser.dart';
 
 class PdfImportService {
   final List<StatementParser> _parsers = [
+    TradeRepublicAccountStatementParser(),
     TradeRepublicParser(),
     BoursoramaParser(),
     RevolutParser(),
@@ -48,7 +50,7 @@ class PdfImportService {
         debugPrint("Testing parser: ${parser.bankName}");
         if (parser.canParse(text)) {
           debugPrint("Parser MATCHED: ${parser.bankName}");
-          transactions.addAll(parser.parse(text));
+          transactions.addAll(await parser.parse(text));
           break;
         } else {
           debugPrint("Parser REJECTED: ${parser.bankName}");

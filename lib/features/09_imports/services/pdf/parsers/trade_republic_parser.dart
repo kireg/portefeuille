@@ -29,7 +29,7 @@ class TradeRepublicParser implements StatementParser {
   }
 
   @override
-  List<ParsedTransaction> parse(String rawText) {
+  Future<List<ParsedTransaction>> parse(String rawText, {void Function(double)? onProgress}) async {
     final List<ParsedTransaction> transactions = [];
     
     // Normalisation du texte : remplacer les sauts de ligne par des espaces pour faciliter les regex

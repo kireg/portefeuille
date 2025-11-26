@@ -26,7 +26,7 @@ class BoursoramaParser implements StatementParser {
   }
 
   @override
-  List<ParsedTransaction> parse(String rawText) {
+  Future<List<ParsedTransaction>> parse(String rawText, {void Function(double)? onProgress}) async {
     final List<ParsedTransaction> transactions = [];
     
     // Regex pour Boursorama (Avis d'opéré classique)

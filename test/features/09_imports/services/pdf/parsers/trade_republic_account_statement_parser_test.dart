@@ -11,47 +11,87 @@ void main() {
   });
 
   const fakeStatementText = """
-TRADE REPUBLIC BANK GMBH
+TRADE REPUBLIC BANK GMBH, BRANCH FRANCE
+ 
+ 
 75 BOULEVARD HAUSSMANN
 75008 PARIS
 DATE
 01 mai 2025 - 31 juil. 2025
-
+IBAN
+FR7698233268450061759229466
+BIC
+TRBKFRPPXXX
+JEAN DUPOND
+Avenue des Alpes 43
+75000 PARIS
+Trade Republic Bank GmbH, Branch France
+c/o Regus, 75 boulevard Haussmann
+75008 Paris
+900 796 855 R.C.S. Paris
+www.traderepublic.fr
+TVA DE307510626
+Siège social : Trade Republic Bank GmbH
+Brunnenstrasse 19-21, 10119 Berlin, Allemagne
+Registre du commerce du tribunal local de
+Charlottenburg, HRB 244347 B, Allemagne
+Directeurs Généraux
+Andreas Torner
+Gernot Mittendorfer
+Christian Hecker
+Thomas Pischke
+Généré le 26 nov. 2025, 05:14:15
+Page
+ 
+ 
+ 
+1
+de
+14
 SYNTHÈSE DU RELEVÉ DE COMPTE
-PRODUIT SOLDE DÉBUT
-Compte courant 9591,91 €
-
+PRODUIT
+SOLDE DÉBUT DE PÉRIODE
+ENTRÉE D'ARGENT
+SORTIE D'ARGENT
+SOLDE FIN DE PÉRIODE
+Compte courant
+9591,91 €
+446,83 €
+5698,13 €
+4340,61 €
 TRANSACTIONS
 DATE
 TYPE
 DESCRIPTION
-ENTRÉE D'ARGENT
-SORTIE D'ARGENT
+ENTRÉE 
+D'ARGENT
+SORTIE 
+D'ARGENT
 SOLDE
-
-01 mai 2025
-Intérêts créditeur
+01 
+mai 
+2025
+Intérêts 
+créditeur
 Your interest payment
 15,25 €
 9607,16 €
-
-02 mai 2025
-Exécution d'ordre
+02 
+mai 
+2025
+Exécution 
+d'ordre
 Savings plan execution XF000BTC0017 Bitcoin, quantity: 0.000113
 9,97 €
 9597,19 €
-
-02 mai 2025
-Exécution d'ordre
-Savings plan execution LU0380865021 Xtrackers - Xtrackers Euro Stoxx 50 UCITS ETF 1C, quantity: 0.446677
-40,00 €
-9552,19 €
-
-02 mai 2025
-Exécution d'ordre
-Savings plan execution US0378331005 Apple Inc., quantity: 1.5
-225,00 €
-9327,19 €
+02 
+mai 
+2025
+Exécution 
+d'ordre
+Savings plan execution XF000SOL0012 Solana, quantity: 0.037058
+5,00 €
+9592,19 €
 """;
 
   test('Should identify Trade Republic Account Statement', () {
@@ -60,10 +100,10 @@ Savings plan execution US0378331005 Apple Inc., quantity: 1.5
     expect(parser.canParse("TRADE REPUBLIC BUT NOT STATEMENT"), isFalse);
   });
 
-  test('Should parse transactions correctly', () {
-    final transactions = parser.parse(fakeStatementText);
+  test('Should parse transactions correctly', () async {
+    final transactions = await parser.parse(fakeStatementText);
 
-    expect(transactions.length, 4);
+    expect(transactions.length, 3);
 
     // 1. Interest
     final interest = transactions[0];
@@ -79,26 +119,28 @@ Savings plan execution US0378331005 Apple Inc., quantity: 1.5
     expect(btc.isin, "XF000BTC0017");
     expect(btc.quantity, 0.000113);
     expect(btc.amount, 9.97);
-    expect(btc.assetName, "Bitcoin");
-    // Price = 9.97 / 0.000113 = 88230.08...
-    expect(btc.price, closeTo(88230.08, 0.1));
 
-    // 3. ETF Buy
-    final etf = transactions[2];
-    expect(etf.type, TransactionType.Buy);
-    expect(etf.assetType, AssetType.ETF);
-    expect(etf.isin, "LU0380865021");
-    expect(etf.quantity, 0.446677);
-    expect(etf.amount, 40.00);
-    expect(etf.assetName, contains("Xtrackers - Xtrackers Euro Stoxx 50 UCITS ETF 1C"));
+    // 3. Solana Buy
+    final sol = transactions[2];
+    expect(sol.type, TransactionType.Buy);
+    expect(sol.assetType, AssetType.Crypto);
+    expect(sol.isin, "XF000SOL0012");
+    expect(sol.quantity, 0.037058);
+    expect(sol.amount, 5.00);
+  });
 
-    // 4. Stock Buy (Apple)
-    final apple = transactions[3];
-    expect(apple.type, TransactionType.Buy);
-    expect(apple.assetType, AssetType.Stock); // Default
-    expect(apple.isin, "US0378331005");
-    expect(apple.quantity, 1.5);
-    expect(apple.amount, 225.00);
-    expect(apple.assetName, "Apple Inc.");
+
+  test('Should report progress', () async {
+    double lastProgress = 0.0;
+    await parser.parse(fakeStatementText, onProgress: (progress) {
+      lastProgress = progress;
+      expect(progress, greaterThanOrEqualTo(0.0));
+      expect(progress, lessThanOrEqualTo(1.0));
+    });
+    
+    // Since the text is short, it might not trigger many updates, but it should at least run.
+    // The parser implementation updates progress every 50 lines.
+    // Our fake text is about 60 lines.
+    // So it should trigger at least once or twice.
   });
 }

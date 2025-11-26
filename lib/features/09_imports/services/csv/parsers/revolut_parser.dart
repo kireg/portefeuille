@@ -21,7 +21,7 @@ class RevolutParser implements StatementParser {
   String? get warningMessage => null;
 
   @override
-  List<ParsedTransaction> parse(String rawText) {
+  Future<List<ParsedTransaction>> parse(String rawText, {void Function(double)? onProgress}) async {
     final List<ParsedTransaction> transactions = [];
     final lines = rawText.split('\n');
     
@@ -33,6 +33,12 @@ class RevolutParser implements StatementParser {
     
     // Skip header
     for (var i = 1; i < lines.length; i++) {
+      // Report progress
+      if (onProgress != null && i % 50 == 0) {
+        onProgress(i / lines.length);
+        await Future.delayed(Duration.zero);
+      }
+
       final line = lines[i].trim();
       if (line.isEmpty) continue;
       

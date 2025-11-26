@@ -19,7 +19,7 @@ class TradeRepublicAccountStatementParser implements StatementParser {
   String? get warningMessage => null; // This is the "good" parser, no warning needed.
 
   @override
-  List<ParsedTransaction> parse(String rawText) {
+  Future<List<ParsedTransaction>> parse(String rawText, {void Function(double)? onProgress}) async {
     final List<ParsedTransaction> transactions = [];
     
     // 1. Pre-processing: Split into lines
@@ -35,14 +35,29 @@ class TradeRepublicAccountStatementParser implements StatementParser {
     // French months: janv, févr, mars, avr, mai, juin, juil, août, sept, oct, nov, déc
     // We'll use a regex that matches DD MMM YYYY
     final dateRegex = RegExp(r'^\d{2}\s+[a-zA-Zéû\.]+\s+\d{4}');
+    
+    // Regex for split date:
+    // Line i: \d{2}
+    // Line i+1: [a-zA-Zéû\.]+
+    // Line i+2: \d{4}
+    final dayRegex = RegExp(r'^\d{2}$');
+    final monthRegex = RegExp(r'^[a-zA-Zéû\.]+$');
+    final yearRegex = RegExp(r'^\d{4}$');
 
     bool inTransactionsSection = false;
 
     for (int i = 0; i < lines.length; i++) {
+      // Report progress
+      if (onProgress != null && i % 50 == 0) {
+        onProgress(i / lines.length);
+        // Allow UI to update
+        await Future.delayed(Duration.zero);
+      }
+
       final line = lines[i];
       
       // Detect start of transactions section
-      if (line.contains("TRANSACTIONS") && lines[i+1].contains("DATE")) {
+      if (line.contains("TRANSACTIONS") && (i+1 < lines.length && lines[i+1].contains("DATE"))) {
         inTransactionsSection = true;
         continue;
       }
@@ -50,14 +65,36 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // Skip headers/footers if possible, but the date check usually handles it.
       if (!inTransactionsSection) continue;
 
-      // Check if line starts with a date
+      // Check if line starts with a date (Single line format)
+      bool isNewTransaction = false;
+      bool isSplitDate = false;
+      
       if (dateRegex.hasMatch(line)) {
+        isNewTransaction = true;
+      } 
+      // Check for split date format
+      else if (i + 2 < lines.length && 
+               dayRegex.hasMatch(line) && 
+               monthRegex.hasMatch(lines[i+1]) && 
+               yearRegex.hasMatch(lines[i+2])) {
+         isNewTransaction = true;
+         isSplitDate = true;
+      }
+
+      if (isNewTransaction) {
         // Process previous block if exists
         if (currentBlock.isNotEmpty) {
           _parseBlock(currentBlock, transactions);
           currentBlock = [];
         }
-        currentBlock.add(line);
+        
+        if (isSplitDate) {
+          // Reconstruct date on one line
+          currentBlock.add("${lines[i]} ${lines[i+1]} ${lines[i+2]}");
+          i += 2; // Skip next 2 lines as they are part of the date
+        } else {
+          currentBlock.add(line);
+        }
       } else {
         // Append to current block if we are inside a transaction
         if (currentBlock.isNotEmpty) {
@@ -186,21 +223,27 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // Line 2 = Type
       // Line 3..N = Description
       
-      String typeStr = "";
-      String description = "";
+      // In split format, Type might be split too.
+      // We join everything from index 1 to lastAmountLineIndex.
       
-      if (block.length > 1) {
-        typeStr = block[1];
+      int descEndIndex = lastAmountLineIndex > 0 ? lastAmountLineIndex : block.length;
+      String fullDescription = "";
+      
+      if (1 < descEndIndex) {
+        fullDescription = block.sublist(1, descEndIndex).join(" ");
       }
       
-      int descStartIndex = 2;
-      int descEndIndex = lastAmountLineIndex > 0 ? lastAmountLineIndex : block.length;
-      
-      if (descStartIndex < descEndIndex) {
-        description = block.sublist(descStartIndex, descEndIndex).join(" ");
-      } else {
-        // Fallback if structure is tight
-        description = block.sublist(1, descEndIndex).join(" "); // Include type in description if needed
+      // Clean up Type from Description
+      // Known types: "Exécution d'ordre", "Intérêts créditeur", "Virement"
+      String typeStr = fullDescription; // For type detection
+      String description = fullDescription;
+
+      if (fullDescription.contains("Exécution d'ordre")) {
+        description = fullDescription.replaceAll("Exécution d'ordre", "").trim();
+      } else if (fullDescription.contains("Intérêts créditeur")) {
+        description = fullDescription.replaceAll("Intérêts créditeur", "").trim();
+      } else if (fullDescription.contains("Virement")) {
+         // Keep Virement maybe?
       }
 
       // Determine TransactionType and AssetType

@@ -24,6 +24,7 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/features/09_imports/ui/widgets/wizard_step_file.dart';
 import 'package:portefeuille/features/09_imports/ui/widgets/wizard_step_source.dart';
 import 'package:portefeuille/features/09_imports/ui/screens/ai_import_config_screen.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/transaction_edit_dialog.dart';
 
 class FileImportWizard extends StatefulWidget {
   const FileImportWizard({super.key});
@@ -39,6 +40,7 @@ class _FileImportWizardState extends State<FileImportWizard> {
 
   // Step 3: Validation & Parsing
   bool _isParsing = false;
+  double _parsingProgress = 0.0; // New state for progress
   String? _parsingError;
   String? _parserWarning; // New state variable
   List<ParsedTransaction>? _parsedTransactions;
@@ -117,6 +119,7 @@ class _FileImportWizardState extends State<FileImportWizard> {
 
     setState(() {
       _isParsing = true;
+      _parsingProgress = 0.0;
       _parsingError = null;
       _parserWarning = null;
       _parsedTransactions = null;
@@ -171,7 +174,13 @@ class _FileImportWizardState extends State<FileImportWizard> {
          
          if (parser != null) {
            _parserWarning = parser.warningMessage;
-           results = parser.parse(text);
+           results = await parser.parse(text, onProgress: (progress) {
+             if (mounted) {
+               setState(() {
+                 _parsingProgress = progress;
+               });
+             }
+           });
          }
       }
 
@@ -411,13 +420,24 @@ class _FileImportWizardState extends State<FileImportWizard> {
 
   Widget _buildValidationStep() {
     if (_isParsing) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text("Analyse du fichier en cours..."),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            const Text("Analyse du fichier en cours..."),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: 200,
+              child: LinearProgressIndicator(
+                value: _parsingProgress,
+                backgroundColor: AppColors.surfaceLight,
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text("${(_parsingProgress * 100).toInt()}%"),
           ],
         ),
       );
@@ -629,17 +649,81 @@ class _FileImportWizardState extends State<FileImportWizard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(tx.assetName, style: AppTypography.bodyBold),
                           Text(
-                            "${tx.date.day}/${tx.date.month}/${tx.date.year}",
+                            tx.assetName,
+                            style: AppTypography.bodyBold,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            "${tx.date.day}/${tx.date.month}/${tx.date.year} • ${tx.type.toString().split('.').last}",
                             style: AppTypography.caption,
                           ),
+                          if (tx.isin != null)
+                            Text(
+                              "ISIN: ${tx.isin}",
+                              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                            ),
                         ],
                       ),
                     ),
-                    Text(
-                      "${tx.amount.toStringAsFixed(2)} ${tx.currency}",
-                      style: AppTypography.bodyBold,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "${tx.amount.toStringAsFixed(2)} ${tx.currency}",
+                          style: AppTypography.bodyBold,
+                        ),
+                        Text(
+                          "${tx.quantity} @ ${tx.price.toStringAsFixed(2)}",
+                          style: AppTypography.caption,
+                        ),
+                      ],
+                    ),
+                    // Actions
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          showDialog(
+                            context: context,
+                            builder: (context) => TransactionEditDialog(
+                              transaction: tx,
+                              onSave: (updated) {
+                                setState(() {
+                                  _parsedTransactions![index] = updated;
+                                });
+                              },
+                            ),
+                          );
+                        } else if (value == 'delete') {
+                          setState(() {
+                            _parsedTransactions!.removeAt(index);
+                          });
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit, size: 18, color: AppColors.textPrimary),
+                              SizedBox(width: 8),
+                              Text("Modifier"),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, size: 18, color: AppColors.error),
+                              SizedBox(width: 8),
+                              Text("Supprimer", style: TextStyle(color: AppColors.error)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
