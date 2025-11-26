@@ -18,6 +18,9 @@ class RevolutParser implements StatementParser {
   }
 
   @override
+  String? get warningMessage => null;
+
+  @override
   List<ParsedTransaction> parse(String rawText) {
     final List<ParsedTransaction> transactions = [];
     final lines = rawText.split('\n');

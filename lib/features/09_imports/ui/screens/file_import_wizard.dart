@@ -505,13 +505,13 @@ class _FileImportWizardState extends State<FileImportWizard> {
             padding: const EdgeInsets.all(12),
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: AppColors.info.withValues(alpha: 0.1),
+              color: AppColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.info),
+              border: Border.all(color: AppColors.warning),
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: AppColors.info),
+                const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
