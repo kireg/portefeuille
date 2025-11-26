@@ -14,6 +14,9 @@ class TradeRepublicParser implements StatementParser {
     return canParse;
   }
 
+  @override
+  String? get warningMessage => "Ce document n'est pas l'historique de toutes vos transactions mais l'image à l'instant t de ce que vous possédez, il peut fausser l'analyse de vos plus values.";
+
   AssetType _inferAssetType(String name) {
     final upper = name.toUpperCase();
     if (upper.contains('ETF') || upper.contains('MSCI') || upper.contains('S&P') || upper.contains('VANGUARD') || upper.contains('ISHARES') || upper.contains('AMUNDI')) {
@@ -26,7 +29,7 @@ class TradeRepublicParser implements StatementParser {
   }
 
   @override
-  List<ParsedTransaction> parse(String rawText) {
+  Future<List<ParsedTransaction>> parse(String rawText, {void Function(double)? onProgress}) async {
     final List<ParsedTransaction> transactions = [];
     
     // Normalisation du texte : remplacer les sauts de ligne par des espaces pour faciliter les regex

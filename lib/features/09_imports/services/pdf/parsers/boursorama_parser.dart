@@ -11,6 +11,9 @@ class BoursoramaParser implements StatementParser {
     return rawText.contains("Boursorama") && rawText.contains("Avis d'opéré");
   }
 
+  @override
+  String? get warningMessage => null;
+
   AssetType _inferAssetType(String name) {
     final upper = name.toUpperCase();
     if (upper.contains('ETF') || upper.contains('MSCI') || upper.contains('S&P') || upper.contains('VANGUARD') || upper.contains('ISHARES') || upper.contains('AMUNDI')) {
@@ -23,7 +26,7 @@ class BoursoramaParser implements StatementParser {
   }
 
   @override
-  List<ParsedTransaction> parse(String rawText) {
+  Future<List<ParsedTransaction>> parse(String rawText, {void Function(double)? onProgress}) async {
     final List<ParsedTransaction> transactions = [];
     
     // Regex pour Boursorama (Avis d'opéré classique)

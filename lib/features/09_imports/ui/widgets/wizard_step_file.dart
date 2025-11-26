@@ -132,6 +132,8 @@ class WizardStepFile extends StatelessWidget {
             file.name,
             style: AppTypography.h3,
             textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 8),
           Text(

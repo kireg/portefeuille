@@ -16,6 +16,7 @@ import 'package:portefeuille/features/07_management/ui/screens/add_account_scree
 import 'package:portefeuille/features/07_management/ui/screens/add_transaction_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/edit_transaction_screen.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_savings_plan_screen.dart';
+import 'package:portefeuille/features/10_sandbox/ui/boxsand_screen.dart';
 
 /// Définition de toutes les routes nommées de l'application
 class RouteManager {
@@ -23,6 +24,7 @@ class RouteManager {
   static const String splash = '/splash';
   static const String launch = '/launch';
   static const String dashboard = '/dashboard';
+  static const String boxSand = '/boxsand';
 
   // ==================== ROUTES 07_MANAGEMENT ====================
   /// Ajouter une nouvelle institution
@@ -87,6 +89,8 @@ class RouteManager {
         );
       case addSavingsPlan:
         return _buildRoute(settings, const AddSavingsPlanScreen());
+      case boxSand:
+        return _buildRoute(settings, const BoxSandScreen());
       default:
         return _buildErrorRoute(settings, 'Route non trouvée: ${settings.name}');
     }

@@ -31,7 +31,7 @@ class CsvImportService {
         debugPrint("Testing parser: ${parser.bankName}");
         if (parser.canParse(text)) {
           debugPrint("Parser MATCHED: ${parser.bankName}");
-          transactions.addAll(parser.parse(text));
+          transactions.addAll(await parser.parse(text));
           break;
         } else {
           debugPrint("Parser REJECTED: ${parser.bankName}");

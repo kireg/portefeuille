@@ -39,13 +39,17 @@ class AssetMetadataAdapter extends TypeAdapter<AssetMetadata> {
       riskRating: fields[20] as String?,
       latitude: fields[21] as double?,
       longitude: fields[22] as double?,
-    );
+      pendingPrice: fields[23] as double?,
+      pendingPriceCurrency: fields[24] as String?,
+      pendingPriceSource: fields[25] as String?,
+      pendingPriceDate: fields[26] as DateTime?,
+    )..apiErrors = (fields[12] as Map?)?.cast<String, String>();
   }
 
   @override
   void write(BinaryWriter writer, AssetMetadata obj) {
     writer
-      ..writeByte(22)
+      ..writeByte(27)
       ..writeByte(0)
       ..write(obj.ticker)
       ..writeByte(1)
@@ -70,6 +74,8 @@ class AssetMetadataAdapter extends TypeAdapter<AssetMetadata> {
       ..write(obj.assetTypeDetailed)
       ..writeByte(11)
       ..write(obj.lastSyncSource)
+      ..writeByte(12)
+      ..write(obj.apiErrors)
       ..writeByte(13)
       ..write(obj.projectName)
       ..writeByte(14)
@@ -89,7 +95,15 @@ class AssetMetadataAdapter extends TypeAdapter<AssetMetadata> {
       ..writeByte(21)
       ..write(obj.latitude)
       ..writeByte(22)
-      ..write(obj.longitude);
+      ..write(obj.longitude)
+      ..writeByte(23)
+      ..write(obj.pendingPrice)
+      ..writeByte(24)
+      ..write(obj.pendingPriceCurrency)
+      ..writeByte(25)
+      ..write(obj.pendingPriceSource)
+      ..writeByte(26)
+      ..write(obj.pendingPriceDate);
   }
 
   @override

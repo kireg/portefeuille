@@ -13,6 +13,7 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/parsers/boursorama_parser.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/parsers/trade_republic_parser.dart';
+import 'package:portefeuille/features/09_imports/services/pdf/parsers/trade_republic_account_statement_parser.dart';
 import 'package:portefeuille/features/09_imports/services/csv/parsers/revolut_parser.dart';
 import 'package:portefeuille/features/09_imports/services/excel/la_premiere_brique_parser.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,7 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/features/09_imports/ui/widgets/wizard_step_file.dart';
 import 'package:portefeuille/features/09_imports/ui/widgets/wizard_step_source.dart';
 import 'package:portefeuille/features/09_imports/ui/screens/ai_import_config_screen.dart';
+import 'package:portefeuille/features/09_imports/ui/widgets/transaction_edit_dialog.dart';
 
 class FileImportWizard extends StatefulWidget {
   const FileImportWizard({super.key});
@@ -38,9 +40,16 @@ class _FileImportWizardState extends State<FileImportWizard> {
 
   // Step 3: Validation & Parsing
   bool _isParsing = false;
+  double _parsingProgress = 0.0; // New state for progress
   String? _parsingError;
+  String? _parserWarning; // New state variable
   List<ParsedTransaction>? _parsedTransactions;
   String? _selectedAccountId;
+  
+  // Validation Warnings
+  List<ParsedTransaction> _duplicateTransactions = [];
+  List<ParsedTransaction> _invalidIsinTransactions = [];
+  bool _hasConfirmedWarnings = false;
 
   // Step 1: File Selection
   Future<void> _pickFile() async {
@@ -110,8 +119,13 @@ class _FileImportWizardState extends State<FileImportWizard> {
 
     setState(() {
       _isParsing = true;
+      _parsingProgress = 0.0;
       _parsingError = null;
+      _parserWarning = null;
       _parsedTransactions = null;
+      _duplicateTransactions = [];
+      _invalidIsinTransactions = [];
+      _hasConfirmedWarnings = false;
     });
 
     try {
@@ -147,17 +161,73 @@ class _FileImportWizardState extends State<FileImportWizard> {
              parser = RevolutParser();
              break;
            case 'trade_republic':
-             parser = TradeRepublicParser();
+             final trSnapshotParser = TradeRepublicParser();
+             final trStatementParser = TradeRepublicAccountStatementParser();
+             
+             if (trStatementParser.canParse(text)) {
+               parser = trStatementParser;
+             } else {
+               parser = trSnapshotParser;
+             }
              break;
          }
          
          if (parser != null) {
-           results = parser.parse(text);
+           _parserWarning = parser.warningMessage;
+           results = await parser.parse(text, onProgress: (progress) {
+             if (mounted) {
+               setState(() {
+                 _parsingProgress = progress;
+               });
+             }
+           });
          }
+      }
+
+      // --- VALIDATION LOGIC ---
+      final portfolioProvider = context.read<PortfolioProvider>();
+      final activePortfolio = portfolioProvider.activePortfolio;
+      final List<Transaction> existingTransactions = [];
+      if (activePortfolio != null) {
+        for (var inst in activePortfolio.institutions) {
+          for (var acc in inst.accounts) {
+            existingTransactions.addAll(acc.transactions);
+          }
+        }
+      }
+      
+      final isinRegex = RegExp(r'^[A-Z]{2}[A-Z0-9]{9}[0-9]$');
+
+      final List<ParsedTransaction> duplicates = [];
+      final List<ParsedTransaction> invalidIsins = [];
+
+      for (final parsed in results) {
+        // 1. Check Duplicates
+        final isDuplicate = existingTransactions.any((existing) {
+          final isSameDate = parsed.date.year == existing.date.year &&
+              parsed.date.month == existing.date.month &&
+              parsed.date.day == existing.date.day;
+          final isSameQty = (parsed.quantity - (existing.quantity ?? 0.0)).abs() < 0.0001;
+          final isSameAmount = (parsed.amount - existing.amount).abs() < 0.0001;
+          return isSameDate && isSameQty && isSameAmount;
+        });
+
+        if (isDuplicate) {
+          duplicates.add(parsed);
+        }
+
+        // 2. Check ISIN Validity
+        if (parsed.isin != null && parsed.isin!.isNotEmpty) {
+          if (!isinRegex.hasMatch(parsed.isin!)) {
+            invalidIsins.add(parsed);
+          }
+        }
       }
 
       setState(() {
         _parsedTransactions = results;
+        _duplicateTransactions = duplicates;
+        _invalidIsinTransactions = invalidIsins;
         _isParsing = false;
       });
 
@@ -350,13 +420,24 @@ class _FileImportWizardState extends State<FileImportWizard> {
 
   Widget _buildValidationStep() {
     if (_isParsing) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text("Analyse du fichier en cours..."),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            const Text("Analyse du fichier en cours..."),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: 200,
+              child: LinearProgressIndicator(
+                value: _parsingProgress,
+                backgroundColor: AppColors.surfaceLight,
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text("${(_parsingProgress * 100).toInt()}%"),
           ],
         ),
       );
@@ -379,6 +460,35 @@ class _FileImportWizardState extends State<FileImportWizard> {
             AppButton(
               label: "Réessayer",
               onPressed: _parseFile,
+              type: AppButtonType.secondary,
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_parserWarning != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              "Avertissement lors de l'analyse",
+              style: AppTypography.h3.copyWith(color: AppColors.warning),
+            ),
+            const SizedBox(height: 8),
+            Text(_parserWarning!, textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            AppButton(
+              label: "Continuer malgré l'avertissement",
+              onPressed: () {
+                setState(() {
+                  _hasConfirmedWarnings = true;
+                });
+                _saveTransactions();
+              },
               type: AppButtonType.secondary,
             ),
           ],
@@ -410,13 +520,93 @@ class _FileImportWizardState extends State<FileImportWizard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_parserWarning != null) ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.warning),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _parserWarning!,
+                    style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         Text("Validation", style: AppTypography.h2),
         const SizedBox(height: 8),
         Text(
           "${_parsedTransactions!.length} transactions trouvées.",
           style: AppTypography.body.copyWith(color: AppColors.textSecondary),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+
+        // --- WARNINGS SECTION ---
+        if (_duplicateTransactions.isNotEmpty || _invalidIsinTransactions.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.warning),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
+                    const SizedBox(width: 8),
+                    Text("Attention requise", style: AppTypography.h3.copyWith(color: AppColors.warning)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (_duplicateTransactions.isNotEmpty)
+                  Text(
+                    "• ${_duplicateTransactions.length} doublons potentiels détectés (même date, quantité, montant).",
+                    style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+                  ),
+                if (_invalidIsinTransactions.isNotEmpty)
+                  Text(
+                    "• ${_invalidIsinTransactions.length} codes ISIN semblent invalides.",
+                    style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+                  ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _hasConfirmedWarnings,
+                      activeColor: AppColors.warning,
+                      onChanged: (val) {
+                        setState(() {
+                          _hasConfirmedWarnings = val ?? false;
+                        });
+                      },
+                    ),
+                    Expanded(
+                      child: Text(
+                        "Je confirme vouloir importer ces transactions malgré les avertissements.",
+                        style: AppTypography.caption,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        // --- END WARNINGS SECTION ---
         
         AppDropdown<String>(
           label: "Compte de destination",
@@ -459,17 +649,81 @@ class _FileImportWizardState extends State<FileImportWizard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(tx.assetName, style: AppTypography.bodyBold),
                           Text(
-                            "${tx.date.day}/${tx.date.month}/${tx.date.year}",
+                            tx.assetName,
+                            style: AppTypography.bodyBold,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            "${tx.date.day}/${tx.date.month}/${tx.date.year} • ${tx.type.toString().split('.').last}",
                             style: AppTypography.caption,
                           ),
+                          if (tx.isin != null)
+                            Text(
+                              "ISIN: ${tx.isin}",
+                              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                            ),
                         ],
                       ),
                     ),
-                    Text(
-                      "${tx.amount.toStringAsFixed(2)} ${tx.currency}",
-                      style: AppTypography.bodyBold,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "${tx.amount.toStringAsFixed(2)} ${tx.currency}",
+                          style: AppTypography.bodyBold,
+                        ),
+                        Text(
+                          "${tx.quantity} @ ${tx.price.toStringAsFixed(2)}",
+                          style: AppTypography.caption,
+                        ),
+                      ],
+                    ),
+                    // Actions
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          showDialog(
+                            context: context,
+                            builder: (context) => TransactionEditDialog(
+                              transaction: tx,
+                              onSave: (updated) {
+                                setState(() {
+                                  _parsedTransactions![index] = updated;
+                                });
+                              },
+                            ),
+                          );
+                        } else if (value == 'delete') {
+                          setState(() {
+                            _parsedTransactions!.removeAt(index);
+                          });
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit, size: 18, color: AppColors.textPrimary),
+                              SizedBox(width: 8),
+                              Text("Modifier"),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, size: 18, color: AppColors.error),
+                              SizedBox(width: 8),
+                              Text("Supprimer", style: TextStyle(color: AppColors.error)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -485,7 +739,13 @@ class _FileImportWizardState extends State<FileImportWizard> {
     bool canGoNext = false;
     if (_currentStep == 0 && _selectedFile != null) canGoNext = true;
     if (_currentStep == 1 && _selectedSourceId != null) canGoNext = true;
-    if (_currentStep == 2 && _selectedAccountId != null && _parsedTransactions != null && _parsedTransactions!.isNotEmpty) canGoNext = true;
+    if (_currentStep == 2 && _selectedAccountId != null && _parsedTransactions != null && _parsedTransactions!.isNotEmpty) {
+      if (_duplicateTransactions.isNotEmpty || _invalidIsinTransactions.isNotEmpty) {
+        canGoNext = _hasConfirmedWarnings;
+      } else {
+        canGoNext = true;
+      }
+    }
 
     return Padding(
       padding: const EdgeInsets.all(24.0),

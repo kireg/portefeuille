@@ -44,6 +44,10 @@ abstract class StatementParser {
   /// Vérifie si le contenu brut du PDF correspond à cette banque.
   bool canParse(String rawText);
 
+  /// Message d'avertissement optionnel à afficher à l'utilisateur.
+  String? get warningMessage => null;
+
   /// Extrait les transactions du texte brut.
-  List<ParsedTransaction> parse(String rawText);
+  /// [onProgress] est appelé avec une valeur entre 0.0 et 1.0 pour indiquer la progression.
+  Future<List<ParsedTransaction>> parse(String rawText, {void Function(double)? onProgress});
 }

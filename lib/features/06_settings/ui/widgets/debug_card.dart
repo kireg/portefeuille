@@ -6,6 +6,7 @@ import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/services/route_manager.dart';
 
 class DebugCard extends StatelessWidget {
   const DebugCard({super.key});
@@ -48,6 +49,16 @@ class DebugCard extends StatelessWidget {
                   const SnackBar(content: Text("Historique reconstruit avec succès !")),
                 );
               }
+            },
+          ),
+          const SizedBox(height: AppDimens.paddingS),
+          AppButton(
+            label: "BoxSand (Extraction PDF)",
+            icon: Icons.picture_as_pdf,
+            type: AppButtonType.secondary,
+            textColor: AppColors.textPrimary,
+            onPressed: () {
+              Navigator.pushNamed(context, RouteManager.boxSand);
             },
           ),
         ],

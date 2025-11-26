@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +14,7 @@ import '../../06_settings/ui/settings_screen.dart';
 
 // UI Components
 import 'package:portefeuille/core/ui/theme/app_colors.dart'; // Pour le fond par défaut
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_floating_nav_bar.dart';
 import 'widgets/dashboard_app_bar.dart';
@@ -110,14 +112,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final safeIndex = _selectedIndex >= tabs.length ? 0 : _selectedIndex;
 
     // Dashboard complet
-    return Scaffold(
-      // On utilise un Scaffold simple ici.
-      // La couleur de fond assure qu'il n'y a pas de flash blanc,
-      // mais c'est l'AppScreen à l'intérieur des onglets (OverviewTab) qui fera le vrai gradient.
-      backgroundColor: AppColors.background,
-      resizeToAvoidBottomInset: false, // Évite que le clavier casse la layout
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
 
-      body: Stack(
+        final shouldPop = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: Text('Quitter l\'application ?', style: AppTypography.h3),
+            content: Text('Voulez-vous vraiment fermer l\'application ?',
+                style: AppTypography.body),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Non'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Oui'),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldPop == true) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        // On utilise un Scaffold simple ici.
+        // La couleur de fond assure qu'il n'y a pas de flash blanc,
+        // mais c'est l'AppScreen à l'intérieur des onglets (OverviewTab) qui fera le vrai gradient.
+        backgroundColor: AppColors.background,
+        resizeToAvoidBottomInset: false, // Évite que le clavier casse la layout
+
+        body: Stack(
         children: [
           // 1. Le Contenu (Les Onglets)
           // CORRECTION : Plus de padding TOP ici. L'onglet prend tout l'écran.
@@ -141,6 +172,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             items: navItems,
           ),
         ],
+      ),
       ),
     );
   }

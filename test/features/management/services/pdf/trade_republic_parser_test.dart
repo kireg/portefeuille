@@ -12,7 +12,7 @@ void main() {
       expect(parser.canParse("Boursorama"), isFalse);
     });
 
-    test('parse extracts buy order correctly', () {
+    test('parse extracts buy order correctly', () async {
       const rawText = """
       TRADE REPUBLIC
       Date : 12.05.2023
@@ -21,7 +21,7 @@ void main() {
       Montant total : 1500,00 EUR
       """;
 
-      final transactions = parser.parse(rawText);
+      final transactions = await parser.parse(rawText);
 
       expect(transactions.length, 1);
       final tx = transactions.first;
@@ -33,7 +33,7 @@ void main() {
       expect(tx.date, DateTime(2023, 5, 12));
     });
 
-    test('parse extracts sell order correctly', () {
+    test('parse extracts sell order correctly', () async {
       const rawText = """
       TRADE REPUBLIC
       Date : 15.06.2023
@@ -41,7 +41,7 @@ void main() {
       Vente de 5,5 titres Tesla Inc. au cours de 200,50 USD
       """;
 
-      final transactions = parser.parse(rawText);
+      final transactions = await parser.parse(rawText);
 
       expect(transactions.length, 1);
       final tx = transactions.first;
