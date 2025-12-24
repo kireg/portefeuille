@@ -1,3 +1,10 @@
+## Catégories Crypto / PEA / CTO
+
+Le parser Trade Republic (relevé de compte) renseigne une `category` par transaction :
+- `Crypto` : détection par mots-clés spécifiques et/ou ISIN commençant par `XF`.
+- `PEA` / `CTO` : heuristiques basées sur les en-têtes de relevés (mention PEA, IBAN/identifiants), avec repli sur le choix utilisateur dans l’assistant.
+
+Lors de l’import, l’assistant propose une sélection de catégorie. Une fois choisie, seules les transactions de cette famille sont listées à la validation. Le compte destination suggéré doit rester cohérent avec la catégorie, mais reste modifiable.
 # Analyse et Plan d'Action : Parser Trade Republic (Relevé de Compte)
 
 ## 1. Objectif

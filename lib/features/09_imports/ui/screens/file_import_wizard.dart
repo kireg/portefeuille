@@ -27,6 +27,9 @@ import 'package:portefeuille/features/09_imports/ui/widgets/wizard_step_file.dar
 import 'package:portefeuille/features/09_imports/ui/widgets/wizard_step_source.dart';
 import 'package:portefeuille/features/09_imports/ui/screens/ai_import_config_screen.dart';
 import 'package:portefeuille/features/09_imports/ui/widgets/transaction_edit_dialog.dart';
+import 'package:portefeuille/features/09_imports/services/import_diff_service.dart';
+import 'package:portefeuille/features/09_imports/services/import_save_service.dart';
+import 'package:portefeuille/features/09_imports/i18n/strings.dart';
 
 class FileImportWizard extends StatefulWidget {
   const FileImportWizard({super.key});
@@ -47,7 +50,7 @@ class _FileImportWizardState extends State<FileImportWizard> {
   double _parsingProgress = 0.0; // New state for progress
   String? _parsingError;
   String? _parserWarning; // New state variable
-  List<_CandidateTx>? _candidates;
+  List<ImportCandidate>? _candidates;
   String? _selectedAccountId;
 
   // Validation Warnings
@@ -55,30 +58,158 @@ class _FileImportWizardState extends State<FileImportWizard> {
   List<ParsedTransaction> _invalidIsinTransactions = [];
   bool _hasConfirmedWarnings = false;
 
-  String _identityKeyParsed(ParsedTransaction tx) {
-    final dateKey = DateTime(tx.date.year, tx.date.month, tx.date.day).toIso8601String();
-    final assetRef = (tx.ticker ?? tx.isin ?? tx.assetName).toLowerCase();
-    return '$dateKey|$assetRef|${tx.type}|${tx.quantity.toStringAsFixed(4)}|${tx.amount.toStringAsFixed(2)}';
+  // La logique de clés/diff est gérée par ImportDiffService.
+
+  Widget _buildCandidateCard(int index, ImportCandidate candidate) {
+    final tx = candidate.parsed;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: AppCard(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Checkbox(
+              value: candidate.selected,
+              onChanged: (val) {
+                setState(() {
+                  candidate.selected = val ?? false;
+                });
+              },
+            ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: (tx.type == TransactionType.Buy ||
+                        tx.type == TransactionType.Deposit)
+                    ? AppColors.success.withValues(alpha: 0.1)
+                    : AppColors.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                (tx.type == TransactionType.Buy ||
+                        tx.type == TransactionType.Deposit)
+                    ? Icons.arrow_downward
+                    : Icons.arrow_upward,
+                color: (tx.type == TransactionType.Buy ||
+                        tx.type == TransactionType.Deposit)
+                    ? AppColors.success
+                    : AppColors.error,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          tx.assetName,
+                          style: AppTypography.bodyBold,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (candidate.isModified)
+                        Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            "Modifié",
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.warning,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  Text(
+                    "${tx.date.day}/${tx.date.month}/${tx.date.year} • ${tx.type.toString().split('.').last}",
+                    style: AppTypography.caption,
+                  ),
+                  if (tx.isin != null)
+                    Text(
+                      "ISIN: ${tx.isin}",
+                      style: AppTypography.caption
+                          .copyWith(color: AppColors.textSecondary),
+                    ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  "${tx.amount.toStringAsFixed(2)} ${tx.currency}",
+                  style: AppTypography.bodyBold,
+                ),
+                Text(
+                  "${tx.quantity} @ ${tx.price.toStringAsFixed(2)}",
+                  style: AppTypography.caption,
+                ),
+              ],
+            ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
+              onSelected: (value) {
+                if (value == 'edit') {
+                  showDialog(
+                    context: context,
+                    builder: (context) => TransactionEditDialog(
+                      transaction: tx,
+                      onSave: (updated) {
+                        setState(() {
+                          _candidates![index] =
+                              candidate.copyWith(parsed: updated);
+                        });
+                      },
+                    ),
+                  );
+                } else if (value == 'delete') {
+                  setState(() {
+                    _candidates!.removeAt(index);
+                  });
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, size: 18, color: AppColors.textPrimary),
+                      SizedBox(width: 8),
+                      Text("Modifier"),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, size: 18, color: AppColors.error),
+                      SizedBox(width: 8),
+                      Text("Supprimer",
+                          style: TextStyle(color: AppColors.error)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  String _identityKeyExisting(Transaction tx) {
-    final dateKey = DateTime(tx.date.year, tx.date.month, tx.date.day).toIso8601String();
-    final assetRef = (tx.assetTicker ?? tx.assetName ?? '').toLowerCase();
-    final qty = (tx.quantity ?? 0).toStringAsFixed(4);
-    return '$dateKey|$assetRef|${tx.type}|$qty|${tx.amount.toStringAsFixed(2)}';
-  }
-
-  String _matchKeyParsed(ParsedTransaction tx) {
-    final dateKey = DateTime(tx.date.year, tx.date.month, tx.date.day).toIso8601String();
-    final assetRef = (tx.ticker ?? tx.isin ?? tx.assetName).toLowerCase();
-    return '$dateKey|$assetRef|${tx.type}';
-  }
-
-  String _matchKeyExisting(Transaction tx) {
-    final dateKey = DateTime(tx.date.year, tx.date.month, tx.date.day).toIso8601String();
-    final assetRef = (tx.assetTicker ?? tx.assetName ?? '').toLowerCase();
-    return '$dateKey|$assetRef|${tx.type}';
-  }
+  // Helpers supprimés au profit d'ImportDiffService.
 
   // Step 1: File Selection
   Future<void> _pickFile() async {
@@ -236,68 +367,16 @@ class _FileImportWizardState extends State<FileImportWizard> {
         }
       }
 
-      final isinRegex = RegExp(r'^[A-Z]{2}[A-Z0-9]{9}[0-9]$');
-
-      final List<ParsedTransaction> duplicates = [];
-      final List<ParsedTransaction> invalidIsins = [];
-      final List<_CandidateTx> candidates = [];
-
-      final existingIdentity = existingTransactions
-          .map((tx) => _identityKeyExisting(tx))
-          .toSet();
-      final existingByMatchKey = <String, Transaction>{
-        for (final tx in existingTransactions) _matchKeyExisting(tx): tx
-      };
-
-      for (final parsed in results) {
-        final identityKey = _identityKeyParsed(parsed);
-        final matchKey = _matchKeyParsed(parsed);
-
-        final isDuplicate = existingIdentity.contains(identityKey);
-        if (isDuplicate) {
-          duplicates.add(parsed);
-          continue;
-        }
-
-        Transaction? existingMatch;
-        bool isModified = false;
-
-        if (_importMode == ImportMode.update) {
-          existingMatch = existingByMatchKey[matchKey];
-          if (existingMatch != null) {
-            final qtyDiff =
-                (parsed.quantity - (existingMatch.quantity ?? 0)).abs();
-            final amountDiff = (parsed.amount - existingMatch.amount).abs();
-
-            // On considère modifié si une différence notable est détectée
-            if (qtyDiff > 0.0001 || amountDiff > 0.01) {
-              isModified = true;
-            } else {
-              duplicates.add(parsed);
-              continue;
-            }
-          }
-        }
-
-        if (parsed.isin != null && parsed.isin!.isNotEmpty) {
-          if (!isinRegex.hasMatch(parsed.isin!)) {
-            invalidIsins.add(parsed);
-          }
-        }
-
-        candidates.add(
-          _CandidateTx(
-            parsed,
-            existingMatch: existingMatch,
-            isModified: isModified,
-          ),
-        );
-      }
+      final diff = ImportDiffService().compute(
+        parsed: results,
+        existing: existingTransactions,
+        mode: _importMode,
+      );
 
       setState(() {
-        _candidates = candidates;
-        _duplicateTransactions = duplicates;
-        _invalidIsinTransactions = invalidIsins;
+        _candidates = diff.candidates;
+        _duplicateTransactions = diff.duplicates;
+        _invalidIsinTransactions = diff.invalidIsins;
         _isParsing = false;
       });
     } catch (e) {
@@ -328,39 +407,20 @@ class _FileImportWizardState extends State<FileImportWizard> {
     if (selectedCandidates.isEmpty) return;
 
     final transactionProvider = context.read<TransactionProvider>();
-
-    final modeLabel = _importMode == ImportMode.update
-      ? 'Actualisation'
-      : 'Import initial';
-
-    final transactions = selectedCandidates
-      .map((candidate) => Transaction(
-              id: const Uuid().v4(),
-              accountId: _selectedAccountId!,
-          type: candidate.parsed.type,
-          date: candidate.parsed.date,
-          assetTicker: candidate.parsed.ticker ??
-            candidate.parsed
-              .isin, // Use ISIN as fallback if ticker is not available
-          assetName: candidate.parsed.assetName,
-          quantity: candidate.parsed.quantity,
-          price: candidate.parsed.price,
-          amount: candidate.parsed.amount,
-          fees: candidate.parsed.fees,
-          notes: "$modeLabel depuis $_selectedSourceId",
-          assetType: candidate.parsed.assetType,
-          priceCurrency: candidate.parsed.currency,
-            ))
-        .toList();
-
-    await transactionProvider.addTransactions(transactions);
+    final count = await ImportSaveService.saveSelected(
+      provider: transactionProvider,
+      candidates: selectedCandidates,
+      accountId: _selectedAccountId!,
+      mode: _importMode,
+      sourceId: _selectedSourceId,
+    );
 
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(
-                '${selectedCandidates.length} transactions importées avec succès')),
+            content:
+              Text('$count transaction(s) traitée(s) avec succès')),
       );
     }
   }
@@ -575,14 +635,14 @@ class _FileImportWizardState extends State<FileImportWizard> {
                 color: AppColors.warning, size: 48),
             const SizedBox(height: 16),
             Text(
-              "Avertissement lors de l'analyse",
+              StringsImport.warningTitle,
               style: AppTypography.h3.copyWith(color: AppColors.warning),
             ),
             const SizedBox(height: 8),
             Text(_parserWarning!, textAlign: TextAlign.center),
             const SizedBox(height: 24),
             AppButton(
-              label: "Continuer malgré l'avertissement",
+              label: StringsImport.continueDespiteWarning,
               onPressed: () {
                 setState(() {
                   _hasConfirmedWarnings = true;
@@ -597,7 +657,7 @@ class _FileImportWizardState extends State<FileImportWizard> {
     }
 
     if (_candidates == null || _candidates!.isEmpty) {
-      return const Center(child: Text("Aucune transaction trouvée."));
+      return const Center(child: Text(StringsImport.noneFound));
     }
 
     // Account Selection
@@ -645,7 +705,7 @@ class _FileImportWizardState extends State<FileImportWizard> {
             ),
           ),
         ],
-        Text("Validation", style: AppTypography.h2),
+        Text(StringsImport.validationTitle, style: AppTypography.h2),
         const SizedBox(height: 8),
         Text(
           "${_candidates!.length} transactions retenues (${_candidates!.where((c) => c.isModified).length} modifiées)",
@@ -671,7 +731,7 @@ class _FileImportWizardState extends State<FileImportWizard> {
                     const Icon(Icons.warning_amber_rounded,
                         color: AppColors.warning),
                     const SizedBox(width: 8),
-                    Text("Attention requise",
+                    Text(StringsImport.attentionRequired,
                         style: AppTypography.h3
                             .copyWith(color: AppColors.warning)),
                   ],
@@ -717,7 +777,7 @@ class _FileImportWizardState extends State<FileImportWizard> {
         // --- END WARNINGS SECTION ---
 
         AppDropdown<String>(
-          label: "Compte de destination",
+          label: StringsImport.destinationAccount,
           value: _selectedAccountId,
           items: accountItems,
           onChanged: (val) => setState(() => _selectedAccountId = val),
@@ -725,161 +785,38 @@ class _FileImportWizardState extends State<FileImportWizard> {
 
         const SizedBox(height: 16),
         Expanded(
-          child: ListView.separated(
-            itemCount: _candidates!.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final candidate = _candidates![index];
-              final tx = candidate.parsed;
-              return AppCard(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Checkbox(
-                      value: candidate.selected,
-                      onChanged: (val) {
-                        setState(() {
-                          candidate.selected = val ?? false;
-                        });
-                      },
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: (tx.type == TransactionType.Buy ||
-                                tx.type == TransactionType.Deposit)
-                            ? AppColors.success.withValues(alpha: 0.1)
-                            : AppColors.error.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        (tx.type == TransactionType.Buy ||
-                                tx.type == TransactionType.Deposit)
-                            ? Icons.arrow_downward
-                            : Icons.arrow_upward,
-                        color: (tx.type == TransactionType.Buy ||
-                                tx.type == TransactionType.Deposit)
-                            ? AppColors.success
-                            : AppColors.error,
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  tx.assetName,
-                                  style: AppTypography.bodyBold,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (candidate.isModified)
-                                Container(
-                                  margin: const EdgeInsets.only(left: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        AppColors.warning.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    "Modifié",
-                                    style: AppTypography.caption.copyWith(
-                                      color: AppColors.warning,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          Text(
-                            "${tx.date.day}/${tx.date.month}/${tx.date.year} • ${tx.type.toString().split('.').last}",
-                            style: AppTypography.caption,
-                          ),
-                          if (tx.isin != null)
-                            Text(
-                              "ISIN: ${tx.isin}",
-                              style: AppTypography.caption
-                                  .copyWith(color: AppColors.textSecondary),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "${tx.amount.toStringAsFixed(2)} ${tx.currency}",
-                          style: AppTypography.bodyBold,
-                        ),
-                        Text(
-                          "${tx.quantity} @ ${tx.price.toStringAsFixed(2)}",
-                          style: AppTypography.caption,
-                        ),
-                      ],
-                    ),
-                    // Actions
-                    PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert,
-                          color: AppColors.textSecondary),
-                      onSelected: (value) {
-                        if (value == 'edit') {
-                          showDialog(
-                            context: context,
-                            builder: (context) => TransactionEditDialog(
-                              transaction: tx,
-                              onSave: (updated) {
-                                setState(() {
-                                  _candidates![index] = candidate.copyWith(
-                                    parsed: updated,
-                                  );
-                                });
-                              },
-                            ),
-                          );
-                        } else if (value == 'delete') {
-                          setState(() {
-                            _candidates!.removeAt(index);
-                          });
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                          value: 'edit',
-                          child: Row(
-                            children: [
-                              Icon(Icons.edit,
-                                  size: 18, color: AppColors.textPrimary),
-                              SizedBox(width: 8),
-                              Text("Modifier"),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete,
-                                  size: 18, color: AppColors.error),
-                              SizedBox(width: 8),
-                              Text("Supprimer",
-                                  style: TextStyle(color: AppColors.error)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+          child: ListView(
+            children: [
+              // Nouveaux
+              if (_candidates!.any((c) => !c.isModified)) ...[
+                Text(
+                  "${StringsImport.newLabel} (${_candidates!.where((c) => !c.isModified).length})",
+                  style: AppTypography.h3,
                 ),
-              );
-            },
+                const SizedBox(height: 8),
+                ..._candidates!
+                    .asMap()
+                    .entries
+                    .where((e) => !e.value.isModified)
+                    .map((entry) => _buildCandidateCard(entry.key, entry.value))
+                    .toList(),
+                const SizedBox(height: 16),
+              ],
+              // Modifiés
+              if (_candidates!.any((c) => c.isModified)) ...[
+                Text(
+                  "${StringsImport.modifiedLabel} (${_candidates!.where((c) => c.isModified).length})",
+                  style: AppTypography.h3,
+                ),
+                const SizedBox(height: 8),
+                ..._candidates!
+                    .asMap()
+                    .entries
+                    .where((e) => e.value.isModified)
+                    .map((entry) => _buildCandidateCard(entry.key, entry.value))
+                    .toList(),
+              ],
+            ],
           ),
         ),
       ],
@@ -929,29 +866,5 @@ class _FileImportWizardState extends State<FileImportWizard> {
 }
 
 class _CandidateTx {
-  _CandidateTx(
-    this.parsed, {
-    this.existingMatch,
-    this.isModified = false,
-    this.selected = true,
-  });
-
-  ParsedTransaction parsed;
-  final Transaction? existingMatch;
-  bool isModified;
-  bool selected;
-
-  _CandidateTx copyWith({
-    ParsedTransaction? parsed,
-    Transaction? existingMatch,
-    bool? isModified,
-    bool? selected,
-  }) {
-    return _CandidateTx(
-      parsed ?? this.parsed,
-      existingMatch: existingMatch ?? this.existingMatch,
-      isModified: isModified ?? this.isModified,
-      selected: selected ?? this.selected,
-    );
-  }
+  // Obsolète: remplacé par ImportCandidate dans ImportDiffService.
 }

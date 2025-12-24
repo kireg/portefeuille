@@ -11,22 +11,24 @@
   - Calcule les diffs vs les transactions existantes.
   - Propose uniquement les transactions nouvelles ou modifiées.
   - Ne duplique jamais un doublon strict.
+  - Met à jour les transactions existantes marquées "Modifiés" (montant, prix, notes), sans création de doublon.
 - Textes UX : choix clair du mode, avertissement sur doublons et champs modifiés.
 
 ## Détection de doublons / modifications
-- Clé d’identité transaction : source + date normalisée + (ticker/isin/assetId) + type + quantité + montant arrondi.
-- Doublon : même clé complète → ignorer en actualisation.
-- Modifiée : même clé partielle (date+assetId+type) mais montant/prix/notes différents → présenter en “Modifiés”.
+- Clé d’identité transaction (complète) : date normalisée (jour), (ticker ou isin ou assetName), type, quantité (4 décimales), montant (2 décimales).
+- Clé de matching (partielle) : date normalisée (jour), (ticker ou isin ou assetName), type.
+- Doublon : même clé complète → ignoré en actualisation.
+- Modifiée : même clé partielle mais quantité/montant différents (seuils: quantité > 0.0001, montant > 0.01) → présenté en “Modifiés”.
 - Normalisation : arrondi montants, gestion devise, nettoyage des séparateurs, dates éclatées.
 
 ## Assistant d’import (wizard)
-- Ajout d’un choix de **mode** (Initial/Actualisation) dans l’étape Source ou Validation.
+- Ajout d’un choix de **mode** (Initial/Actualisation) dans l’étape Source.
 - En mode Actualisation :
-  - Afficher deux listes : "Nouveaux" et "Modifiés" (compteurs).
-  - Permettre d’inclure/exclure chaque transaction.
+  - Affiche deux sections : "Nouveaux" et "Modifiés" (compteurs), avec case à cocher par ligne.
+  - Les lignes "Modifiés" portent un badge et, si sélectionnées, mettront à jour la transaction existante correspondante.
 - Sauvegarde :
   - Initial → ajoute tout.
-  - Actualisation → ajoute nouveaux, met à jour modifiés (montant/prix/notes) sans créer de doublons.
+  - Actualisation → ajoute les nouveaux en batch, met à jour les modifiés (montant, prix, notes) via `updateTransaction`.
 - Gestion des avertissements et confirmation pour ignorer les doublons détectés.
 
 ## Trade Republic : catégories Crypto / PEA / CTO
@@ -65,6 +67,7 @@
 ## Checkpoints
 - ✅ Ajout des champs (category, importMode) + classification TR (crypto/PEA/CTO) dans les parsers.
 - ✅ UI wizard : choix du mode + catégorie TR + filtrage en amont de la validation.
-- ⏳ Diff/déduplication + rendu "Nouveaux/Modifiés" en mode Actualisation.
-- ⏳ Sauvegarde : appliquer les décisions (ajout/mise à jour), ignorer les doublons, tests unitaires/intégration.
+- ✅ Diff/déduplication + rendu "Nouveaux/Modifiés" en mode Actualisation (candidats avec badges et sélection).
+- ✅ Sauvegarde : ajoute les nouveaux et met à jour les modifiés sans doublon.
+- ⏳ Tests unitaires/intégration.
 - ⏳ Docs (HubImport, ParserTradeRepublic), i18n et logs/telemetry.
