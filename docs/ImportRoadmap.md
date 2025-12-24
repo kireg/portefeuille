@@ -63,8 +63,8 @@
 - Journaliser les décisions (doublon ignoré, modifié mis à jour) pour diagnostic.
 
 ## Checkpoints
-1) Ajout des champs (category, importMode) + classification TR.
-2) UI wizard : choix mode + catégorie TR + filtrage.
-3) Diff/déduplication + rendu Nouveaux/Modifiés.
-4) Sauvegarde + tests unitaires/intégration.
-5) Docs + i18n + logs.
+- ✅ Ajout des champs (category, importMode) + classification TR (crypto/PEA/CTO) dans les parsers.
+- ✅ UI wizard : choix du mode + catégorie TR + filtrage en amont de la validation.
+- ⏳ Diff/déduplication + rendu "Nouveaux/Modifiés" en mode Actualisation.
+- ⏳ Sauvegarde : appliquer les décisions (ajout/mise à jour), ignorer les doublons, tests unitaires/intégration.
+- ⏳ Docs (HubImport, ParserTradeRepublic), i18n et logs/telemetry.

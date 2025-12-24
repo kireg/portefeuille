@@ -1,0 +1,4 @@
+enum ImportMode {
+  initial,
+  update,
+}
