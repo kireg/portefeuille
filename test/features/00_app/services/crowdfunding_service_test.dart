@@ -252,4 +252,83 @@ void main() {
       expect(hasCorrectInterest, isTrue);
     });
   });
+
+  group('CrowdfundingService duration basis (max vs target)', () {
+    test('generateProjections uses maxDuration when available', () {
+      final startDate = DateTime(2024, 1, 15);
+      final asset = Asset(
+        id: 'a1',
+        name: 'Projet Test',
+        ticker: 'CROWD_TEST',
+        type: AssetType.RealEstateCrowdfunding,
+        expectedYield: 12.0,
+        repaymentType: RepaymentType.MonthlyInterest,
+        targetDuration: 12,
+        maxDuration: 24,
+        transactions: [
+          Transaction(
+            id: 't1',
+            accountId: 'acc1',
+            type: TransactionType.Buy,
+            date: startDate,
+            assetTicker: 'CROWD_TEST',
+            assetName: 'Projet Test',
+            quantity: 1000.0,
+            price: 1.0,
+            amount: -1000.0,
+            fees: 0.0,
+            notes: '',
+            assetType: AssetType.RealEstateCrowdfunding,
+          ),
+        ],
+      );
+
+      final projections = service.generateProjections([asset]);
+      final capital = projections.where((p) => p.type == TransactionType.CapitalRepayment).toList();
+      expect(capital.length, 1);
+
+      final expectedEnd = startDate.add(const Duration(days: 24 * 30));
+      expect(capital.first.date.year, expectedEnd.year);
+      expect(capital.first.date.month, expectedEnd.month);
+    });
+
+    test('generateProjections falls back to targetDuration when maxDuration is null', () {
+      // Choisir une date de début suffisamment récente pour que la fin soit dans le futur
+      final startDate = DateTime(2025, 7, 1);
+      final asset = Asset(
+        id: 'a2',
+        name: 'Projet Target Seulement',
+        ticker: 'CROWD_TARGET',
+        type: AssetType.RealEstateCrowdfunding,
+        expectedYield: 10.0,
+        repaymentType: RepaymentType.InFine,
+        targetDuration: 18,
+        maxDuration: null,
+        transactions: [
+          Transaction(
+            id: 't2',
+            accountId: 'acc1',
+            type: TransactionType.Buy,
+            date: startDate,
+            assetTicker: 'CROWD_TARGET',
+            assetName: 'Projet Target Seulement',
+            quantity: 500.0,
+            price: 1.0,
+            amount: -500.0,
+            fees: 0.0,
+            notes: '',
+            assetType: AssetType.RealEstateCrowdfunding,
+          ),
+        ],
+      );
+
+      final projections = service.generateProjections([asset]);
+      final capital = projections.where((p) => p.type == TransactionType.CapitalRepayment).toList();
+      expect(capital.length, 1);
+
+      final expectedEnd = startDate.add(const Duration(days: 18 * 30));
+      expect(capital.first.date.year, expectedEnd.year);
+      expect(capital.first.date.month, expectedEnd.month);
+    });
+  });
 }

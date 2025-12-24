@@ -261,7 +261,7 @@ class _FileImportWizardState extends State<FileImportWizard> {
       accountId: _selectedAccountId!,
       type: parsed.type,
       date: parsed.date,
-      assetTicker: parsed.ticker,
+      assetTicker: parsed.ticker ?? parsed.isin, // Use ISIN as fallback if ticker is not available
       assetName: parsed.assetName,
       quantity: parsed.quantity,
       price: parsed.price,

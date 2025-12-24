@@ -15,10 +15,12 @@ class CrowdfundingTimelineWidget extends StatefulWidget {
   });
 
   @override
-  State<CrowdfundingTimelineWidget> createState() => _CrowdfundingTimelineWidgetState();
+  State<CrowdfundingTimelineWidget> createState() =>
+      _CrowdfundingTimelineWidgetState();
 }
 
-class _CrowdfundingTimelineWidgetState extends State<CrowdfundingTimelineWidget> {
+class _CrowdfundingTimelineWidgetState
+    extends State<CrowdfundingTimelineWidget> {
   final Set<String> _selectedProjectIds = {};
 
   void _showFilterDialog() {
@@ -138,7 +140,9 @@ class _CrowdfundingTimelineWidgetState extends State<CrowdfundingTimelineWidget>
               IconButton(
                 icon: Icon(
                   Icons.filter_list,
-                  color: _selectedProjectIds.isNotEmpty ? AppColors.primary : AppColors.textSecondary,
+                  color: _selectedProjectIds.isNotEmpty
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                 ),
                 onPressed: _showFilterDialog,
               ),
@@ -169,8 +173,11 @@ class _CrowdfundingTimelineWidgetState extends State<CrowdfundingTimelineWidget>
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            DateFormat('MMM', 'fr_FR').format(endDate).toUpperCase(),
-                            style: AppTypography.bodyBold.copyWith(color: AppColors.primary),
+                            DateFormat('MMM', 'fr_FR')
+                                .format(endDate)
+                                .toUpperCase(),
+                            style: AppTypography.bodyBold
+                                .copyWith(color: AppColors.primary),
                           ),
                           Text(
                             DateFormat('yyyy', 'fr_FR').format(endDate),
@@ -189,13 +196,16 @@ class _CrowdfundingTimelineWidgetState extends State<CrowdfundingTimelineWidget>
                           decoration: BoxDecoration(
                             color: AppColors.primary,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.background, width: 2),
+                            border: Border.all(
+                                color: AppColors.background, width: 2),
                           ),
                         ),
                         Expanded(
                           child: Container(
                             width: 2,
-                            color: isLast ? Colors.transparent : AppColors.surfaceLight,
+                            color: isLast
+                                ? Colors.transparent
+                                : AppColors.surfaceLight,
                           ),
                         ),
                       ],
@@ -204,7 +214,8 @@ class _CrowdfundingTimelineWidgetState extends State<CrowdfundingTimelineWidget>
                     // Carte Projet
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: AppDimens.paddingM),
+                        padding:
+                            const EdgeInsets.only(bottom: AppDimens.paddingM),
                         child: _CrowdfundingProjectCard(asset: asset),
                       ),
                     ),
@@ -220,9 +231,8 @@ class _CrowdfundingTimelineWidgetState extends State<CrowdfundingTimelineWidget>
 
   DateTime _getStartDate(Asset asset) {
     if (asset.transactions.isEmpty) return DateTime.now();
-    final buyTransactions = asset.transactions
-        .where((t) => t.type == TransactionType.Buy)
-        .toList();
+    final buyTransactions =
+        asset.transactions.where((t) => t.type == TransactionType.Buy).toList();
     if (buyTransactions.isEmpty) return DateTime.now();
     buyTransactions.sort((a, b) => a.date.compareTo(b.date));
     return buyTransactions.first.date;
@@ -230,7 +240,8 @@ class _CrowdfundingTimelineWidgetState extends State<CrowdfundingTimelineWidget>
 
   DateTime _getEndDate(Asset asset) {
     final start = _getStartDate(asset);
-    final duration = asset.targetDuration ?? 0;
+    // On base l'estimation sur la durée maximale si disponible
+    final duration = asset.maxDuration ?? asset.targetDuration ?? 0;
     return start.add(Duration(days: duration * 30));
   }
 }
@@ -241,7 +252,8 @@ class _CrowdfundingProjectCard extends StatefulWidget {
   const _CrowdfundingProjectCard({required this.asset});
 
   @override
-  State<_CrowdfundingProjectCard> createState() => _CrowdfundingProjectCardState();
+  State<_CrowdfundingProjectCard> createState() =>
+      _CrowdfundingProjectCardState();
 }
 
 class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
@@ -255,7 +267,8 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
     final now = DateTime.now();
     final totalDuration = endDate.difference(startDate).inDays;
     final elapsed = now.difference(startDate).inDays;
-    final progress = (totalDuration > 0) ? (elapsed / totalDuration).clamp(0.0, 1.0) : 0.0;
+    final progress =
+        (totalDuration > 0) ? (elapsed / totalDuration).clamp(0.0, 1.0) : 0.0;
 
     // Calculs financiers
     double invested = 0.0;
@@ -265,9 +278,11 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
     for (var t in asset.transactions) {
       if (t.type == TransactionType.Buy) {
         invested += t.amount.abs();
-      } else if (t.type == TransactionType.Dividend || t.type == TransactionType.Interest) {
+      } else if (t.type == TransactionType.Dividend ||
+          t.type == TransactionType.Interest) {
         interests += t.amount;
-      } else if (t.type == TransactionType.CapitalRepayment || t.type == TransactionType.Sell) {
+      } else if (t.type == TransactionType.CapitalRepayment ||
+          t.type == TransactionType.Sell) {
         repaidCapital += t.amount;
       }
     }
@@ -289,7 +304,9 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: _isExpanded ? AppColors.primary.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.05),
+            color: _isExpanded
+                ? AppColors.primary.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.05),
           ),
           boxShadow: _isExpanded
               ? [
@@ -316,7 +333,9 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
                   ),
                 ),
                 Icon(
-                  _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  _isExpanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
                   color: AppColors.textSecondary,
                   size: 20,
                 ),
@@ -343,9 +362,12 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
                   style: AppTypography.caption,
                 ),
                 if (endDate.isBefore(now))
-                  Text("Terminé", style: AppTypography.caption.copyWith(color: AppColors.success))
+                  Text("Terminé",
+                      style: AppTypography.caption
+                          .copyWith(color: AppColors.success))
                 else
-                  Text("${endDate.difference(now).inDays} jours", style: AppTypography.caption),
+                  Text("${endDate.difference(now).inDays} jours",
+                      style: AppTypography.caption),
               ],
             ),
 
@@ -354,14 +376,15 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
               const SizedBox(height: AppDimens.paddingM),
               const Divider(height: 1, color: AppColors.surfaceLight),
               const SizedBox(height: AppDimens.paddingM),
-              
               _buildDetailRow("Investi", invested, currency),
               const SizedBox(height: 4),
-              _buildDetailRow("Intérêts perçus", interests, currency, valueColor: AppColors.success),
+              _buildDetailRow("Intérêts perçus", interests, currency,
+                  valueColor: AppColors.success),
               const SizedBox(height: 4),
               _buildDetailRow("Capital remboursé", repaidCapital, currency),
               const SizedBox(height: 4),
-              _buildDetailRow("Restant dû", remainingCapital, currency, isBold: true),
+              _buildDetailRow("Restant dû", remainingCapital, currency,
+                  isBold: true),
             ],
           ],
         ),
@@ -369,12 +392,15 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
     );
   }
 
-  Widget _buildDetailRow(String label, double amount, String currency, {Color? valueColor, bool isBold = false}) {
+  Widget _buildDetailRow(String label, double amount, String currency,
+      {Color? valueColor, bool isBold = false}) {
     final style = isBold ? AppTypography.bodyBold : AppTypography.caption;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+        Text(label,
+            style:
+                AppTypography.caption.copyWith(color: AppColors.textSecondary)),
         Text(
           "${NumberFormat.currency(symbol: '', decimalDigits: 2).format(amount)} $currency",
           style: style.copyWith(color: valueColor ?? AppColors.textPrimary),
@@ -385,9 +411,8 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
 
   DateTime _getStartDate(Asset asset) {
     if (asset.transactions.isEmpty) return DateTime.now();
-    final buyTransactions = asset.transactions
-        .where((t) => t.type == TransactionType.Buy)
-        .toList();
+    final buyTransactions =
+        asset.transactions.where((t) => t.type == TransactionType.Buy).toList();
     if (buyTransactions.isEmpty) return DateTime.now();
     buyTransactions.sort((a, b) => a.date.compareTo(b.date));
     return buyTransactions.first.date;
@@ -395,7 +420,8 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
 
   DateTime _getEndDate(Asset asset) {
     final start = _getStartDate(asset);
-    final duration = asset.targetDuration ?? 0;
+    // On base l'estimation sur la durée maximale si disponible
+    final duration = asset.maxDuration ?? asset.targetDuration ?? 0;
     return start.add(Duration(days: duration * 30));
   }
 }

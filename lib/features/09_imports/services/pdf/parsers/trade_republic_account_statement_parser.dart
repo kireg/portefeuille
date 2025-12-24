@@ -83,17 +83,26 @@ class TradeRepublicAccountStatementParser implements StatementParser {
 
       if (isNewTransaction) {
         // Process previous block if exists
-        if (currentBlock.isNotEmpty) {
+        // IMPORTANT: Only process if we are in the transactions section
+        if (currentBlock.isNotEmpty && inTransactionsSection) {
           _parseBlock(currentBlock, transactions);
           currentBlock = [];
         }
         
-        if (isSplitDate) {
-          // Reconstruct date on one line
-          currentBlock.add("${lines[i]} ${lines[i+1]} ${lines[i+2]}");
-          i += 2; // Skip next 2 lines as they are part of the date
+        // Only start a new block if we are in the transactions section
+        if (inTransactionsSection) {
+          if (isSplitDate) {
+            // Reconstruct date on one line
+            currentBlock.add("${lines[i]} ${lines[i+1]} ${lines[i+2]}");
+            i += 2; // Skip next 2 lines as they are part of the date
+          } else {
+            currentBlock.add(line);
+          }
         } else {
-          currentBlock.add(line);
+          // Skip dates before the TRANSACTIONS section header
+          if (isSplitDate) {
+            i += 2; // Still skip the date parts to avoid misparse
+          }
         }
       } else {
         // Append to current block if we are inside a transaction
