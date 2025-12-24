@@ -231,6 +231,16 @@ class LaPremiereBriqueParser {
     if (val is DateCellValue) {
       return DateTime(val.year, val.month, val.day);
     }
+
+    if (val is IntCellValue) {
+      // Excel stocke parfois les dates comme nombre de jours depuis 1899-12-30
+      final serial = val.value;
+      return DateTime(1899, 12, 30).add(Duration(days: serial));
+    }
+    if (val is DoubleCellValue) {
+      final serial = val.value.round();
+      return DateTime(1899, 12, 30).add(Duration(days: serial));
+    }
     
     String text = "";
     if (val is TextCellValue) {

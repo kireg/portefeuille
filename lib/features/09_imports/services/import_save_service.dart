@@ -1,15 +1,19 @@
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/09_imports/services/import_diff_service.dart';
 import 'package:portefeuille/features/09_imports/services/models/import_mode.dart';
+import 'package:portefeuille/core/data/models/asset_metadata.dart';
 
 class ImportSaveService {
   static Future<int> saveSelected({
     required TransactionProvider provider,
+    required PortfolioProvider portfolioProvider,
     required List<ImportCandidate> candidates,
     required String accountId,
     required ImportMode mode,
     required String? sourceId,
+    Map<String, AssetMetadata>? metadataByTicker,
   }) async {
     final selectedCandidates = candidates.where((c) => c.selected).toList();
     if (selectedCandidates.isEmpty) return 0;

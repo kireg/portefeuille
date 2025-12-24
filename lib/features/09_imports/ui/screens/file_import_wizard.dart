@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:uuid/uuid.dart';
+import 'package:excel/excel.dart' as excel_lib hide Border;
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
+import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
@@ -44,6 +46,7 @@ class _FileImportWizardState extends State<FileImportWizard> {
   String? _selectedSourceId;
   ImportMode _importMode = ImportMode.initial;
   ImportCategory _selectedTrCategory = ImportCategory.cto;
+  Map<String, AssetMetadata> _crowdfundingMetadata = {};
 
   // Step 3: Validation & Parsing
   bool _isParsing = false;
@@ -287,6 +290,7 @@ class _FileImportWizardState extends State<FileImportWizard> {
       _duplicateTransactions = [];
       _invalidIsinTransactions = [];
       _hasConfirmedWarnings = false;
+      _crowdfundingMetadata = {};
     });
 
     try {
@@ -297,20 +301,36 @@ class _FileImportWizardState extends State<FileImportWizard> {
       if (sourceId == 'la_premiere_brique') {
         final parser = LaPremiereBriqueParser();
         final projects = await parser.parse(file);
-        // Convert to ParsedTransaction
-        results = projects
-            .map((p) => ParsedTransaction(
-                  date: p.investmentDate ?? DateTime.now(),
-                  type: TransactionType.Buy,
-                  assetName: p.projectName,
-                  quantity: p.investedAmount,
-                  price: 1.0,
-                  amount: p.investedAmount,
-                  fees: 0,
-                  currency: 'EUR',
-                  assetType: AssetType.RealEstateCrowdfunding,
-                ))
-            .toList();
+        _crowdfundingMetadata = {};
+
+        // Convert to ParsedTransaction + préparer les métadonnées Crowdfunding
+        results = projects.map((p) {
+          final ticker = p.projectName;
+
+          _crowdfundingMetadata[ticker] = AssetMetadata(
+            ticker: ticker,
+            projectName: p.projectName,
+            minDuration: p.minDurationMonths,
+            targetDuration: p.durationMonths,
+            maxDuration: p.maxDurationMonths,
+            expectedYield: p.yieldPercent,
+            repaymentType: p.repaymentType,
+            priceCurrency: 'EUR',
+          );
+
+          return ParsedTransaction(
+            date: p.investmentDate ?? DateTime.now(),
+            type: TransactionType.Buy,
+            assetName: p.projectName,
+            ticker: ticker,
+            quantity: p.investedAmount,
+            price: 1.0,
+            amount: p.investedAmount,
+            fees: 0,
+            currency: 'EUR',
+            assetType: AssetType.RealEstateCrowdfunding,
+          );
+        }).toList();
       } else {
         // Text based parsers
         String text = await _extractText(file);
@@ -388,16 +408,52 @@ class _FileImportWizardState extends State<FileImportWizard> {
   }
 
   Future<String> _extractText(PlatformFile file) async {
-    if (file.extension?.toLowerCase() == 'pdf') {
+    final extension = file.extension?.toLowerCase();
+
+    if (extension == 'pdf') {
       final PdfDocument document = PdfDocument(
           inputBytes: file.bytes ?? await File(file.path!).readAsBytes());
       String text = PdfTextExtractor(document).extractText();
       document.dispose();
       return text;
-    } else {
-      final bytes = file.bytes ?? await File(file.path!).readAsBytes();
-      return utf8.decode(bytes);
     }
+
+    final bytes = file.bytes ?? await File(file.path!).readAsBytes();
+
+    if (extension == 'xlsx' || extension == 'xls') {
+      try {
+        final excel = excel_lib.Excel.decodeBytes(bytes);
+        if (excel.tables.isEmpty) return '';
+
+        final buffer = StringBuffer();
+        final sheet = excel.tables.values.first;
+
+        for (final row in sheet.rows) {
+          final cells = row.map(_stringifyCell).toList();
+          if (cells.every((value) => value.trim().isEmpty)) continue;
+          buffer.writeln(cells.join(','));
+        }
+
+        return buffer.toString();
+      } on FormatException {
+        // Fallback: fichier corrompu ou non Excel malgré l'extension, on tente un décodage texte simple
+        return utf8.decode(bytes, allowMalformed: true);
+      }
+    }
+
+    return utf8.decode(bytes, allowMalformed: true);
+  }
+
+  String _stringifyCell(excel_lib.Data? cell) {
+    final value = cell?.value;
+    if (value == null) return '';
+
+    if (value is excel_lib.TextCellValue) return value.value.toString();
+    if (value is excel_lib.DateCellValue) {
+      return DateTime(value.year, value.month, value.day).toIso8601String();
+    }
+
+    return value.toString();
   }
 
   Future<void> _saveTransactions() async {
@@ -407,12 +463,15 @@ class _FileImportWizardState extends State<FileImportWizard> {
     if (selectedCandidates.isEmpty) return;
 
     final transactionProvider = context.read<TransactionProvider>();
+    final portfolioProvider = context.read<PortfolioProvider>();
     final count = await ImportSaveService.saveSelected(
       provider: transactionProvider,
+      portfolioProvider: portfolioProvider,
       candidates: selectedCandidates,
       accountId: _selectedAccountId!,
       mode: _importMode,
       sourceId: _selectedSourceId,
+      metadataByTicker: _crowdfundingMetadata.isEmpty ? null : _crowdfundingMetadata,
     );
 
     if (mounted) {
@@ -863,8 +922,4 @@ class _FileImportWizardState extends State<FileImportWizard> {
       ),
     );
   }
-}
-
-class _CandidateTx {
-  // Obsolète: remplacé par ImportCandidate dans ImportDiffService.
 }
