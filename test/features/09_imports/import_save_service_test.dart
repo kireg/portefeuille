@@ -1,14 +1,26 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/services/transaction_service.dart';
+import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
+import 'package:portefeuille/core/data/services/api_service.dart';
+import 'package:portefeuille/core/data/abstractions/i_settings.dart';
+import '../../test_harness.dart';
 import 'package:portefeuille/features/09_imports/services/import_diff_service.dart';
 import 'package:portefeuille/features/09_imports/services/import_save_service.dart';
 import 'package:portefeuille/features/09_imports/services/models/import_mode.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
 
 class FakeTransactionProvider extends TransactionProvider {
-  FakeTransactionProvider() : super(transactionService: _DummyService(), portfolioProvider: _DummyPortfolioProvider());
+  FakeTransactionProvider()
+      : super(
+          transactionService: _DummyTransactionService(),
+          portfolioProvider: _DummyPortfolioProvider(),
+        );
 
   final List<Transaction> added = [];
   final List<Transaction> updated = [];
@@ -24,11 +36,40 @@ class FakeTransactionProvider extends TransactionProvider {
   }
 }
 
-// Dummies to satisfy base class; not used in tests.
-class _DummyService {}
-class _DummyPortfolioProvider {}
+class _DummyTransactionService extends TransactionService {
+  _DummyTransactionService() : super(repository: PortfolioRepository());
+}
+
+class _DummySettings implements ISettings {
+  @override
+  String? get fmpApiKey => null;
+  @override
+  bool get hasFmpApiKey => false;
+  @override
+  String get baseCurrency => 'EUR';
+  @override
+  int get appColorValue => 0xFF000000;
+  @override
+  List<String> get serviceOrder => const ['FMP', 'Yahoo'];
+}
+
+class _DummyPortfolioProvider extends PortfolioProvider {
+  _DummyPortfolioProvider()
+      : super(
+          repository: PortfolioRepository(),
+          apiService: ApiService(settings: _DummySettings()),
+        );
+}
 
 void main() {
+  late Directory hiveDir;
+  setUpAll(() async {
+    hiveDir = await initTestHive();
+  });
+
+  tearDownAll(() async {
+    await tearDownTestHive(hiveDir);
+  });
   group('ImportSaveService', () {
     test('ajoute nouveaux et met à jour modifiés', () async {
       final provider = FakeTransactionProvider();
