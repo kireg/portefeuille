@@ -91,7 +91,16 @@ $$ \text{Valeur (EUR)} = \text{Valeur (Devise Origine)} \times \text{Taux de Cha
 *   Le prix de l'actif est fixé à 1€ par unité.
 *   La quantité est fixée au montant investi (ex: 1000€ = 1000 unités).
 *   **Auto-Dépôt automatique :** Un DÉPÔT compensatoire est créé automatiquement pour chaque date d'investissement afin de neutraliser l'impact sur les liquidités. Cela reflète le fait que l'argent était déjà disponible sur la plateforme avant l'import.
+*   **Notes du dépôt :** `"Apport auto - Crowdfunding (mode depuis source)"`
 
-### Import PDF (Banque)
+### Import Initial de Positions (Snapshot)
+*   Lors d'un import initial (positions existantes sans historique complet), les achats reconstitués sont également **NÉGATIFS**.
+*   Pour éviter un solde de liquidité fortement négatif, un DÉPÔT compensatoire est créé automatiquement par date d'achat (hors crowdfunding).
+*   **Notes du dépôt :** `"Apport auto - Neutralisation import (mode depuis source)"`
+*   Cette neutralisation s'applique uniquement en mode `initial` et n'affecte pas les imports en mode `supplement` ou `replacement`.
+
+### Import PDF/Excel (Banque)
 *   Les achats sont convertis en montants **NÉGATIFS**.
-*   Si l'option "Auto-Dépôt" est activée, une transaction de DÉPÔT du même montant (positif) est créée simultanément pour neutraliser l'impact sur la liquidité (utile si on ne suit pas le compte espèce de la banque).
+*   Les ventes sont converties en montants **POSITIFS**.
+*   Les dividendes et intérêts sont **POSITIFS**.
+*   Les retraits sont **NÉGATIFS**.

@@ -361,6 +361,7 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       final isinMatch = isinRegex.firstMatch(description);
       if (isinMatch != null) {
         isin = isinMatch.group(1);
+        ticker = isin; // Utiliser l'ISIN comme ticker pour grouper les transactions
       }
 
       final qtyMatch = qtyRegex.firstMatch(description);

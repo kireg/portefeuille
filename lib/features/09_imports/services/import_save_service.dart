@@ -35,8 +35,10 @@ class ImportSaveService {
     if (newCandidates.isNotEmpty) {
       final List<Transaction> transactions = [];
       
-      // Grouper les achats crowdfunding par date pour créer un seul dépôt compensatoire par date
+      // Grouper les achats par date pour créer un seul dépôt compensatoire par date
+      // Conserver un flag par date si c'est du crowdfunding (pour le libellé des notes)
       final Map<String, double> crowdfundingDepositsByDate = {};
+      final Map<String, bool> depositIsCrowdfundingByDate = {};
       
       for (final candidate in newCandidates) {
         final parsed = candidate.parsed;
@@ -57,14 +59,20 @@ class ImportSaveService {
           assetType: parsed.assetType,
           priceCurrency: parsed.currency,
         ));
+        ));
         
-        // Pour les achats crowdfunding, calculer le dépôt compensatoire
-        // Le montant de l'achat est négatif, donc on doit ajouter son opposé (positif)
-        if (parsed.type == TransactionType.Buy && 
-            parsed.assetType == AssetType.RealEstateCrowdfunding) {
-          final dateKey = parsed.date.toIso8601String().substring(0, 10); // YYYY-MM-DD
-          crowdfundingDepositsByDate[dateKey] = 
+        // Neutralisation des snapshots (relevés de positions import initial)
+        // Si le parser a marqué la transaction comme Buy (position) ET que le mode est initial,
+        // on ajoute un dépôt compensatoire pour ne pas changer les liquidités.
+        if (parsed.type == TransactionType.Buy &&
+            mode == ImportMode.initial &&
+            parsed.amount < 0 &&
+            parsed.assetType != AssetType.RealEstateCrowdfunding) {
+          final dateKey = parsed.date.toIso8601String().substring(0, 10);
+          crowdfundingDepositsByDate[dateKey] =
               (crowdfundingDepositsByDate[dateKey] ?? 0) + parsed.amount.abs();
+          depositIsCrowdfundingByDate[dateKey] =
+            (depositIsCrowdfundingByDate[dateKey] ?? false);
         }
       }
       
@@ -74,13 +82,16 @@ class ImportSaveService {
         final amount = entry.value;
         final date = DateTime.parse(dateStr);
         
+        final isCrowd = depositIsCrowdfundingByDate[dateStr] == true;
         transactions.add(Transaction(
           id: 'deposit_auto_$dateStr',
           accountId: accountId,
           type: TransactionType.Deposit,
           date: date,
           amount: amount,
-          notes: "Apport auto - Crowdfunding ($modeLabel depuis $sourceId)",
+          notes: isCrowd
+              ? "Apport auto - Crowdfunding ($modeLabel depuis $sourceId)"
+              : "Apport auto - Neutralisation import ($modeLabel depuis $sourceId)",
           priceCurrency: 'EUR',
         ));
       }

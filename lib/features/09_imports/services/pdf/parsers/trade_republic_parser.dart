@@ -184,6 +184,7 @@ class TradeRepublicParser implements StatementParser {
         type: TransactionType.Buy, // Portfolio snapshot
         assetName: assetName,
         isin: isin,
+        ticker: isin, // Utiliser l'ISIN comme ticker pour grouper les transactions
         quantity: quantity,
         price: price,
         amount: -total.abs(),

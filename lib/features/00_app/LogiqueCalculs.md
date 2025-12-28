@@ -20,7 +20,15 @@ Ce document décrit les règles de calcul utilisées par l’application pour le
 ## Import La Première Brique
 - Le parser Excel calcule `durationMonths` à partir des dates min/max (min + 6 mois, plafonné par max) et renseigne aussi `minDurationMonths` et `maxDurationMonths`.
 - Lors de l’hydratation, `asset.maxDuration` est enregistrée si disponible et devient la base des projections.
+## Import Trade Republic
+- Les parsers Trade Republic (`TradeRepublicParser` et `TradeRepublicAccountStatementParser`) utilisent désormais l'ISIN comme ticker par défaut.
+- Cela permet de regrouper correctement les transactions par actif et de calculer le capital investi.
+- Sans ticker, les transactions n'étaient pas associées à des actifs et impactaient uniquement les liquidités.
 
+## Gestion des Liquidités lors des Imports
+- **Import Crowdfunding** : Les achats décrémentent directement les liquidités (pas de dépôt compensatoire automatique).
+- **Import Snapshot (relevé de positions)** : En mode "import initial", un dépôt compensatoire est créé pour neutraliser l'impact sur les liquidités, car on importe "ce que je possède maintenant" sans l'historique complet.
+- Cette distinction garantit que les liquidités reflètent la réalité financière : un investissement de 1000€ sur un compte avec 2000€ de dépôt initial laisse 1000€ de liquidités disponibles.
 ## Hypothèses
 - 1 mois ≈ 30 jours pour le calcul des dates de fin (cohérence globale des widgets existants).
 - Le prix unitaire du crowdfunding est considéré à 1 (la quantité représente le montant investi).
