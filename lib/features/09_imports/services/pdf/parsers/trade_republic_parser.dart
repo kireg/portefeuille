@@ -131,8 +131,9 @@ class TradeRepublicParser implements StatementParser {
 
       final quantity = double.tryParse(qtyStr) ?? 0.0;
       final price = double.tryParse(priceStr) ?? 0.0;
-      final amount = quantity *
-          price; // Approximation, le montant net est souvent ailleurs
+        // Uniformisation: Achat = montant négatif, Vente = positif
+        final rawAmount = quantity * price;
+        final amount = (typeStr == 'achat') ? -rawAmount.abs() : rawAmount.abs();
       final assetType = _inferAssetType(assetName);
       final ImportCategory? category = assetType == AssetType.Crypto
           ? ImportCategory.crypto
@@ -180,13 +181,12 @@ class TradeRepublicParser implements StatementParser {
 
       transactions.add(ParsedTransaction(
         date: docDate ?? DateTime.now(),
-        type: TransactionType
-            .Buy, // On considère ça comme un achat pour l'import initial
+        type: TransactionType.Buy, // Portfolio snapshot
         assetName: assetName,
         isin: isin,
         quantity: quantity,
         price: price,
-        amount: total,
+        amount: -total.abs(),
         fees: 0.0,
         currency: "EUR", // Par défaut EUR sur ce relevé
         assetType: assetType,
@@ -210,7 +210,7 @@ class TradeRepublicParser implements StatementParser {
 
         final quantity = double.tryParse(qtyStr) ?? 0.0;
         final perShare = double.tryParse(perShareStr) ?? 0.0;
-        final amount = quantity * perShare; // Montant total = qté × montant par titre
+        final amount = (quantity * perShare).abs(); // Dividende toujours positif
 
         final assetType = _inferAssetType(assetName);
         final ImportCategory? category = assetType == AssetType.Crypto

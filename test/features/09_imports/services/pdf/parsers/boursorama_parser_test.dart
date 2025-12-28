@@ -54,7 +54,7 @@ Achat au comptant de 10 LVMH à 850,00 EUR
       expect(tx.quantity, closeTo(10.0, 0.001));
       expect(tx.assetName, 'LVMH');
       expect(tx.price, closeTo(850.0, 0.01));
-      expect(tx.amount, closeTo(8500.0, 0.01));
+      expect(tx.amount, closeTo(-8500.0, 0.01));
       expect(tx.currency, 'EUR');
     });
 
@@ -212,7 +212,7 @@ TOTAL EUR7 318,26
       expect(thales.quantity, closeTo(15.0, 0.01));
       expect(thales.isin, 'FR0000121329');
       expect(thales.price, closeTo(163.88, 0.01)); // PRU
-      expect(thales.amount, closeTo(15 * 163.88, 1.0)); // Montant investi
+      expect(thales.amount, closeTo(-(15 * 163.88), 1.0)); // Montant investi (achat négatif)
       expect(thales.date.year, 2025);
       expect(thales.date.month, 9);
       expect(thales.date.day, 30);

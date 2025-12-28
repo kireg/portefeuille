@@ -138,6 +138,44 @@ void main() {
       expect(provider.updated.first.id, 't_mod');
     });
 
+    test('génère des IDs courts même avec un nom d’actif très long', () async {
+      final provider = FakeTransactionProvider();
+      final date = DateTime(2024, 5, 20);
+
+      final longName = 'A' * 400; // > 255 caractères
+
+      final parsed = [
+        ParsedTransaction(
+          date: date,
+          type: TransactionType.Buy,
+          assetName: longName,
+          ticker: 'LONG',
+          quantity: 1.0,
+          price: 10.0,
+          amount: 10.0,
+          fees: 0.0,
+          currency: 'EUR',
+        ),
+      ];
+
+      final diff =
+          ImportDiffService().compute(parsed: parsed, existing: [], mode: ImportMode.initial);
+      diff.candidates.forEach((c) => c.selected = true);
+
+      final count = await ImportSaveService.saveSelected(
+        provider: provider,
+        portfolioProvider: _DummyPortfolioProvider(),
+        candidates: diff.candidates,
+        accountId: 'acc',
+        mode: ImportMode.initial,
+        sourceId: 'trade_republic',
+      );
+
+      expect(count, 1);
+      expect(provider.added, hasLength(1));
+      expect(provider.added.first.id.length, lessThan(255));
+    });
+
     test('crée un dépôt compensatoire pour les imports crowdfunding', () async {
       final provider = FakeTransactionProvider();
       final date = DateTime(2024, 6, 15);

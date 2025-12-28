@@ -6,8 +6,10 @@ import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/09_imports/services/import_diff_service.dart';
 import 'package:portefeuille/features/09_imports/services/models/import_mode.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
+import 'package:uuid/uuid.dart';
 
 class ImportSaveService {
+  static const _uuid = Uuid();
   /// Sauvegarde les transactions sélectionnées.
   /// 
   /// Pour les imports crowdfunding, crée automatiquement un dépôt compensatoire
@@ -39,9 +41,9 @@ class ImportSaveService {
       for (final candidate in newCandidates) {
         final parsed = candidate.parsed;
         
-        // Créer la transaction d'achat
+        // Créer la transaction d'achat (id borné en taille via UUID)
         transactions.add(Transaction(
-          id: parsed.assetName + parsed.date.toIso8601String(),
+          id: _uuid.v4(),
           accountId: accountId,
           type: parsed.type,
           date: parsed.date,

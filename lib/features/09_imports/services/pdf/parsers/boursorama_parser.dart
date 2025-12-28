@@ -172,8 +172,8 @@ class BoursoramaParser implements StatementParser {
           continue;
         }
         
-        // Calculer le montant investi basé sur le PRU
-        final investedAmount = quantity * pru;
+        // Calculer le montant investi basé sur le PRU (achat => montant négatif)
+        final investedAmount = -(quantity * pru).abs();
         
         transactions.add(ParsedTransaction(
           date: docDate ?? DateTime.now(),
@@ -228,7 +228,13 @@ class BoursoramaParser implements StatementParser {
 
         final quantity = double.tryParse(qtyStr) ?? 0.0;
         final price = double.tryParse(priceStr) ?? 0.0;
-        final amount = quantity * price;
+        var amount = quantity * price;
+        // Uniformisation des signes: Achat négatif, Vente positif
+        if (typeStr == 'achat') {
+          amount = -amount.abs();
+        } else {
+          amount = amount.abs();
+        }
 
         transactions.add(ParsedTransaction(
           date: docDate ?? DateTime.now(),

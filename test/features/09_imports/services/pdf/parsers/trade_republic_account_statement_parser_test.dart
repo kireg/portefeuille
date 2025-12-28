@@ -120,7 +120,7 @@ Savings plan execution XF000SOL0012 Solana, quantity: 0.037058
     expect(btc.assetType, AssetType.Crypto);
     expect(btc.isin, "XF000BTC0017");
     expect(btc.quantity, 0.000113);
-    expect(btc.amount, 9.97);
+    expect(btc.amount, -9.97);
     expect(btc.category, ImportCategory.crypto);
 
     // 3. Solana Buy
@@ -129,7 +129,7 @@ Savings plan execution XF000SOL0012 Solana, quantity: 0.037058
     expect(sol.assetType, AssetType.Crypto);
     expect(sol.isin, "XF000SOL0012");
     expect(sol.quantity, 0.037058);
-    expect(sol.amount, 5.00);
+    expect(sol.amount, -5.00);
     expect(sol.category, ImportCategory.crypto);
   });
 
@@ -156,6 +156,51 @@ Savings plan execution MSCI World, quantity: 1.0
     final tx = transactions.first;
     expect(tx.assetType, isNotNull);
     expect(tx.category, ImportCategory.pea);
+  });
+
+  test('PEA section does not override previous CTO section', () async {
+    const multiStatement = '''
+SYNTHÈSE DU RELEVÉ DE COMPTE
+PRODUIT
+Compte courant
+TRANSACTIONS
+DATE
+TYPE
+DESCRIPTION
+ENTRÉE D'ARGENT
+SORTIE D'ARGENT
+SOLDE
+01 mai 2025
+Exécution d'ordre
+Savings plan execution ABC Corp, quantity: 1
+10,00 €
+100,00 €
+SYNTHÈSE DU RELEVÉ DE COMPTE
+PRODUIT
+Compte PEA
+TRANSACTIONS
+DATE
+TYPE
+DESCRIPTION
+ENTRÉE D'ARGENT
+SORTIE D'ARGENT
+SOLDE
+02 mai 2025
+Exécution d'ordre
+Savings plan execution PEA ETF, quantity: 1
+20,00 €
+120,00 €
+''';
+
+    final transactions = await parser.parse(multiStatement);
+
+    expect(transactions, hasLength(2));
+
+    final ctoTx = transactions.first;
+    expect(ctoTx.category, ImportCategory.cto);
+
+    final peaTx = transactions.last;
+    expect(peaTx.category, ImportCategory.pea);
   });
 
   test('Should report progress', () async {

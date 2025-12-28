@@ -25,13 +25,9 @@ class TradeRepublicAccountStatementParser implements StatementParser {
   Future<List<ParsedTransaction>> parse(String rawText,
       {void Function(double)? onProgress}) async {
     final List<ParsedTransaction> transactions = [];
-
-    // Heuristique simple : si le relevé mentionne explicitement le PEA, on classe les actifs non-crypto en PEA, sinon CTO.
-    final lower = rawText.toLowerCase();
-    final ImportCategory nonCryptoCategory =
-        (lower.contains('pea') || lower.contains("plan d'epargne en actions"))
-            ? ImportCategory.pea
-            : ImportCategory.cto;
+    // Par défaut on traite la section en cours comme CTO ; chaque section "Compte PEA"
+    // bascule dynamiquement la catégorie non-crypto vers PEA.
+    ImportCategory currentCategory = ImportCategory.cto;
 
     // 1. Pre-processing: Split into lines
     final lines = rawText.split('\n').map((l) => l.trim()).toList();
@@ -66,6 +62,40 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       }
 
       final line = lines[i];
+      final lowerLine = line.toLowerCase();
+
+      // Changement de section selon l'intitulé du produit
+      if (lowerLine.contains('compte pea')) {
+        if (currentBlock.isNotEmpty) {
+          _parseBlock(currentBlock, transactions, currentCategory);
+          currentBlock = [];
+        }
+        currentCategory = ImportCategory.pea;
+        inTransactionsSection = false;
+        continue;
+      }
+      if (lowerLine.contains('compte courant') ||
+          lowerLine.contains('compte espèces') ||
+          lowerLine.contains('compte espece')) {
+        if (currentBlock.isNotEmpty) {
+          _parseBlock(currentBlock, transactions, currentCategory);
+          currentBlock = [];
+        }
+        currentCategory = ImportCategory.cto;
+        inTransactionsSection = false;
+        continue;
+      }
+
+      // Nouvelle synthèse : on réinitialise avant de chercher le prochain tableau "TRANSACTIONS".
+      if (line.contains("SYNTHÈSE DU RELEVÉ DE COMPTE") ||
+          line.contains("ACCOUNT STATEMENT SUMMARY")) {
+        if (currentBlock.isNotEmpty) {
+          _parseBlock(currentBlock, transactions, currentCategory);
+          currentBlock = [];
+        }
+        inTransactionsSection = false;
+        continue;
+      }
 
       // Detect start of transactions section
       if (line.contains("TRANSACTIONS") &&
@@ -97,7 +127,7 @@ class TradeRepublicAccountStatementParser implements StatementParser {
         // Process previous block if exists
         // IMPORTANT: Only process if we are in the transactions section
         if (currentBlock.isNotEmpty && inTransactionsSection) {
-          _parseBlock(currentBlock, transactions, nonCryptoCategory);
+          _parseBlock(currentBlock, transactions, currentCategory);
           currentBlock = [];
         }
 
@@ -130,7 +160,7 @@ class TradeRepublicAccountStatementParser implements StatementParser {
 
     // Process last block
     if (currentBlock.isNotEmpty) {
-      _parseBlock(currentBlock, transactions, nonCryptoCategory);
+      _parseBlock(currentBlock, transactions, currentCategory);
     }
 
     return transactions;
@@ -139,7 +169,7 @@ class TradeRepublicAccountStatementParser implements StatementParser {
   void _parseBlock(
     List<String> block,
     List<ParsedTransaction> transactions,
-    ImportCategory nonCryptoCategory,
+    ImportCategory accountCategory,
   ) {
     if (block.isEmpty) return;
 
@@ -235,7 +265,6 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // Example: [9597.19, 9.97]
 
       double transactionAmount = 0.0;
-      bool isOut = false;
 
       if (amounts.length >= 2) {
         transactionAmount =
@@ -293,20 +322,15 @@ class TradeRepublicAccountStatementParser implements StatementParser {
         // Or we check if "Achat" or "Vente" is in text.
         // "Savings plan execution" is typically a Buy.
         type = TransactionType.Buy;
-        isOut = true; // Usually money goes OUT to buy.
-
         if (description.contains("Vente") || description.contains("Sell")) {
           type = TransactionType.Sell;
-          isOut = false;
         }
       } else if (typeStr.contains("Intérêts") ||
           description.contains("interest")) {
         type = TransactionType.Dividend; // Or Interest
-        isOut = false;
       } else if (typeStr.contains("Dividende") ||
           description.contains("Dividend")) {
         type = TransactionType.Dividend;
-        isOut = false;
       } else if (typeStr.contains("Virement") ||
           description.contains("Transfer")) {
         // Check direction
@@ -360,14 +384,33 @@ class TradeRepublicAccountStatementParser implements StatementParser {
 
       // Infer Asset Type
       assetType = _inferAssetType(assetName, isin);
-      final ImportCategory category = assetType == AssetType.Crypto
-          ? ImportCategory.crypto
-          : nonCryptoCategory;
-
       // Calculate Price
       double price = 0.0;
       if (quantity > 0) {
-        price = transactionAmount / quantity;
+        price = (transactionAmount.abs()) / quantity;
+      }
+
+      final blockLower = block.join(' ').toLowerCase();
+
+      // Uniformisation des signes de montants
+      double signedAmount = transactionAmount;
+      switch (type) {
+        case TransactionType.Buy:
+          signedAmount = -transactionAmount.abs();
+          break;
+        case TransactionType.Sell:
+          signedAmount = transactionAmount.abs();
+          break;
+        case TransactionType.Dividend:
+        case TransactionType.Interest:
+        case TransactionType.Deposit:
+          signedAmount = transactionAmount.abs();
+          break;
+        case TransactionType.Withdrawal:
+          signedAmount = -transactionAmount.abs();
+          break;
+        default:
+          signedAmount = transactionAmount;
       }
 
       transactions.add(ParsedTransaction(
@@ -378,12 +421,16 @@ class TradeRepublicAccountStatementParser implements StatementParser {
         ticker: ticker,
         quantity: quantity,
         price: price,
-        amount: transactionAmount,
+        amount: signedAmount,
         fees:
             0, // Fees are often separate or included. In this summary, they might be included in net amount.
         currency: "EUR",
         assetType: assetType,
-        category: category,
+        category: assetType == AssetType.Crypto
+            ? ImportCategory.crypto
+            : (blockLower.contains('pea')
+                ? ImportCategory.pea
+                : accountCategory),
       ));
     } catch (e) {
       debugPrint("Error parsing block: $block \n $e");
