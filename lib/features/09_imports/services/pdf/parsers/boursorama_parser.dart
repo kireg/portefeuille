@@ -10,16 +10,27 @@ class BoursoramaParser implements StatementParser {
   @override
   bool canParse(String rawText) {
     final lower = rawText.toLowerCase();
-    // Supporte les avis d'opéré et les relevés de compte
-    return lower.contains("boursorama") && 
+    // Supporte les avis d'opéré, les relevés de compte titres et les dividendes
+    // BoursoBank est le nouveau nom de Boursorama Banque
+    final isBourso = lower.contains("boursorama") || lower.contains("boursobank");
+    return isBourso && 
            (lower.contains("avis d'opéré") || 
             lower.contains("relevé de compte") ||
+            lower.contains("releve compte titres") ||
             lower.contains("dividende") ||
             lower.contains("coupon"));
   }
 
   @override
   String? get warningMessage => null;
+
+  /// Détecte si le document est un relevé de portefeuille (snapshot)
+  bool _isPortfolioStatement(String rawText) {
+    final lower = rawText.toLowerCase();
+    return lower.contains("releve compte titres") || 
+           lower.contains("valorisé au") ||
+           lower.contains("valorisation de la ligne");
+  }
 
   AssetType _inferAssetType(String name) {
     final upper = name.toUpperCase();
@@ -39,6 +50,162 @@ class BoursoramaParser implements StatementParser {
 
   @override
   Future<List<ParsedTransaction>> parse(String rawText, {void Function(double)? onProgress}) async {
+    // Si c'est un relevé de portefeuille, utiliser le parser dédié
+    if (_isPortfolioStatement(rawText)) {
+      return _parsePortfolioStatement(rawText);
+    }
+    
+    // Sinon, parser les avis d'opéré classiques
+    return _parseTradeConfirmations(rawText);
+  }
+
+  /// Parse un relevé de portefeuille (snapshot des positions)
+  List<ParsedTransaction> _parsePortfolioStatement(String rawText) {
+    final List<ParsedTransaction> transactions = [];
+    
+    // Extraction de la date de valorisation: "Valorisé au 30/09/2025"
+    DateTime? docDate;
+    final regexValoDate = RegExp(r'[Vv]aloris[eé]\s+au\s+(\d{2})/(\d{2})/(\d{4})');
+    final dateMatch = regexValoDate.firstMatch(rawText);
+    if (dateMatch != null) {
+      docDate = DateTime(
+        int.parse(dateMatch.group(3)!),
+        int.parse(dateMatch.group(2)!),
+        int.parse(dateMatch.group(1)!),
+      );
+    }
+    
+    // Pattern pour les lignes d'actifs dans le relevé BoursoBank
+    // Le format PDF extrait peut être très compact (sans espaces) ou avec espaces.
+    // 
+    // Format compact: "15THALES (FR0000121329) * 266,603 999,0054,64163,88"
+    // Format espacé: "15 THALES (FR0000121329) * 266,60 3 999,00 54,64 163,88"
+    //
+    // Structure: Qty + Name + (ISIN) + * + Prix + Valorisation + %Portef + PRU
+    //
+    // On cherche d'abord l'ISIN qui est le point d'ancrage le plus fiable
+    final regexIsin = RegExp(r'\(([A-Z]{2}[A-Z0-9]{10})\)\s*\*');
+    
+    for (final isinMatch in regexIsin.allMatches(rawText)) {
+      try {
+        final isin = isinMatch.group(1)!;
+        final isinStart = isinMatch.start;
+        
+        // Chercher en arrière pour trouver quantité + nom
+        // On prend les 100 caractères avant l'ISIN
+        final prefixStart = (isinStart - 100).clamp(0, rawText.length);
+        final prefix = rawText.substring(prefixStart, isinStart);
+        
+        // Pattern: quantité (avec ou sans décimales) + nom de l'actif
+        // Le nom peut contenir des espaces, lettres, points, &, -
+        final regexPrefix = RegExp(r'(\d+(?:[,\.]\d+)?)\s*([A-ZÀ-Ü][A-ZÀ-Ü0-9\s\.&\-]+?)\s*$');
+        final prefixMatch = regexPrefix.firstMatch(prefix);
+        
+        if (prefixMatch == null) {
+          debugPrint('BoursoramaParser: Could not parse prefix for ISIN $isin: "$prefix"');
+          continue;
+        }
+        
+        final qtyStr = prefixMatch.group(1)!.replaceAll(',', '.');
+        final assetName = prefixMatch.group(2)!.trim();
+        final quantity = double.tryParse(qtyStr) ?? 0.0;
+        
+        if (quantity <= 0) continue;
+        
+        // Chercher après l'ISIN pour les valeurs numériques
+        // Format après "* ": cours + valorisation + %portef + PRU
+        final suffixStart = isinMatch.end;
+        final suffixEnd = (suffixStart + 150).clamp(0, rawText.length);
+        var suffix = rawText.substring(suffixStart, suffixEnd);
+        
+        // Nettoyer le suffix: arrêter avant le prochain ISIN, "Sous-Total", ou saut de section
+        final stopPatterns = [
+          RegExp(r'\([A-Z]{2}[A-Z0-9]{10}\)'), // Prochain ISIN
+          RegExp(r'Sous-Total', caseSensitive: false),
+          RegExp(r'TOTAL', caseSensitive: false),
+          RegExp(r'VALEURS', caseSensitive: false),
+        ];
+        for (final pattern in stopPatterns) {
+          final match = pattern.firstMatch(suffix);
+          if (match != null && match.start > 0) {
+            suffix = suffix.substring(0, match.start);
+            break;
+          }
+        }
+        
+        // Extraire les nombres décimaux (format français: virgule comme séparateur décimal)
+        // Pattern pour capturer des nombres comme "266,60" ou "3 999,00" ou "54,64" ou "163,88"
+        // Un nombre décimal français = chiffres (optionnellement avec espaces) + virgule + 2-3 chiffres décimaux
+        // 
+        // ATTENTION: Dans le format compact du PDF BoursoBank, les nombres peuvent être collés:
+        // "266,603 999,0054,64163,88"
+        // On doit identifier les 4 valeurs: cours, valorisation, %portef, PRU
+        //
+        // Stratégie: extraire tous les nombres décimaux avec le pattern flexible,
+        // puis pour le PRU prendre les derniers chiffres + virgule + 2 chiffres
+        
+        // Première passe: trouver tous les nombres décimaux standards
+        final regexDecimalNumbers = RegExp(r'(\d[\d\s]*,\d{2,3})');
+        final numberMatches = regexDecimalNumbers.allMatches(suffix).toList();
+        
+        double cours = 0.0;
+        double pru = 0.0;
+        
+        if (numberMatches.isNotEmpty) {
+          cours = _parseNumber(numberMatches[0].group(1)!);
+        }
+        
+        // Pour le PRU, on cherche le dernier nombre du bloc
+        // Dans le format compact "54,64163,88", après le 3ème match, il reste "163,88"
+        // On utilise une approche différente: chercher le dernier pattern \d+,\d{2} dans le suffix
+        final allDecimalMatches = RegExp(r'(\d+,\d{2})').allMatches(suffix).toList();
+        if (allDecimalMatches.length >= 4) {
+          // Format normal: prendre le 4ème
+          pru = _parseNumber(allDecimalMatches[3].group(1)!);
+        } else if (allDecimalMatches.isNotEmpty) {
+          // Fallback: prendre le dernier
+          pru = _parseNumber(allDecimalMatches.last.group(1)!);
+        }
+        
+        if (pru <= 0) {
+          debugPrint('BoursoramaParser: Could not determine PRU for ISIN $isin in: "$suffix"');
+          continue;
+        }
+        
+        // Calculer le montant investi basé sur le PRU
+        final investedAmount = quantity * pru;
+        
+        transactions.add(ParsedTransaction(
+          date: docDate ?? DateTime.now(),
+          type: TransactionType.Buy,
+          assetName: assetName,
+          isin: isin,
+          quantity: quantity,
+          price: pru, // On utilise le PRU comme prix d'achat
+          amount: investedAmount,
+          fees: 0.0,
+          currency: 'EUR',
+          assetType: _inferAssetType(assetName),
+        ));
+        
+        debugPrint('BoursoramaParser: Parsed position - $assetName ($isin), qty: $quantity, pru: $pru, current: $cours');
+      } catch (e) {
+        debugPrint('BoursoramaParser: Error parsing position: $e');
+      }
+    }
+    
+    return transactions;
+  }
+
+  /// Parse un nombre avec gestion des espaces comme séparateurs de milliers
+  double _parseNumber(String str) {
+    // Supprime les espaces (séparateurs de milliers) et remplace la virgule par un point
+    final cleaned = str.replaceAll(' ', '').replaceAll(',', '.');
+    return double.tryParse(cleaned) ?? 0.0;
+  }
+
+  /// Parse les avis d'opéré (confirmations de transactions)
+  Future<List<ParsedTransaction>> _parseTradeConfirmations(String rawText) async {
     final List<ParsedTransaction> transactions = [];
     
     // Extraction de la date d'exécution (plusieurs formats possibles)
