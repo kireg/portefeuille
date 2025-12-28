@@ -5,18 +5,22 @@ import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
-// import 'package:dotted_border/dotted_border.dart'; // Si disponible, sinon Border.all avec dash pattern manuel ou simple
+import 'package:portefeuille/features/09_imports/services/source_detector.dart';
 
 class WizardStepFile extends StatelessWidget {
   final PlatformFile? selectedFile;
   final VoidCallback onPickFile;
   final VoidCallback onClearFile;
+  final SourceDetectionResult? detectionResult;
+  final bool isDetecting;
 
   const WizardStepFile({
     super.key,
     required this.selectedFile,
     required this.onPickFile,
     required this.onClearFile,
+    this.detectionResult,
+    this.isDetecting = false,
   });
 
   @override
@@ -35,16 +39,82 @@ class WizardStepFile extends StatelessWidget {
           style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
         
-        Expanded(
-          child: Center(
-            child: selectedFile == null
-                ? _buildUploadArea()
-                : _buildFileCard(),
-          ),
-        ),
+        if (selectedFile == null)
+          Expanded(child: Center(child: _buildUploadArea()))
+        else ...[
+          _buildFileCard(),
+          const SizedBox(height: 16),
+          if (isDetecting)
+            const Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 8),
+                  Text('Analyse du fichier...'),
+                ],
+              ),
+            )
+          else if (detectionResult != null)
+            Expanded(child: _buildPreviewCard()),
+        ],
       ],
+    );
+  }
+
+  Widget _buildPreviewCard() {
+    final result = detectionResult!;
+    
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                result.isDetected ? Icons.check_circle : Icons.info_outline,
+                color: result.isDetected ? AppColors.success : AppColors.warning,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  result.message ?? 'Fichier analysé',
+                  style: AppTypography.bodyBold.copyWith(
+                    color: result.isDetected ? AppColors.success : AppColors.warning,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text('Aperçu du contenu :', style: AppTypography.caption),
+          const SizedBox(height: 8),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SingleChildScrollView(
+                child: Text(
+                  result.preview.isNotEmpty 
+                      ? result.preview 
+                      : 'Aperçu non disponible',
+                  style: AppTypography.caption.copyWith(
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -12,29 +12,29 @@ void main() {
     final sheet = excel['Mes prêts'];
     sheet
       ..appendRow([
-        'Nom du projet',
-        'Date de signature (JJ/MM/AAAA)',
-        'Date de remboursement minimale (JJ/MM/AAAA)',
-        'Date de remboursement maximale (JJ/MM/AAAA)',
-        'Montant investi (€)',
-        'Taux annuel total (%)',
+        TextCellValue('Nom du projet'),
+        TextCellValue('Date de signature (JJ/MM/AAAA)'),
+        TextCellValue('Date de remboursement minimale (JJ/MM/AAAA)'),
+        TextCellValue('Date de remboursement maximale (JJ/MM/AAAA)'),
+        TextCellValue('Montant investi (€)'),
+        TextCellValue('Taux annuel total (%)'),
       ])
       ..appendRow([
-        'Projet Test',
+        TextCellValue('Projet Test'),
         // Excel numeric dates (days since 1899-12-30)
-        45500, // 2024-07-13 approx
-        45500 + 180, // min +6 mois approx
-        45500 + 330, // max ~11 mois
-        1000,
-        10,
+        IntCellValue(45500), // 2024-07-13 approx
+        IntCellValue(45500 + 180), // min +6 mois approx
+        IntCellValue(45500 + 330), // max ~11 mois
+        IntCellValue(1000),
+        IntCellValue(10),
       ]);
 
     // Sheet "Échéances" (optional)
     final schedule = excel['Échéances'];
     schedule
-      ..appendRow(['Projet', 'Part des intérêts', 'Part du capital'])
-      ..appendRow(['Projet Test', 5, 0])
-      ..appendRow(['Projet Test', 5, 1000]);
+      ..appendRow([TextCellValue('Projet'), TextCellValue('Part des intérêts'), TextCellValue('Part du capital')])
+      ..appendRow([TextCellValue('Projet Test'), IntCellValue(5), IntCellValue(0)])
+      ..appendRow([TextCellValue('Projet Test'), IntCellValue(5), IntCellValue(1000)]);
 
     final bytes = excel.encode()!;
     final tempDir = await Directory.systemTemp.createTemp('lpb_test_');

@@ -20,6 +20,7 @@ import 'package:portefeuille/features/09_imports/services/csv/parsers/revolut_pa
 import 'package:portefeuille/features/09_imports/services/excel/la_premiere_brique_parser.dart';
 import 'package:portefeuille/features/09_imports/services/models/import_category.dart';
 import 'package:portefeuille/features/09_imports/services/models/import_mode.dart';
+import 'package:portefeuille/features/09_imports/services/source_detector.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
@@ -47,6 +48,11 @@ class _FileImportWizardState extends State<FileImportWizard> {
   ImportMode _importMode = ImportMode.initial;
   ImportCategory _selectedTrCategory = ImportCategory.cto;
   Map<String, AssetMetadata> _crowdfundingMetadata = {};
+
+  // Source detection
+  final SourceDetector _sourceDetector = SourceDetector();
+  SourceDetectionResult? _detectionResult;
+  bool _isDetecting = false;
 
   // Step 3: Validation & Parsing
   bool _isParsing = false;
@@ -225,9 +231,15 @@ class _FileImportWizardState extends State<FileImportWizard> {
       );
 
       if (result != null) {
+        final file = result.files.single;
         setState(() {
-          _selectedFile = result.files.single;
+          _selectedFile = file;
+          _detectionResult = null;
+          _isDetecting = true;
         });
+
+        // Lancer la détection automatique
+        await _detectSource(file);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -236,9 +248,36 @@ class _FileImportWizardState extends State<FileImportWizard> {
     }
   }
 
+  Future<void> _detectSource(PlatformFile file) async {
+    try {
+      final detection = await _sourceDetector.detect(file);
+      if (mounted) {
+        setState(() {
+          _detectionResult = detection;
+          _isDetecting = false;
+          // Auto-sélection si haute confiance
+          if (detection.isDetected && detection.sourceId != null) {
+            _selectedSourceId = detection.sourceId;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isDetecting = false;
+          _detectionResult = SourceDetectionResult(
+            message: 'Erreur lors de la détection: $e',
+          );
+        });
+      }
+    }
+  }
+
   void _clearFile() {
     setState(() {
       _selectedFile = null;
+      _detectionResult = null;
+      _selectedSourceId = null;
     });
   }
 
@@ -304,6 +343,8 @@ class _FileImportWizardState extends State<FileImportWizard> {
         _crowdfundingMetadata = {};
 
         // Convert to ParsedTransaction + préparer les métadonnées Crowdfunding
+        // Note: Le montant est négatif pour les achats (convention de l'app)
+        // Un dépôt compensatoire sera créé par ImportSaveService pour neutraliser l'impact sur les liquidités
         results = projects.map((p) {
           final ticker = p.projectName;
 
@@ -325,7 +366,7 @@ class _FileImportWizardState extends State<FileImportWizard> {
             ticker: ticker,
             quantity: p.investedAmount,
             price: 1.0,
-            amount: p.investedAmount,
+            amount: -p.investedAmount, // Négatif pour un achat (convention de l'app)
             fees: 0,
             currency: 'EUR',
             assetType: AssetType.RealEstateCrowdfunding,
@@ -606,6 +647,8 @@ class _FileImportWizardState extends State<FileImportWizard> {
           selectedFile: _selectedFile,
           onPickFile: _pickFile,
           onClearFile: _clearFile,
+          detectionResult: _detectionResult,
+          isDetecting: _isDetecting,
         );
       case 1:
         return WizardStepSource(
@@ -627,6 +670,8 @@ class _FileImportWizardState extends State<FileImportWizard> {
               _selectedTrCategory = cat;
             });
           },
+          suggestedSourceId: _detectionResult?.sourceId,
+          suggestionConfidence: _detectionResult?.confidence,
         );
       case 2:
         return _buildValidationStep();

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
+import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/services/transaction_service.dart';
@@ -124,6 +125,7 @@ void main() {
 
       final count = await ImportSaveService.saveSelected(
         provider: provider,
+        portfolioProvider: _DummyPortfolioProvider(),
         candidates: diff.candidates,
         accountId: 'acc',
         mode: ImportMode.update,
@@ -134,6 +136,121 @@ void main() {
       expect(provider.added.length, 1);
       expect(provider.updated.length, 1);
       expect(provider.updated.first.id, 't_mod');
+    });
+
+    test('crée un dépôt compensatoire pour les imports crowdfunding', () async {
+      final provider = FakeTransactionProvider();
+      final date = DateTime(2024, 6, 15);
+
+      final parsed = [
+        ParsedTransaction(
+          date: date,
+          type: TransactionType.Buy,
+          assetName: 'Projet Alpha',
+          ticker: 'Projet Alpha',
+          quantity: 1000.0,
+          price: 1.0,
+          amount: -1000.0, // Négatif selon la convention
+          fees: 0.0,
+          currency: 'EUR',
+          assetType: AssetType.RealEstateCrowdfunding,
+        ),
+        ParsedTransaction(
+          date: date,
+          type: TransactionType.Buy,
+          assetName: 'Projet Beta',
+          ticker: 'Projet Beta',
+          quantity: 500.0,
+          price: 1.0,
+          amount: -500.0,
+          fees: 0.0,
+          currency: 'EUR',
+          assetType: AssetType.RealEstateCrowdfunding,
+        ),
+      ];
+
+      final diff = ImportDiffService().compute(parsed: parsed, existing: [], mode: ImportMode.initial);
+      diff.candidates.forEach((c) => c.selected = true);
+
+      final count = await ImportSaveService.saveSelected(
+        provider: provider,
+        portfolioProvider: _DummyPortfolioProvider(),
+        candidates: diff.candidates,
+        accountId: 'acc_cf',
+        mode: ImportMode.initial,
+        sourceId: 'la_premiere_brique',
+      );
+
+      expect(count, 2);
+      
+      // 2 achats + 1 dépôt compensatoire (regroupé par date)
+      expect(provider.added.length, 3);
+      
+      // Vérifier les achats
+      final buys = provider.added.where((t) => t.type == TransactionType.Buy).toList();
+      expect(buys.length, 2);
+      expect(buys.every((t) => t.amount < 0), true, reason: 'Les achats doivent avoir un montant négatif');
+      
+      // Vérifier le dépôt compensatoire
+      final deposits = provider.added.where((t) => t.type == TransactionType.Deposit).toList();
+      expect(deposits.length, 1);
+      expect(deposits.first.amount, 1500.0); // 1000 + 500
+      expect(deposits.first.notes, contains('Apport auto'));
+      expect(deposits.first.notes, contains('Crowdfunding'));
+    });
+
+    test('crée plusieurs dépôts compensatoires pour différentes dates crowdfunding', () async {
+      final provider = FakeTransactionProvider();
+      final date1 = DateTime(2024, 6, 15);
+      final date2 = DateTime(2024, 7, 20);
+
+      final parsed = [
+        ParsedTransaction(
+          date: date1,
+          type: TransactionType.Buy,
+          assetName: 'Projet Alpha',
+          ticker: 'Projet Alpha',
+          quantity: 1000.0,
+          price: 1.0,
+          amount: -1000.0,
+          fees: 0.0,
+          currency: 'EUR',
+          assetType: AssetType.RealEstateCrowdfunding,
+        ),
+        ParsedTransaction(
+          date: date2,
+          type: TransactionType.Buy,
+          assetName: 'Projet Beta',
+          ticker: 'Projet Beta',
+          quantity: 500.0,
+          price: 1.0,
+          amount: -500.0,
+          fees: 0.0,
+          currency: 'EUR',
+          assetType: AssetType.RealEstateCrowdfunding,
+        ),
+      ];
+
+      final diff = ImportDiffService().compute(parsed: parsed, existing: [], mode: ImportMode.initial);
+      diff.candidates.forEach((c) => c.selected = true);
+
+      final count = await ImportSaveService.saveSelected(
+        provider: provider,
+        portfolioProvider: _DummyPortfolioProvider(),
+        candidates: diff.candidates,
+        accountId: 'acc_cf',
+        mode: ImportMode.initial,
+        sourceId: 'la_premiere_brique',
+      );
+
+      expect(count, 2);
+      
+      // 2 achats + 2 dépôts compensatoires (un par date)
+      expect(provider.added.length, 4);
+      
+      final deposits = provider.added.where((t) => t.type == TransactionType.Deposit).toList();
+      expect(deposits.length, 2);
+      expect(deposits.map((d) => d.amount).toSet(), {1000.0, 500.0});
     });
   });
 }

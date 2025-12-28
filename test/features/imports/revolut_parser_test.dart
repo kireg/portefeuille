@@ -36,7 +36,14 @@ Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
   });
 
   test('parse Revolut XLSX statement sample', () async {
-    final bytes = await File('docs/trading-account-statement_2023-09-04_2025-12-24_fr-fr_b70449.xlsx').readAsBytes();
+    final sampleFile = File('docs/trading-account-statement_2023-09-04_2025-12-24_fr-fr_b70449.xlsx');
+    if (!await sampleFile.exists()) {
+      // Skip si le fichier de test n'existe pas (environnement CI ou fichier non fourni)
+      markTestSkipped('Fichier de test XLSX non disponible');
+      return;
+    }
+    
+    final bytes = await sampleFile.readAsBytes();
     final text = _excelToText(bytes);
     final result = await parser.parse(text);
 

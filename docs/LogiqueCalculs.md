@@ -88,8 +88,9 @@ $$ \text{Valeur (EUR)} = \text{Valeur (Devise Origine)} \times \text{Taux de Cha
 ### Import Crowdfunding
 *   Chaque projet est importé comme une transaction d'**ACHAT**.
 *   Le montant de la transaction est **NÉGATIF** (sortie de cash).
-*   Le prix de l'actif est fixé au montant investi.
-*   La quantité est fixée à 1.
+*   Le prix de l'actif est fixé à 1€ par unité.
+*   La quantité est fixée au montant investi (ex: 1000€ = 1000 unités).
+*   **Auto-Dépôt automatique :** Un DÉPÔT compensatoire est créé automatiquement pour chaque date d'investissement afin de neutraliser l'impact sur les liquidités. Cela reflète le fait que l'argent était déjà disponible sur la plateforme avant l'import.
 
 ### Import PDF (Banque)
 *   Les achats sont convertis en montants **NÉGATIFS**.

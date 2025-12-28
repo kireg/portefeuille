@@ -62,10 +62,24 @@ class TradeRepublicParser implements StatementParser {
       caseSensitive: false,
     );
 
-    // Pattern 2 : Dividende (Français)
-    // "Dividende pour 10 titres Apple Inc. Montant par titre 0,25 USD"
+    // Pattern 2 : Dividende (Français) - Version améliorée
+    // Format 1: "Dividende pour 10 titres Apple Inc. Montant par titre 0,25 USD Total 2,50 USD"
+    // Format 2: "Dividende Apple Inc. 2,50 EUR"
+    // Format 3: Bloc avec "Dividende" puis lignes suivantes avec montant
     final regexDividendFR = RegExp(
-      r'Dividende\s+pour\s+([\d,]+)\s+titres\s+([\s\S]*?)\s+Montant',
+      r'Dividende\s+pour\s+([\d,]+)\s+titres\s+([\s\S]*?)\s+Montant\s+par\s+titre\s+([\d,]+)\s*(EUR|USD)',
+      caseSensitive: false,
+    );
+
+    // Pattern alternatif pour dividendes avec montant total direct
+    final regexDividendAlt = RegExp(
+      r'Dividende\s+([\s\S]*?)\s+Total[:\s]+([\d,]+)\s*(EUR|USD)',
+      caseSensitive: false,
+    );
+
+    // Pattern pour "Crédit" qui indique souvent le montant net reçu après un dividende
+    final regexCreditAmount = RegExp(
+      r'Crédit[:\s]+([\d,]+)\s*(EUR|USD)',
       caseSensitive: false,
     );
 
@@ -188,29 +202,110 @@ class TradeRepublicParser implements StatementParser {
         "TradeRepublicParser: Found ${dividendMatches.length} dividend matches");
 
     for (final match in dividendMatches) {
-      final qtyStr = match.group(1)!.replaceAll(',', '.');
-      final assetName = match.group(2)!.trim();
+      try {
+        final qtyStr = match.group(1)!.replaceAll(',', '.');
+        final assetName = match.group(2)!.trim().replaceAll(RegExp(r'\s+'), ' ');
+        final perShareStr = match.group(3)!.replaceAll(',', '.');
+        final currency = match.group(4)!;
 
-      // Pour le dividende, il faut chercher le montant total plus loin
-      // C'est complexe sans le texte complet. On met un placeholder.
-      final assetType = _inferAssetType(assetName);
-      final ImportCategory? category = assetType == AssetType.Crypto
-          ? ImportCategory.crypto
-          : ImportCategory.unknown;
+        final quantity = double.tryParse(qtyStr) ?? 0.0;
+        final perShare = double.tryParse(perShareStr) ?? 0.0;
+        final amount = quantity * perShare; // Montant total = qté × montant par titre
 
-      transactions.add(ParsedTransaction(
-        date: docDate ?? DateTime.now(),
-        type: TransactionType.Dividend,
-        assetName: assetName,
-        quantity: double.tryParse(qtyStr) ?? 0.0,
-        price: 0,
-        amount: 0, // À extraire plus précisément
-        fees: 0,
-        currency: "EUR",
-        assetType: assetType,
-        category: category,
-      ));
-      debugPrint("TradeRepublicParser: Added dividend: $assetName");
+        final assetType = _inferAssetType(assetName);
+        final ImportCategory? category = assetType == AssetType.Crypto
+            ? ImportCategory.crypto
+            : ImportCategory.unknown;
+
+        transactions.add(ParsedTransaction(
+          date: docDate ?? DateTime.now(),
+          type: TransactionType.Dividend,
+          assetName: assetName,
+          quantity: quantity,
+          price: perShare,
+          amount: amount,
+          fees: 0,
+          currency: currency,
+          assetType: assetType,
+          category: category,
+        ));
+        debugPrint("TradeRepublicParser: Added dividend: $assetName amount=$amount $currency");
+      } catch (e) {
+        debugPrint('TradeRepublicParser: Error parsing dividend: $e');
+      }
+    }
+
+    // Recherche des dividendes avec format alternatif (montant total direct)
+    final dividendAltMatches = regexDividendAlt.allMatches(rawText);
+    debugPrint(
+        "TradeRepublicParser: Found ${dividendAltMatches.length} dividend alt matches");
+
+    for (final match in dividendAltMatches) {
+      try {
+        final assetName = match.group(1)!.trim().replaceAll(RegExp(r'\s+'), ' ');
+        final amountStr = match.group(2)!.replaceAll(',', '.');
+        final currency = match.group(3)!;
+
+        final amount = double.tryParse(amountStr) ?? 0.0;
+
+        // Vérifier qu'on n'a pas déjà ajouté ce dividende
+        final alreadyExists = transactions.any((t) =>
+            t.type == TransactionType.Dividend &&
+            t.assetName.contains(assetName.substring(0, assetName.length > 10 ? 10 : assetName.length)));
+        
+        if (!alreadyExists) {
+          final assetType = _inferAssetType(assetName);
+          final ImportCategory? category = assetType == AssetType.Crypto
+              ? ImportCategory.crypto
+              : ImportCategory.unknown;
+
+          transactions.add(ParsedTransaction(
+            date: docDate ?? DateTime.now(),
+            type: TransactionType.Dividend,
+            assetName: assetName,
+            quantity: 0,
+            price: 0,
+            amount: amount,
+            fees: 0,
+            currency: currency,
+            assetType: assetType,
+            category: category,
+          ));
+          debugPrint("TradeRepublicParser: Added dividend (alt): $assetName amount=$amount $currency");
+        }
+      } catch (e) {
+        debugPrint('TradeRepublicParser: Error parsing dividend alt: $e');
+      }
+    }
+
+    // Si on a trouvé un crédit mais pas de montant de dividende, on met à jour
+    final creditMatch = regexCreditAmount.firstMatch(rawText);
+    if (creditMatch != null) {
+      final creditAmountStr = creditMatch.group(1)!.replaceAll(',', '.');
+      final creditCurrency = creditMatch.group(2)!;
+      final creditAmount = double.tryParse(creditAmountStr) ?? 0.0;
+
+      // Met à jour le dernier dividende sans montant
+      final dividendIdx = transactions.lastIndexWhere(
+          (t) => t.type == TransactionType.Dividend && t.amount == 0);
+      if (dividendIdx >= 0) {
+        final tx = transactions[dividendIdx];
+        transactions[dividendIdx] = ParsedTransaction(
+          date: tx.date,
+          type: tx.type,
+          assetName: tx.assetName,
+          isin: tx.isin,
+          ticker: tx.ticker,
+          quantity: tx.quantity,
+          price: tx.price,
+          amount: creditAmount,
+          fees: tx.fees,
+          currency: creditCurrency,
+          assetType: tx.assetType,
+          category: tx.category,
+        );
+        debugPrint("TradeRepublicParser: Updated dividend with credit amount: $creditAmount $creditCurrency");
+      }
     }
 
     return transactions;

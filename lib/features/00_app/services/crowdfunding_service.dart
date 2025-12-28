@@ -85,15 +85,14 @@ class CrowdfundingService {
     }).toList();
 
     for (final tx in relevantTransactions) {
-      final amount = tx.amount;
       final assetId = tx.assetTicker;
 
       if (assetId != null) {
         if (tx.type == TransactionType.Buy) {
-          // Buy amount is positive (investment cost)
-          activeProjects[assetId] = (activeProjects[assetId] ?? 0) + amount;
+          // Buy amount is negative per app convention, use absolute value
+          activeProjects[assetId] = (activeProjects[assetId] ?? 0) + tx.amount.abs();
         } else if (tx.type == TransactionType.CapitalRepayment) {
-          activeProjects[assetId] = (activeProjects[assetId] ?? 0) - amount;
+          activeProjects[assetId] = (activeProjects[assetId] ?? 0) - tx.amount;
           if (activeProjects[assetId]! < 0.01) activeProjects[assetId] = 0;
         }
       }
@@ -258,15 +257,17 @@ class CrowdfundingService {
           break;
 
         case TransactionType.Buy:
-          // Buy amount is usually positive in input, representing the cost.
-          // Liquidity decreases: subtract amount
-          liquidity -= amount;
-          // Invested Capital increases: add amount
-          investedCapital += amount;
+          // Buy amount is negative per app convention.
+          // Use absolute value for calculations.
+          final buyAmount = amount.abs();
+          // Liquidity decreases
+          liquidity -= buyAmount;
+          // Invested Capital increases
+          investedCapital += buyAmount;
 
           final assetId = tx.assetTicker;
           if (assetId != null) {
-            activeProjects[assetId] = (activeProjects[assetId] ?? 0) + amount;
+            activeProjects[assetId] = (activeProjects[assetId] ?? 0) + buyAmount;
           }
           break;
 
