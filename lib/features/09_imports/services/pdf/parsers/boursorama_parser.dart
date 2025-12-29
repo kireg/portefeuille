@@ -137,8 +137,11 @@ class BoursoramaParser implements StatementParser {
         // Problème: "8810" est capturé au lieu de "10" car c'est la séquence complète avant "S"
         // Solution: Heuristique - si qty > 1000 et précédé d'une virgule, prendre 2 derniers chiffres
         
-        // Pattern: nombre + nom en majuscules
-        final qtyNamePattern = RegExp(r'(\d+)\s*([A-ZÀ-Ü][A-ZÀ-Ü0-9\s\.&\-]+?)\s*$');
+        // Pattern: nombre (entier ou décimal) + nom en majuscules
+        // Capture:
+        // 1. Quantité (ex: "15", "2,5", "163,8810")
+        // 2. Nom de l'actif
+        final qtyNamePattern = RegExp(r'(\d+(?:[.,]\d+)?)\s*([A-ZÀ-Ü][A-ZÀ-Ü0-9\s\.&\-]+?)\s*$');
         final prefixMatch = qtyNamePattern.firstMatch(prefix);
         
         if (prefixMatch == null) {
@@ -149,26 +152,36 @@ class BoursoramaParser implements StatementParser {
         var quantityStr = prefixMatch.group(1)!;
         final assetName = prefixMatch.group(2)!.trim();
         
-        // Heuristique anti-collage: si qty > 20 ET précédée d'une virgule/point,
-        // c'est probablement un nombre décimal collé
-        // Ex: "163,8810" -> prendre "10" (2 derniers chiffres)
-        // Ex: "16,072" -> prendre "2" (1 dernier chiffre)
-        // Ex: "35,504" -> prendre "4" (1 dernier chiffre)
-        final qty = int.tryParse(quantityStr) ?? 0;
-        if (qty > 20) {
-          // Chercher si juste avant il y a virgule/point
-          final qtyStart = prefixMatch.start + (prefix.substring(prefixMatch.start).indexOf(quantityStr));
-          if (qtyStart > 0) {
-            final charBefore = prefix[qtyStart - 1];
-            if (charBefore == ',' || charBefore == '.') {
-              // Prendre 1 ou 2 derniers chiffres selon la longueur
-              // Si >= 4 chiffres, prendre 2 derniers (ex: 8810 -> 10)
-              // Sinon prendre 1 dernier (ex: 072 -> 2, 444 -> 4)
-              final takeCount = quantityStr.length >= 4 ? 2 : 1;
-              quantityStr = quantityStr.substring(quantityStr.length - takeCount);
-              debugPrint('BoursoramaParser: Applied anti-concatenation heuristic for $assetName: ${prefixMatch.group(1)} -> $quantityStr');
-            }
+        // Heuristique anti-collage et gestion des décimales
+        // Cas 1: "163,8810" -> Prix "163,88" collé à Qty "10"
+        // Cas 2: "2,5" -> Qty "2.5"
+        // Cas 3: "15" -> Qty "15"
+        
+        double quantity = 0.0;
+        
+        if (quantityStr.contains(',') || quantityStr.contains('.')) {
+          // Séparer partie entière et décimale
+          final separator = quantityStr.contains(',') ? ',' : '.';
+          final parts = quantityStr.split(separator);
+          final decimals = parts[1];
+          
+          // Si plus de 2 décimales, c'est probablement une concaténation (Prix + Qty)
+          // Car les prix ont généralement 2 décimales (EUR)
+          if (decimals.length > 2) {
+             // Ex: "8810" (4 chars) -> prendre "10" (2 derniers)
+             // Ex: "072" (3 chars) -> prendre "2" (1 dernier)
+             final takeCount = decimals.length >= 4 ? 2 : 1;
+             final realQtyStr = decimals.substring(decimals.length - takeCount);
+             quantity = double.tryParse(realQtyStr) ?? 0.0;
+             
+             debugPrint('BoursoramaParser: Applied anti-concatenation heuristic for $assetName: $quantityStr -> $quantity');
+          } else {
+            // C'est une vraie quantité décimale (ex: "2,5" ou "2,50")
+            quantity = double.tryParse(quantityStr.replaceAll(',', '.')) ?? 0.0;
           }
+        } else {
+          // Entier simple
+          quantity = double.tryParse(quantityStr) ?? 0.0;
         }
         
         // Chercher après l'ISIN pour le PRU (Prix de Revient Unitaire)
@@ -190,15 +203,7 @@ class BoursoramaParser implements StatementParser {
             break;
           }
         }
-        
-        // NOUVELLE STRATEGIE SIMPLIFIEE:
-        // 1. Parser la quantité depuis le prefix (groupe 1 du match regex)
-        // 2. Parser le PRU depuis le suffix (dernier nombre à 2 décimales)
-        // 3. Montant investi = quantité × PRU
-        
-        // La regex capture désormais le premier entier au début du prefix
-        final quantity = double.tryParse(quantityStr) ?? 0.0;
-        
+
         if (quantity <= 0) {
           debugPrint('BoursoramaParser: Invalid quantity $quantityStr for $assetName');
           continue;
