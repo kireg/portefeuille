@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
+import 'package:portefeuille/features/09_imports/services/models/import_category.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
 
 class TradeRepublicAccountStatementParser implements StatementParser {
@@ -11,31 +12,37 @@ class TradeRepublicAccountStatementParser implements StatementParser {
   bool canParse(String rawText) {
     // Check for specific keywords that identify the Account Statement (Relevé de Compte)
     // vs the Securities Account Statement (Relevé de Titres)
-    return rawText.contains("TRADE REPUBLIC") && 
-           (rawText.contains("SYNTHÈSE DU RELEVÉ DE COMPTE") || rawText.contains("ACCOUNT STATEMENT SUMMARY"));
+    return rawText.contains("TRADE REPUBLIC") &&
+        (rawText.contains("SYNTHÈSE DU RELEVÉ DE COMPTE") ||
+            rawText.contains("ACCOUNT STATEMENT SUMMARY"));
   }
 
   @override
-  String? get warningMessage => null; // This is the "good" parser, no warning needed.
+  String? get warningMessage =>
+      null; // This is the "good" parser, no warning needed.
 
   @override
-  Future<List<ParsedTransaction>> parse(String rawText, {void Function(double)? onProgress}) async {
+  Future<List<ParsedTransaction>> parse(String rawText,
+      {void Function(double)? onProgress}) async {
     final List<ParsedTransaction> transactions = [];
-    
+    // Par défaut on traite la section en cours comme CTO ; chaque section "Compte PEA"
+    // bascule dynamiquement la catégorie non-crypto vers PEA.
+    ImportCategory currentCategory = ImportCategory.cto;
+
     // 1. Pre-processing: Split into lines
     final lines = rawText.split('\n').map((l) => l.trim()).toList();
-    
+
     // 2. State Machine to parse transactions
     // We look for a date at the start of a line to begin a transaction block.
     // We accumulate lines until the next date or end of file.
-    
+
     List<String> currentBlock = [];
-    
+
     // Regex for date: "01 mai 2025" or "01 May 2025"
     // French months: janv, févr, mars, avr, mai, juin, juil, août, sept, oct, nov, déc
     // We'll use a regex that matches DD MMM YYYY
     final dateRegex = RegExp(r'^\d{2}\s+[a-zA-Zéû\.]+\s+\d{4}');
-    
+
     // Regex for split date:
     // Line i: \d{2}
     // Line i+1: [a-zA-Zéû\.]+
@@ -55,66 +62,115 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       }
 
       final line = lines[i];
-      
+      final lowerLine = line.toLowerCase();
+
+      // Changement de section selon l'intitulé du produit
+      if (lowerLine.contains('compte pea')) {
+        if (currentBlock.isNotEmpty) {
+          _parseBlock(currentBlock, transactions, currentCategory);
+          currentBlock = [];
+        }
+        currentCategory = ImportCategory.pea;
+        inTransactionsSection = false;
+        continue;
+      }
+      if (lowerLine.contains('compte courant') ||
+          lowerLine.contains('compte espèces') ||
+          lowerLine.contains('compte espece')) {
+        if (currentBlock.isNotEmpty) {
+          _parseBlock(currentBlock, transactions, currentCategory);
+          currentBlock = [];
+        }
+        currentCategory = ImportCategory.cto;
+        inTransactionsSection = false;
+        continue;
+      }
+
+      // Nouvelle synthèse : on réinitialise avant de chercher le prochain tableau "TRANSACTIONS".
+      if (line.contains("SYNTHÈSE DU RELEVÉ DE COMPTE") ||
+          line.contains("ACCOUNT STATEMENT SUMMARY")) {
+        if (currentBlock.isNotEmpty) {
+          _parseBlock(currentBlock, transactions, currentCategory);
+          currentBlock = [];
+        }
+        inTransactionsSection = false;
+        continue;
+      }
+
       // Detect start of transactions section
-      if (line.contains("TRANSACTIONS") && (i+1 < lines.length && lines[i+1].contains("DATE"))) {
+      if (line.contains("TRANSACTIONS") &&
+          (i + 1 < lines.length && lines[i + 1].contains("DATE"))) {
         inTransactionsSection = true;
         continue;
       }
-      
+
       // Skip headers/footers if possible, but the date check usually handles it.
       if (!inTransactionsSection) continue;
 
       // Check if line starts with a date (Single line format)
       bool isNewTransaction = false;
       bool isSplitDate = false;
-      
+
       if (dateRegex.hasMatch(line)) {
         isNewTransaction = true;
-      } 
+      }
       // Check for split date format
-      else if (i + 2 < lines.length && 
-               dayRegex.hasMatch(line) && 
-               monthRegex.hasMatch(lines[i+1]) && 
-               yearRegex.hasMatch(lines[i+2])) {
-         isNewTransaction = true;
-         isSplitDate = true;
+      else if (i + 2 < lines.length &&
+          dayRegex.hasMatch(line) &&
+          monthRegex.hasMatch(lines[i + 1]) &&
+          yearRegex.hasMatch(lines[i + 2])) {
+        isNewTransaction = true;
+        isSplitDate = true;
       }
 
       if (isNewTransaction) {
         // Process previous block if exists
-        if (currentBlock.isNotEmpty) {
-          _parseBlock(currentBlock, transactions);
+        // IMPORTANT: Only process if we are in the transactions section
+        if (currentBlock.isNotEmpty && inTransactionsSection) {
+          _parseBlock(currentBlock, transactions, currentCategory);
           currentBlock = [];
         }
-        
-        if (isSplitDate) {
-          // Reconstruct date on one line
-          currentBlock.add("${lines[i]} ${lines[i+1]} ${lines[i+2]}");
-          i += 2; // Skip next 2 lines as they are part of the date
+
+        // Only start a new block if we are in the transactions section
+        if (inTransactionsSection) {
+          if (isSplitDate) {
+            // Reconstruct date on one line
+            currentBlock.add("${lines[i]} ${lines[i + 1]} ${lines[i + 2]}");
+            i += 2; // Skip next 2 lines as they are part of the date
+          } else {
+            currentBlock.add(line);
+          }
         } else {
-          currentBlock.add(line);
+          // Skip dates before the TRANSACTIONS section header
+          if (isSplitDate) {
+            i += 2; // Still skip the date parts to avoid misparse
+          }
         }
       } else {
         // Append to current block if we are inside a transaction
         if (currentBlock.isNotEmpty) {
           // Filter out page numbers or repeated headers if they appear in the middle
-          if (!line.contains("TRADE REPUBLIC BANK GMBH") && !line.startsWith("Page")) {
-             currentBlock.add(line);
+          if (!line.contains("TRADE REPUBLIC BANK GMBH") &&
+              !line.startsWith("Page")) {
+            currentBlock.add(line);
           }
         }
       }
     }
-    
+
     // Process last block
     if (currentBlock.isNotEmpty) {
-      _parseBlock(currentBlock, transactions);
+      _parseBlock(currentBlock, transactions, currentCategory);
     }
 
     return transactions;
   }
 
-  void _parseBlock(List<String> block, List<ParsedTransaction> transactions) {
+  void _parseBlock(
+    List<String> block,
+    List<ParsedTransaction> transactions,
+    ImportCategory accountCategory,
+  ) {
     if (block.isEmpty) return;
 
     // Join block to analyze content more easily, but keep structure in mind.
@@ -123,7 +179,7 @@ class TradeRepublicAccountStatementParser implements StatementParser {
     // Line 2: TYPE
     // Line 3+: DESCRIPTION
     // Last Lines: AMOUNTS (Entry, Exit, Balance)
-    
+
     // Example Block:
     // 02 mai 2025
     // Exécution d'ordre
@@ -134,22 +190,26 @@ class TradeRepublicAccountStatementParser implements StatementParser {
     try {
       final dateStr = block[0]; // "02 mai 2025"
       final date = _parseDate(dateStr);
-      
+
       // Type is usually on the second line, but sometimes date and type are on same line in raw text extraction?
       // Based on the file provided, it seems they are on separate lines.
       // Let's assume line 1 is date.
-      
+
       // We need to find the amounts at the end.
       // Amounts are like "9,97 €" or "1 234,56 €"
       // We look from the end of the block.
-      
+
       double? amountIn;
       double? amountOut;
-      
+
       // Helper to parse amount string "1 234,56 €" -> 1234.56
       double? parseAmount(String s) {
         if (!s.contains('€')) return null;
-        final clean = s.replaceAll('€', '').replaceAll(' ', '').replaceAll(',', '.').trim();
+        final clean = s
+            .replaceAll('€', '')
+            .replaceAll(' ', '')
+            .replaceAll(',', '.')
+            .trim();
         return double.tryParse(clean);
       }
 
@@ -160,55 +220,55 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // 9,97 €
       // 9597,19 €
       // It seems the columns are flattened.
-      
+
       // Let's iterate backwards to find amounts.
       int amountIndex = -1;
       for (int i = block.length - 1; i >= 0; i--) {
         if (block[i].contains('€')) {
-           // This is likely the balance or an amount.
-           // The last one is Balance.
-           // The one before is the transaction amount.
-           amountIndex = i;
-           break; 
+          // This is likely the balance or an amount.
+          // The last one is Balance.
+          // The one before is the transaction amount.
+          amountIndex = i;
+          break;
         }
       }
-      
+
       // If we found the balance, look for the transaction amount before it.
       // Note: Sometimes Balance is not present or parsed differently.
       // But in the example:
       // ...
       // 9,97 €  <-- Amount (Out)
       // 9597,19 € <-- Balance
-      
+
       // Let's try to identify amounts.
       // We need to distinguish In vs Out.
       // The columns are: DATE | TYPE | DESCRIPTION | IN | OUT | BALANCE
       // In the text extraction, empty columns might be skipped.
-      
+
       // Strategy: Parse all amounts at the end of the block.
       List<double> amounts = [];
       int lastAmountLineIndex = -1;
-      
+
       for (int i = block.length - 1; i >= 0; i--) {
-         final val = parseAmount(block[i]);
-         if (val != null) {
-           amounts.add(val);
-           lastAmountLineIndex = i;
-         } else {
-           // If we hit a non-amount line after finding amounts, we stop?
-           // Be careful of numbers in description.
-           if (amounts.isNotEmpty && i < lastAmountLineIndex - 1) break;
-         }
+        final val = parseAmount(block[i]);
+        if (val != null) {
+          amounts.add(val);
+          lastAmountLineIndex = i;
+        } else {
+          // If we hit a non-amount line after finding amounts, we stop?
+          // Be careful of numbers in description.
+          if (amounts.isNotEmpty && i < lastAmountLineIndex - 1) break;
+        }
       }
-      
+
       // amounts are in reverse order: [Balance, AmountOut/In]
       // Example: [9597.19, 9.97]
-      
+
       double transactionAmount = 0.0;
-      bool isOut = false;
-      
+
       if (amounts.length >= 2) {
-        transactionAmount = amounts[1]; // The second from last is the transaction amount
+        transactionAmount =
+            amounts[1]; // The second from last is the transaction amount
         // How to know if it is IN or OUT?
         // We can check the column headers but that's hard in a block.
         // We can infer from Type.
@@ -222,54 +282,78 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // Usually Line 1 = Date
       // Line 2 = Type
       // Line 3..N = Description
-      
+
       // In split format, Type might be split too.
       // We join everything from index 1 to lastAmountLineIndex.
-      
-      int descEndIndex = lastAmountLineIndex > 0 ? lastAmountLineIndex : block.length;
+
+      int descEndIndex =
+          lastAmountLineIndex > 0 ? lastAmountLineIndex : block.length;
       String fullDescription = "";
-      
+
       if (1 < descEndIndex) {
         fullDescription = block.sublist(1, descEndIndex).join(" ");
       }
-      
+
       // Clean up Type from Description
       // Known types: "Exécution d'ordre", "Intérêts créditeur", "Virement"
       String typeStr = fullDescription; // For type detection
       String description = fullDescription;
 
       if (fullDescription.contains("Exécution d'ordre")) {
-        description = fullDescription.replaceAll("Exécution d'ordre", "").trim();
+        description =
+            fullDescription.replaceAll("Exécution d'ordre", "").trim();
       } else if (fullDescription.contains("Intérêts créditeur")) {
-        description = fullDescription.replaceAll("Intérêts créditeur", "").trim();
+        description =
+            fullDescription.replaceAll("Intérêts créditeur", "").trim();
       } else if (fullDescription.contains("Virement")) {
-         // Keep Virement maybe?
+        // Keep Virement maybe?
+      }
+
+      // IMPORTANT: Détecter et IGNORER les virements inter-comptes (Versement PEA)
+      // Ces virements sont des transferts internes entre compte courant et PEA
+      // - Dans la section "Compte courant": Versement PEA = sortie vers PEA (à ignorer)
+      // - Dans la section "Compte PEA": Versement PEA = entrée depuis compte courant (à ignorer)
+      // On ne garde que les vrais dépôts externes (Incoming transfer, SEPA reçu, etc.)
+      //
+      // IMPORTANT: Également ignorer "Incoming transfer from" car ce sont des virements
+      // depuis le compte courant vers le CTO (dépôts compensatoires automatiques)
+      // L'application applique déjà ces dépôts compensatoires, donc on ne doit pas
+      // les importer pour éviter la duplication.
+      if (description.contains("Versement PEA") || 
+          description.contains("Versement d'activation") ||
+          fullDescription.contains("Versement PEA") ||
+          fullDescription.contains("Activation PEA") ||
+          description.contains("Incoming transfer from") ||
+          fullDescription.contains("Incoming transfer from")) {
+        // Skip internal transfers between accounts
+        debugPrint("Skipping internal transfer: $description");
+        return; // Ne pas ajouter cette transaction
       }
 
       // Determine TransactionType and AssetType
       TransactionType type = TransactionType.Deposit; // Default
       AssetType assetType = AssetType.Stock; // Default
-      
+
       // Logic based on Type string and Description
-      if (typeStr.contains("Exécution d'ordre") || description.contains("Savings plan execution") || description.contains("Market Order")) {
+      if (typeStr.contains("Exécution d'ordre") ||
+          description.contains("Savings plan execution") ||
+          description.contains("Market Order")) {
         // Buy or Sell
         // If we can't determine In/Out from columns, we assume Buy for "Savings plan" usually.
         // Or we check if "Achat" or "Vente" is in text.
         // "Savings plan execution" is typically a Buy.
         type = TransactionType.Buy;
-        isOut = true; // Usually money goes OUT to buy.
-        
         if (description.contains("Vente") || description.contains("Sell")) {
           type = TransactionType.Sell;
-          isOut = false;
         }
-      } else if (typeStr.contains("Intérêts") || description.contains("interest")) {
+      } else if (typeStr.contains("Intérêts") ||
+          description.contains("interest")) {
         type = TransactionType.Dividend; // Or Interest
-        isOut = false;
-      } else if (typeStr.contains("Dividende") || description.contains("Dividend")) {
+      } else if (typeStr.contains("Dividende") ||
+          description.contains("Dividend")) {
         type = TransactionType.Dividend;
-        isOut = false;
-      } else if (typeStr.contains("Virement") || description.contains("Transfer")) {
+      } else if (typeStr.contains("Virement") ||
+          description.contains("Transfer")) {
         // Check direction
         // If we don't have column info, it's hard.
         // But usually "Virement entrant" or "Virement sortant".
@@ -284,7 +368,7 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // Sell -> In
       // Dividend -> In
       // Interest -> In
-      
+
       // Extract Quantity and ISIN from Description
       // "Savings plan execution XF000BTC0017 Bitcoin, quantity: 0.000113"
       String? isin;
@@ -294,17 +378,18 @@ class TradeRepublicAccountStatementParser implements StatementParser {
 
       final isinRegex = RegExp(r'([A-Z]{2}[A-Z0-9]{9}[0-9])');
       final qtyRegex = RegExp(r'quantity:\s*([0-9.]+)');
-      
+
       final isinMatch = isinRegex.firstMatch(description);
       if (isinMatch != null) {
         isin = isinMatch.group(1);
+        ticker = isin; // Utiliser l'ISIN comme ticker pour grouper les transactions
       }
-      
+
       final qtyMatch = qtyRegex.firstMatch(description);
       if (qtyMatch != null) {
         quantity = double.tryParse(qtyMatch.group(1) ?? "0") ?? 0.0;
       }
-      
+
       // Clean Asset Name
       // Remove "Savings plan execution", ISIN, "quantity: ..."
       assetName = description
@@ -313,18 +398,41 @@ class TradeRepublicAccountStatementParser implements StatementParser {
           .replaceAll(isin ?? "", "")
           .replaceAll(RegExp(r'quantity:\s*[0-9.]+'), "")
           .trim();
-          
+
       if (assetName.startsWith("-")) assetName = assetName.substring(1).trim();
-      if (assetName.endsWith(",")) assetName = assetName.substring(0, assetName.length - 1).trim();
+      if (assetName.endsWith(","))
+        assetName = assetName.substring(0, assetName.length - 1).trim();
       if (assetName.isEmpty) assetName = "Unknown Asset";
 
       // Infer Asset Type
       assetType = _inferAssetType(assetName, isin);
-
       // Calculate Price
       double price = 0.0;
       if (quantity > 0) {
-        price = transactionAmount / quantity;
+        price = (transactionAmount.abs()) / quantity;
+      }
+
+      final blockLower = block.join(' ').toLowerCase();
+
+      // Uniformisation des signes de montants
+      double signedAmount = transactionAmount;
+      switch (type) {
+        case TransactionType.Buy:
+          signedAmount = -transactionAmount.abs();
+          break;
+        case TransactionType.Sell:
+          signedAmount = transactionAmount.abs();
+          break;
+        case TransactionType.Dividend:
+        case TransactionType.Interest:
+        case TransactionType.Deposit:
+          signedAmount = transactionAmount.abs();
+          break;
+        case TransactionType.Withdrawal:
+          signedAmount = -transactionAmount.abs();
+          break;
+        default:
+          signedAmount = transactionAmount;
       }
 
       transactions.add(ParsedTransaction(
@@ -335,12 +443,17 @@ class TradeRepublicAccountStatementParser implements StatementParser {
         ticker: ticker,
         quantity: quantity,
         price: price,
-        amount: transactionAmount,
-        fees: 0, // Fees are often separate or included. In this summary, they might be included in net amount.
+        amount: signedAmount,
+        fees:
+            0, // Fees are often separate or included. In this summary, they might be included in net amount.
         currency: "EUR",
         assetType: assetType,
+        category: assetType == AssetType.Crypto
+            ? ImportCategory.crypto
+            : (blockLower.contains('pea')
+                ? ImportCategory.pea
+                : accountCategory),
       ));
-
     } catch (e) {
       debugPrint("Error parsing block: $block \n $e");
     }
@@ -351,27 +464,59 @@ class TradeRepublicAccountStatementParser implements StatementParser {
     try {
       final parts = dateStr.split(' ');
       if (parts.length < 3) return DateTime.now();
-      
+
       final day = int.parse(parts[0]);
       final monthStr = parts[1].toLowerCase().replaceAll('.', '');
       final year = int.parse(parts[2]);
-      
+
       int month = 1;
       switch (monthStr) {
-        case 'janv': case 'jan': month = 1; break;
-        case 'févr': case 'fev': case 'février': month = 2; break;
-        case 'mars': month = 3; break;
-        case 'avr': case 'avril': month = 4; break;
-        case 'mai': month = 5; break;
-        case 'juin': month = 6; break;
-        case 'juil': case 'juillet': month = 7; break;
-        case 'août': case 'aout': month = 8; break;
-        case 'sept': month = 9; break;
-        case 'oct': month = 10; break;
-        case 'nov': month = 11; break;
-        case 'déc': case 'dec': case 'décembre': month = 12; break;
+        case 'janv':
+        case 'jan':
+          month = 1;
+          break;
+        case 'févr':
+        case 'fev':
+        case 'février':
+          month = 2;
+          break;
+        case 'mars':
+          month = 3;
+          break;
+        case 'avr':
+        case 'avril':
+          month = 4;
+          break;
+        case 'mai':
+          month = 5;
+          break;
+        case 'juin':
+          month = 6;
+          break;
+        case 'juil':
+        case 'juillet':
+          month = 7;
+          break;
+        case 'août':
+        case 'aout':
+          month = 8;
+          break;
+        case 'sept':
+          month = 9;
+          break;
+        case 'oct':
+          month = 10;
+          break;
+        case 'nov':
+          month = 11;
+          break;
+        case 'déc':
+        case 'dec':
+        case 'décembre':
+          month = 12;
+          break;
       }
-      
+
       return DateTime(year, month, day);
     } catch (e) {
       return DateTime.now();
@@ -381,19 +526,28 @@ class TradeRepublicAccountStatementParser implements StatementParser {
   AssetType _inferAssetType(String name, String? isin) {
     final upper = name.toUpperCase();
     final isinUpper = isin?.toUpperCase() ?? "";
-    
-    if (upper.contains('ETF') || upper.contains('MSCI') || upper.contains('S&P') || upper.contains('VANGUARD') || upper.contains('ISHARES') || upper.contains('AMUNDI')) {
+
+    if (upper.contains('ETF') ||
+        upper.contains('MSCI') ||
+        upper.contains('S&P') ||
+        upper.contains('VANGUARD') ||
+        upper.contains('ISHARES') ||
+        upper.contains('AMUNDI')) {
       return AssetType.ETF;
     }
     // Crypto ISINs often start with XF on Trade Republic? Or just names.
-    if (upper.contains('BITCOIN') || upper.contains('ETHEREUM') || upper.contains('SOLANA') || upper.contains('DOT') || upper.contains('CRYPTO')) {
+    if (upper.contains('BITCOIN') ||
+        upper.contains('ETHEREUM') ||
+        upper.contains('SOLANA') ||
+        upper.contains('DOT') ||
+        upper.contains('CRYPTO')) {
       return AssetType.Crypto;
     }
-    if (isinUpper.startsWith("XF")) { 
-       // Often crypto trackers or crypto on TR
-       return AssetType.Crypto;
+    if (isinUpper.startsWith("XF")) {
+      // Often crypto trackers or crypto on TR
+      return AssetType.Crypto;
     }
-    
+
     return AssetType.Stock;
   }
 }

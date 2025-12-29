@@ -44,3 +44,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 EXTRACTED_Relevé de compte_Anonyme.txt
+
+# Real bank statements for testing (private data)
+/test_data/real_statements/

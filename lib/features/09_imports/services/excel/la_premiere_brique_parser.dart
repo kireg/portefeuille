@@ -65,87 +65,92 @@ class LaPremiereBriqueParser {
 
     // --- 3. Iterate Rows ---
     for (int i = headerRowIndex + 1; i < loansSheet.maxRows; i++) {
-      final row = loansSheet.row(i);
-      if (row.isEmpty) continue;
-      
-      final nameIdx = headers['Nom du projet'];
-      if (nameIdx == null || nameIdx >= row.length) continue;
-      
-      final projectName = _getCellValue(row[nameIdx])?.toString();
-      if (projectName == null || projectName.isEmpty) continue;
-      
-      // Dates
-      final dateSignIdx = headers['Date de signature (JJ/MM/AAAA)'];
-      final dateMinIdx = headers['Date de remboursement minimale (JJ/MM/AAAA)'];
-      final dateMaxIdx = headers['Date de remboursement maximale (JJ/MM/AAAA)'];
-      
-      DateTime? startDate = (dateSignIdx != null && dateSignIdx < row.length) 
-          ? _parseDate(row[dateSignIdx]) 
-          : null;
-          
-      DateTime? minDate = (dateMinIdx != null && dateMinIdx < row.length) 
-          ? _parseDate(row[dateMinIdx]) 
-          : null;
+      try {
+        final row = loansSheet.row(i);
+        if (row.isEmpty) continue;
+        
+        final nameIdx = headers['Nom du projet'];
+        if (nameIdx == null || nameIdx >= row.length) continue;
+        
+        final projectName = _getCellValue(row[nameIdx])?.toString();
+        if (projectName == null || projectName.isEmpty) continue;
+        
+        // Dates
+        final dateSignIdx = headers['Date de signature (JJ/MM/AAAA)'];
+        final dateMinIdx = headers['Date de remboursement minimale (JJ/MM/AAAA)'];
+        final dateMaxIdx = headers['Date de remboursement maximale (JJ/MM/AAAA)'];
+        
+        DateTime? startDate = (dateSignIdx != null && dateSignIdx < row.length) 
+            ? _parseDate(row[dateSignIdx]) 
+            : null;
+            
+        DateTime? minDate = (dateMinIdx != null && dateMinIdx < row.length) 
+            ? _parseDate(row[dateMinIdx]) 
+            : null;
 
-      DateTime? maxDate = (dateMaxIdx != null && dateMaxIdx < row.length) 
-          ? _parseDate(row[dateMaxIdx]) 
-          : null;
+        DateTime? maxDate = (dateMaxIdx != null && dateMaxIdx < row.length) 
+            ? _parseDate(row[dateMaxIdx]) 
+            : null;
 
-      // Duration
-      int? minMonths;
-      int? maxMonths;
-      int durationMonths = 0;
+        // Duration
+        int? minMonths;
+        int? maxMonths;
+        int durationMonths = 0;
 
-      if (startDate != null) {
-        if (minDate != null) {
-           minMonths = ((minDate.difference(startDate).inDays) / 30.437).round();
+        if (startDate != null) {
+          if (minDate != null) {
+             minMonths = ((minDate.difference(startDate).inDays) / 30.437).round();
+          }
+          if (maxDate != null) {
+             maxMonths = ((maxDate.difference(startDate).inDays) / 30.437).round();
+          }
         }
-        if (maxDate != null) {
-           maxMonths = ((maxDate.difference(startDate).inDays) / 30.437).round();
-        }
-      }
 
-      // Logic: Min + 6 months, capped at Max
-      if (minMonths != null) {
-        int target = minMonths + 6;
-        if (maxMonths != null && target > maxMonths) {
-          target = maxMonths;
+        // Logic: Min + 6 months, capped at Max
+        if (minMonths != null) {
+          int target = minMonths + 6;
+          if (maxMonths != null && target > maxMonths) {
+            target = maxMonths;
+          }
+          durationMonths = target;
+        } else if (maxMonths != null) {
+          durationMonths = maxMonths;
         }
-        durationMonths = target;
-      } else if (maxMonths != null) {
-        durationMonths = maxMonths;
+        
+        
+        // Amount
+        final amountIdx = headers['Montant investi (€)'];
+        double amount = 0.0;
+        if (amountIdx != null && amountIdx < row.length) {
+          amount = _parseDouble(row[amountIdx]) ?? 0.0;
+        }
+        
+        // Rate
+        final rateIdx = headers['Taux annuel total (%)'];
+        double rate = 0.0;
+        if (rateIdx != null && rateIdx < row.length) {
+          rate = _parseDouble(row[rateIdx]) ?? 0.0;
+        }
+        
+        // RepaymentType
+        RepaymentType type = repaymentTypes[projectName] ?? RepaymentType.InFine;
+        
+        projects.add(ParsedCrowdfundingProject(
+          projectName: projectName,
+          platform: "La Première Brique",
+          investmentDate: startDate,
+          investedAmount: amount,
+          yieldPercent: rate,
+          durationMonths: durationMonths,
+          minDurationMonths: minMonths,
+          maxDurationMonths: maxMonths,
+          repaymentType: type,
+          country: "France",
+        ));
+      } catch (e) {
+        debugPrint('LaPremiereBriqueParser: Error parsing row $i: $e');
+        // Continue avec les autres lignes
       }
-      
-      
-      // Amount
-      final amountIdx = headers['Montant investi (€)'];
-      double amount = 0.0;
-      if (amountIdx != null && amountIdx < row.length) {
-        amount = _parseDouble(row[amountIdx]) ?? 0.0;
-      }
-      
-      // Rate
-      final rateIdx = headers['Taux annuel total (%)'];
-      double rate = 0.0;
-      if (rateIdx != null && rateIdx < row.length) {
-        rate = _parseDouble(row[rateIdx]) ?? 0.0;
-      }
-      
-      // RepaymentType
-      RepaymentType type = repaymentTypes[projectName] ?? RepaymentType.InFine;
-      
-      projects.add(ParsedCrowdfundingProject(
-        projectName: projectName,
-        platform: "La Première Brique",
-        investmentDate: startDate,
-        investedAmount: amount,
-        yieldPercent: rate,
-        durationMonths: durationMonths,
-        minDurationMonths: minMonths,
-        maxDurationMonths: maxMonths,
-        repaymentType: type,
-        country: "France",
-      ));
     }
     
     return projects;
@@ -230,6 +235,16 @@ class LaPremiereBriqueParser {
     
     if (val is DateCellValue) {
       return DateTime(val.year, val.month, val.day);
+    }
+
+    if (val is IntCellValue) {
+      // Excel stocke parfois les dates comme nombre de jours depuis 1899-12-30
+      final serial = val.value;
+      return DateTime(1899, 12, 30).add(Duration(days: serial));
+    }
+    if (val is DoubleCellValue) {
+      final serial = val.value.round();
+      return DateTime(1899, 12, 30).add(Duration(days: serial));
     }
     
     String text = "";

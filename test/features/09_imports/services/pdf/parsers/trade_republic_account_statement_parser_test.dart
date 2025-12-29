@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/parsers/trade_republic_account_statement_parser.dart';
+import 'package:portefeuille/features/09_imports/services/models/import_category.dart';
 
 void main() {
   late TradeRepublicAccountStatementParser parser;
@@ -111,6 +112,7 @@ Savings plan execution XF000SOL0012 Solana, quantity: 0.037058
     expect(interest.amount, 15.25);
     expect(interest.date, DateTime(2025, 5, 1));
     expect(interest.assetName, contains("Your interest payment"));
+    expect(interest.category, ImportCategory.cto);
 
     // 2. Bitcoin Buy
     final btc = transactions[1];
@@ -118,7 +120,8 @@ Savings plan execution XF000SOL0012 Solana, quantity: 0.037058
     expect(btc.assetType, AssetType.Crypto);
     expect(btc.isin, "XF000BTC0017");
     expect(btc.quantity, 0.000113);
-    expect(btc.amount, 9.97);
+    expect(btc.amount, -9.97);
+    expect(btc.category, ImportCategory.crypto);
 
     // 3. Solana Buy
     final sol = transactions[2];
@@ -126,9 +129,79 @@ Savings plan execution XF000SOL0012 Solana, quantity: 0.037058
     expect(sol.assetType, AssetType.Crypto);
     expect(sol.isin, "XF000SOL0012");
     expect(sol.quantity, 0.037058);
-    expect(sol.amount, 5.00);
+    expect(sol.amount, -5.00);
+    expect(sol.category, ImportCategory.crypto);
   });
 
+  test('Should classify non-crypto as PEA when header mentions PEA', () async {
+    const peaStatement = '''
+TRADE REPUBLIC
+SYNTHÈSE DU RELEVÉ DE COMPTE PEA
+TRANSACTIONS
+DATE
+TYPE
+DESCRIPTION
+ENTRÉE D'ARGENT
+SORTIE D'ARGENT
+SOLDE
+03 mai 2025
+Exécution d'ordre
+Savings plan execution MSCI World, quantity: 1.0
+100,00 €
+900,00 €
+''';
+
+    final transactions = await parser.parse(peaStatement);
+    expect(transactions, isNotEmpty);
+    final tx = transactions.first;
+    expect(tx.assetType, isNotNull);
+    expect(tx.category, ImportCategory.pea);
+  });
+
+  test('PEA section does not override previous CTO section', () async {
+    const multiStatement = '''
+SYNTHÈSE DU RELEVÉ DE COMPTE
+PRODUIT
+Compte courant
+TRANSACTIONS
+DATE
+TYPE
+DESCRIPTION
+ENTRÉE D'ARGENT
+SORTIE D'ARGENT
+SOLDE
+01 mai 2025
+Exécution d'ordre
+Savings plan execution ABC Corp, quantity: 1
+10,00 €
+100,00 €
+SYNTHÈSE DU RELEVÉ DE COMPTE
+PRODUIT
+Compte PEA
+TRANSACTIONS
+DATE
+TYPE
+DESCRIPTION
+ENTRÉE D'ARGENT
+SORTIE D'ARGENT
+SOLDE
+02 mai 2025
+Exécution d'ordre
+Savings plan execution PEA ETF, quantity: 1
+20,00 €
+120,00 €
+''';
+
+    final transactions = await parser.parse(multiStatement);
+
+    expect(transactions, hasLength(2));
+
+    final ctoTx = transactions.first;
+    expect(ctoTx.category, ImportCategory.cto);
+
+    final peaTx = transactions.last;
+    expect(peaTx.category, ImportCategory.pea);
+  });
 
   test('Should report progress', () async {
     double lastProgress = 0.0;
@@ -137,7 +210,7 @@ Savings plan execution XF000SOL0012 Solana, quantity: 0.037058
       expect(progress, greaterThanOrEqualTo(0.0));
       expect(progress, lessThanOrEqualTo(1.0));
     });
-    
+
     // Since the text is short, it might not trigger many updates, but it should at least run.
     // The parser implementation updates progress every 50 lines.
     // Our fake text is about 60 lines.

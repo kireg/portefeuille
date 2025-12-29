@@ -37,6 +37,8 @@ class _TransactionsViewState extends State<TransactionsView> {
   TransactionSortOption _sortOption = TransactionSortOption.institution;
   final Set<String> _selectedIds = {};
   final InstitutionService _institutionService = InstitutionService();
+  String? _filterAccountId;
+  String? _filterInstitutionName;
 
   @override
   void initState() {
@@ -58,12 +60,13 @@ class _TransactionsViewState extends State<TransactionsView> {
     });
   }
 
-  void _selectAll(List<Transaction> transactions) {
+  void _selectAll(List<Transaction> filteredTransactions) {
     setState(() {
-      if (_selectedIds.length == transactions.length) {
+      if (_selectedIds.length == filteredTransactions.length) {
         _selectedIds.clear();
       } else {
-        _selectedIds.addAll(transactions.map((t) => t.id));
+        _selectedIds.clear();
+        _selectedIds.addAll(filteredTransactions.map((t) => t.id));
       }
     });
   }
@@ -301,7 +304,21 @@ class _TransactionsViewState extends State<TransactionsView> {
             .expand((acc) => acc.transactions)
             .toList();
 
-        final groupedTransactions = _groupTransactions(allTransactions, accountsMap, accountIdToInstitutionName, institutionNameToLogo);
+        // Appliquer les filtres
+        final List<Transaction> filteredTransactions = allTransactions.where((t) {
+          if (_filterAccountId != null && t.accountId != _filterAccountId) {
+            return false;
+          }
+          if (_filterInstitutionName != null) {
+            final instName = accountIdToInstitutionName[t.accountId];
+            if (instName != _filterInstitutionName) {
+              return false;
+            }
+          }
+          return true;
+        }).toList();
+
+        final groupedTransactions = _groupTransactions(filteredTransactions, accountsMap, accountIdToInstitutionName, institutionNameToLogo);
         final sortedGroupKeys = groupedTransactions.keys.toList();
 
         return AppScreen(
@@ -326,17 +343,36 @@ class _TransactionsViewState extends State<TransactionsView> {
                   onSortChanged: (val) => setState(() => _sortOption = val),
                   isSelectionMode: _isSelectionMode,
                   selectedCount: _selectedIds.length,
-                  onSelectAll: () => _selectAll(allTransactions),
+                  onSelectAll: () => _selectAll(filteredTransactions),
                   onDeleteSelected: () => _deleteSelectedTransactions(transactionProvider),
                   onCancelSelection: () => setState(() => _selectedIds.clear()),
                   onImportHub: _openImportHub,
+                  filterAccountId: _filterAccountId,
+                  filterInstitutionName: _filterInstitutionName,
+                  accounts: accountsMap,
+                  institutions: institutionNameToLogo.keys.toList(),
+                  onFilterAccountChanged: (id) => setState(() {
+                    _filterAccountId = id;
+                    _filterInstitutionName = null;
+                    _selectedIds.clear();
+                  }),
+                  onFilterInstitutionChanged: (name) => setState(() {
+                    _filterInstitutionName = name;
+                    _filterAccountId = null;
+                    _selectedIds.clear();
+                  }),
+                  onClearFilters: () => setState(() {
+                    _filterAccountId = null;
+                    _filterInstitutionName = null;
+                    _selectedIds.clear();
+                  }),
                 ),
               ),
 
               const SizedBox(height: AppDimens.paddingM),
 
               Expanded(
-                child: allTransactions.isEmpty
+                child: filteredTransactions.isEmpty
                     ? FadeInSlide(
                         delay: 0.2,
                         duration: 0.6,

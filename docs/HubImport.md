@@ -1,3 +1,15 @@
+## Mode Actualisation
+
+Le mode Actualisation calcule les différences entre le fichier importé et les transactions déjà présentes dans le portefeuille.
+
+- Doublons stricts (même date/actif/type/quantité/montant) ignorés.
+- Transactions « Modifiées » détectées par clé partielle (date/actif/type) si quantité ou montant diffèrent au-delà de seuils.
+- L’UI de validation présente deux sections avec compteurs : « Nouveaux » et « Modifiés ». Chaque ligne est sélectionnable.
+- La sauvegarde ajoute les Nouveaux (batch) et met à jour les Modifiés (montant, prix, notes) sans créer de doublon.
+
+Seuils :
+- Quantité : différence > 0.0001
+- Montant : différence > 0.01
 # Module 09_Imports : Hub d'Import Unifié
 
 ## 1. Vision & Concept

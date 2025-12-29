@@ -88,9 +88,19 @@ $$ \text{Valeur (EUR)} = \text{Valeur (Devise Origine)} \times \text{Taux de Cha
 ### Import Crowdfunding
 *   Chaque projet est importé comme une transaction d'**ACHAT**.
 *   Le montant de la transaction est **NÉGATIF** (sortie de cash).
-*   Le prix de l'actif est fixé au montant investi.
-*   La quantité est fixée à 1.
+*   Le prix de l'actif est fixé à 1€ par unité.
+*   La quantité est fixée au montant investi (ex: 1000€ = 1000 unités).
+*   **Auto-Dépôt automatique :** Un DÉPÔT compensatoire est créé automatiquement pour chaque date d'investissement afin de neutraliser l'impact sur les liquidités. Cela reflète le fait que l'argent était déjà disponible sur la plateforme avant l'import.
+*   **Notes du dépôt :** `"Apport auto - Crowdfunding (mode depuis source)"`
 
-### Import PDF (Banque)
+### Import Initial/Actualisation/Supplément de Positions et Achats
+*   Lors d'un import de positions existantes (snapshot) ou d'achats via Trade Republic, BoursoBank, etc., les achats sont importés avec montants **NÉGATIFS**.
+*   Pour éviter un solde de liquidité fortement négatif, un DÉPÔT compensatoire est créé automatiquement par date d'achat.
+*   Cela s'applique à **TOUS les modes** (initial, actualisation, supplément) car l'argent a déjà été prélevé lors de l'investissement réel sur la plateforme d'investissement.
+*   **Notes du dépôt :** `"Apport auto - Crowdfunding (Actualisation depuis source)"` ou `"Apport auto - Neutralisation import (Import initial depuis source)"`
+
+### Import PDF/Excel (Banque)
 *   Les achats sont convertis en montants **NÉGATIFS**.
-*   Si l'option "Auto-Dépôt" est activée, une transaction de DÉPÔT du même montant (positif) est créée simultanément pour neutraliser l'impact sur la liquidité (utile si on ne suit pas le compte espèce de la banque).
+*   Les ventes sont converties en montants **POSITIFS**.
+*   Les dividendes et intérêts sont **POSITIFS**.
+*   Les retraits sont **NÉGATIFS**.

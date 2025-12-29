@@ -1,5 +1,6 @@
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
+import 'package:portefeuille/features/09_imports/services/models/import_category.dart';
 
 /// Modèle intermédiaire pour une transaction extraite d'un PDF.
 /// Elle n'est pas encore une [Transaction] finale car il peut manquer des infos (ex: Ticker).
@@ -15,6 +16,7 @@ class ParsedTransaction {
   final double fees;
   final String currency;
   final AssetType? assetType;
+  final ImportCategory? category;
 
   ParsedTransaction({
     required this.date,
@@ -28,11 +30,12 @@ class ParsedTransaction {
     required this.fees,
     required this.currency,
     this.assetType,
+    this.category,
   });
 
   @override
   String toString() {
-    return 'ParsedTransaction(date: $date, type: $type, asset: $assetName, qty: $quantity, price: $price, amount: $amount, assetType: $assetType)';
+    return 'ParsedTransaction(date: $date, type: $type, asset: $assetName, qty: $quantity, price: $price, amount: $amount, assetType: $assetType, category: $category)';
   }
 }
 
@@ -49,5 +52,6 @@ abstract class StatementParser {
 
   /// Extrait les transactions du texte brut.
   /// [onProgress] est appelé avec une valeur entre 0.0 et 1.0 pour indiquer la progression.
-  Future<List<ParsedTransaction>> parse(String rawText, {void Function(double)? onProgress});
+  Future<List<ParsedTransaction>> parse(String rawText,
+      {void Function(double)? onProgress});
 }

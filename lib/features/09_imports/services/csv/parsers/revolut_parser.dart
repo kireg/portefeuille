@@ -4,17 +4,18 @@ import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
 
 class RevolutParser implements StatementParser {
+  static final RegExp _currencyRegex = RegExp(r'[A-Z]{3}');
+
   @override
   String get bankName => "Revolut";
 
   @override
   bool canParse(String rawText) {
-    // Revolut CSV usually starts with headers like "Type,Product,Started Date..."
-    // Or "Date,Ticker,Type,Quantity..."
-    // Since we receive rawText (which might be the CSV content), we check for headers.
-    return rawText.contains("Type,Product,Started Date") || 
-           rawText.contains("Date,Ticker,Type,Quantity") ||
-           rawText.contains("Revolut");
+    final lower = rawText.toLowerCase();
+    return lower.contains("date,ticker,type,quantity") ||
+        lower.contains("date,ticker,type,price per share") ||
+        lower.contains("cash top-up") ||
+        lower.contains("revolut");
   }
 
   @override
@@ -23,17 +24,10 @@ class RevolutParser implements StatementParser {
   @override
   Future<List<ParsedTransaction>> parse(String rawText, {void Function(double)? onProgress}) async {
     final List<ParsedTransaction> transactions = [];
-    final lines = rawText.split('\n');
-    
+    final lines = rawText.split(RegExp(r'\r?\n'));
     if (lines.isEmpty) return transactions;
 
-    // Detect format based on header
-    final header = lines.first.trim();
-    final isTradingFormat = header.contains("Date,Ticker,Type,Quantity");
-    
-    // Skip header
-    for (var i = 1; i < lines.length; i++) {
-      // Report progress
+    for (var i = 0; i < lines.length; i++) {
       if (onProgress != null && i % 50 == 0) {
         onProgress(i / lines.length);
         await Future.delayed(Duration.zero);
@@ -41,12 +35,14 @@ class RevolutParser implements StatementParser {
 
       final line = lines[i].trim();
       if (line.isEmpty) continue;
-      
+
+      final parts = _splitLine(line);
+      if (_isHeader(parts)) continue;
+
       try {
-        if (isTradingFormat) {
-          _parseTradingLine(line, transactions);
-        } else {
-          _parseStandardLine(line, transactions);
+        final parsed = _parseTradingLine(parts);
+        if (parsed != null) {
+          transactions.add(parsed);
         }
       } catch (e) {
         debugPrint("Error parsing Revolut line: $line -> $e");
@@ -56,54 +52,195 @@ class RevolutParser implements StatementParser {
     return transactions;
   }
 
-  void _parseTradingLine(String line, List<ParsedTransaction> transactions) {
-    // Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
-    final parts = line.split(',');
-    if (parts.length < 7) return;
+  ParsedTransaction? _parseTradingLine(List<String> parts) {
+    // Expected: Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+    if (parts.length < 3) return null;
 
-    final dateStr = parts[0];
-    final ticker = parts[1];
-    final typeStr = parts[2];
-    final quantityStr = parts[3];
-    final priceStr = parts[4];
-    final totalAmountStr = parts[5];
-    final currency = parts[6];
+    final date = DateTime.tryParse(parts[0].trim());
+    if (date == null) return null;
 
-    final date = DateTime.tryParse(dateStr);
-    if (date == null) return;
+    final ticker = _emptyToNull(parts.length > 1 ? parts[1].trim() : null);
+    final typeStr = parts.length > 2 ? parts[2].trim() : '';
+    final quantity = _parseNumber(parts.length > 3 ? parts[3] : null) ?? 0.0;
+    final price = _parseNumber(parts.length > 4 ? parts[4] : null) ?? 0.0;
+    final totalAmountStr = parts.length > 5 ? parts[5] : '';
+    final amount = _parseNumber(totalAmountStr)?.abs() ?? 0.0;
+    final currency = _resolveCurrency(parts, totalAmountStr) ?? 'EUR';
 
-    final quantity = double.tryParse(quantityStr);
-    final price = double.tryParse(priceStr);
-    final totalAmount = double.tryParse(totalAmountStr); // Usually negative for buy
+    final upperType = typeStr.toUpperCase();
 
-    TransactionType type;
-    if (typeStr == 'BUY') {
-      type = TransactionType.Buy;
-    } else if (typeStr == 'SELL') {
-      type = TransactionType.Sell;
-    } else if (typeStr == 'DIVIDEND') {
-      type = TransactionType.Dividend;
-    } else {
-      return; // Ignore other types
+    if (upperType.startsWith('BUY')) {
+      return _buildTransaction(
+        date: date,
+        type: TransactionType.Buy,
+        assetName: ticker,
+        ticker: ticker,
+        quantity: quantity,
+        price: price,
+        amount: -amount, // Négatif : sortie d'argent
+        currency: currency,
+        assetType: AssetType.Stock,
+      );
     }
 
-    transactions.add(ParsedTransaction(
-      date: date,
-      type: type,
-      assetName: ticker, // Revolut uses Ticker as name often
-      ticker: ticker, // Also set ticker
-      isin: null,
-      quantity: quantity ?? 0.0,
-      amount: totalAmount?.abs() ?? 0.0, 
-      price: price ?? 0.0,
-      currency: currency,
-      fees: 0.0, 
-      assetType: AssetType.Stock,
-    ));
+    if (upperType.startsWith('SELL')) {
+      return _buildTransaction(
+        date: date,
+        type: TransactionType.Sell,
+        assetName: ticker,
+        ticker: ticker,
+        quantity: quantity,
+        price: price,
+        amount: amount,
+        currency: currency,
+        assetType: AssetType.Stock,
+      );
+    }
+
+    if (upperType.startsWith('DIVIDEND TAX')) {
+      return _buildTransaction(
+        date: date,
+        type: TransactionType.Fees,
+        assetName: ticker ?? 'Dividend tax',
+        ticker: ticker,
+        quantity: 0,
+        price: 0,
+        amount: amount,
+        currency: currency,
+        assetType: AssetType.Cash,
+      );
+    }
+
+    if (upperType == 'DIVIDEND') {
+      return _buildTransaction(
+        date: date,
+        type: TransactionType.Dividend,
+        assetName: ticker ?? 'Dividende',
+        ticker: ticker,
+        quantity: 0,
+        price: 0,
+        amount: amount,
+        currency: currency,
+        assetType: AssetType.Stock,
+      );
+    }
+
+    if (upperType.startsWith('CASH TOP-UP') ||
+        upperType.startsWith('CASH TRANSFER') ||
+        upperType.startsWith('CARD TOP-UP')) {
+      return _buildTransaction(
+        date: date,
+        type: TransactionType.Deposit,
+        assetName: 'Cash $currency'.trim(),
+        ticker: null,
+        quantity: 0,
+        price: 1,
+        amount: amount,
+        currency: currency,
+        assetType: AssetType.Cash,
+      );
+    }
+
+    if (upperType.startsWith('CASH WITHDRAWAL')) {
+      return _buildTransaction(
+        date: date,
+        type: TransactionType.Withdrawal,
+        assetName: 'Cash $currency'.trim(),
+        ticker: null,
+        quantity: 0,
+        price: 1,
+        amount: -amount, // Négatif : sortie d'argent
+        currency: currency,
+        assetType: AssetType.Cash,
+      );
+    }
+
+    if (upperType.startsWith('INTEREST')) {
+      return _buildTransaction(
+        date: date,
+        type: TransactionType.Interest,
+        assetName: ticker ?? 'Intérêt',
+        ticker: ticker,
+        quantity: 0,
+        price: 0,
+        amount: amount,
+        currency: currency,
+        assetType: AssetType.Cash,
+      );
+    }
+
+    return null;
   }
 
-  void _parseStandardLine(String line, List<ParsedTransaction> transactions) {
-    // Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance
-    // Implementation skipped for now as Trading format is priority.
+  ParsedTransaction _buildTransaction({
+    required DateTime date,
+    required TransactionType type,
+    required String? assetName,
+    required String? ticker,
+    required double quantity,
+    required double price,
+    required double amount,
+    required String currency,
+    required AssetType assetType,
+  }) {
+    final name = assetName?.isNotEmpty == true
+        ? assetName!
+        : ticker?.isNotEmpty == true
+            ? ticker!
+            : 'Inconnu';
+
+    return ParsedTransaction(
+      date: date,
+      type: type,
+      assetName: name,
+      ticker: ticker,
+      isin: null,
+      quantity: quantity,
+      amount: amount,
+      price: price,
+      currency: currency,
+      fees: 0.0,
+      assetType: assetType,
+    );
+  }
+
+  List<String> _splitLine(String line) {
+    return line.split(',').map((p) => p.trim()).toList();
+  }
+
+  bool _isHeader(List<String> parts) {
+    if (parts.isEmpty) return true;
+    final first = parts.first.toLowerCase();
+    return first.startsWith('date') || first.startsWith('type');
+  }
+
+  double? _parseNumber(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    var sanitized = value.replaceAll(RegExp(r'[^0-9,.-]'), '');
+    final hasComma = sanitized.contains(',');
+    final hasDot = sanitized.contains('.');
+
+    if (hasComma && hasDot) {
+      sanitized = sanitized.replaceAll(',', '');
+    } else if (hasComma) {
+      sanitized = sanitized.replaceAll(',', '.');
+    }
+
+    return double.tryParse(sanitized);
+  }
+
+  String? _resolveCurrency(List<String> parts, String amountPart) {
+    if (parts.length > 6 && parts[6].trim().isNotEmpty) {
+      return parts[6].trim();
+    }
+
+    final match = _currencyRegex.firstMatch(amountPart);
+    return match?.group(0);
+  }
+
+  String? _emptyToNull(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 }
