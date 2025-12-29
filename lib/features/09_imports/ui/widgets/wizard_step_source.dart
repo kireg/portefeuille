@@ -63,51 +63,53 @@ class WizardStepSource extends StatelessWidget {
       ),
     ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Quelle est la source ?',
-          style: AppTypography.h2,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Sélectionnez l\'institution d\'origine du fichier.',
-          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-          textAlign: TextAlign.center,
-        ),
-        if (suggestedSourceId != null && suggestionConfidence != null) ...[
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.auto_awesome, color: AppColors.success, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  'Source suggérée : ${_getSourceName(suggestedSourceId!)} '
-                  '(${(suggestionConfidence! * 100).toInt()}%)',
-                  style: AppTypography.bodyBold.copyWith(color: AppColors.success),
-                ),
-              ],
-            ),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Quelle est la source ?',
+            style: AppTypography.h2,
+            textAlign: TextAlign.center,
           ),
-        ],
-        const SizedBox(height: 24),
-        Expanded(
-          child: GridView.builder(
+          const SizedBox(height: 8),
+          Text(
+            'Sélectionnez l\'institution d\'origine du fichier.',
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          if (suggestedSourceId != null && suggestionConfidence != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.auto_awesome, color: AppColors.success, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Source suggérée : ${_getSourceName(suggestedSourceId!)} '
+                    '(${(suggestionConfidence! * 100).toInt()}%)',
+                    style: AppTypography.bodyBold.copyWith(color: AppColors.success),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 1.0,
+              childAspectRatio: 1.3,
             ),
             itemCount: sources.length,
             itemBuilder: (context, index) {
@@ -117,14 +119,14 @@ class WizardStepSource extends StatelessWidget {
               return _buildSourceCard(source, isSelected);
             },
           ),
-        ),
-        const SizedBox(height: 16),
-        _buildImportModeSelector(),
-        if (selectedSourceId == 'trade_republic') ...[
           const SizedBox(height: 16),
-          _buildTrCategorySelector(),
+          _buildImportModeSelector(),
+          if (selectedSourceId == 'trade_republic') ...[
+            const SizedBox(height: 16),
+            _buildTrCategorySelector(),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -133,24 +135,43 @@ class WizardStepSource extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Mode d\'import', style: AppTypography.h3),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: ImportMode.values.map((mode) {
-            final isSelected = importMode == mode;
-            final label =
-                mode == ImportMode.initial ? 'Initial' : 'Actualisation';
-            return ChoiceChip(
-              label: Text(label),
-              selected: isSelected,
-              onSelected: (_) => onImportModeChanged(mode),
-              selectedColor: AppColors.primary.withValues(alpha: 0.15),
-              labelStyle: AppTypography.body.copyWith(
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
-              ),
-            );
-          }).toList(),
+        const SizedBox(height: 12),
+        Center(
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: ImportMode.values.map((mode) {
+              final isSelected = importMode == mode;
+              final label =
+                  mode == ImportMode.initial ? 'Initial' : 'Actualisation';
+              return InkWell(
+                onTap: () => onImportModeChanged(mode),
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isSelected 
+                        ? AppColors.primary 
+                        : AppColors.surface,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isSelected 
+                          ? AppColors.primary 
+                          : AppColors.border,
+                      width: 2,
+                    ),
+                  ),
+                  child: Text(
+                    label,
+                    style: AppTypography.bodyBold.copyWith(
+                      color: isSelected ? Colors.white : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
         ),
       ],
     );
@@ -168,22 +189,41 @@ class WizardStepSource extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Données Trade Republic à importer', style: AppTypography.h3),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: labels.entries.map((entry) {
-            final isSelected = trCategory == entry.key;
-            return ChoiceChip(
-              label: Text(entry.value),
-              selected: isSelected,
-              onSelected: (_) => onTrCategoryChanged(entry.key),
-              selectedColor: AppColors.primary.withValues(alpha: 0.15),
-              labelStyle: AppTypography.body.copyWith(
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
-              ),
-            );
-          }).toList(),
+        const SizedBox(height: 12),
+        Center(
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: labels.entries.map((entry) {
+              final isSelected = trCategory == entry.key;
+              return InkWell(
+                onTap: () => onTrCategoryChanged(entry.key),
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isSelected 
+                        ? AppColors.primary 
+                        : AppColors.surface,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isSelected 
+                          ? AppColors.primary 
+                          : AppColors.border,
+                      width: 2,
+                    ),
+                  ),
+                  child: Text(
+                    entry.value,
+                    style: AppTypography.bodyBold.copyWith(
+                      color: isSelected ? Colors.white : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
         ),
       ],
     );

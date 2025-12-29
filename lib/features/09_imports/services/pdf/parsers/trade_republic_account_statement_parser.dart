@@ -314,10 +314,17 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // - Dans la section "Compte courant": Versement PEA = sortie vers PEA (à ignorer)
       // - Dans la section "Compte PEA": Versement PEA = entrée depuis compte courant (à ignorer)
       // On ne garde que les vrais dépôts externes (Incoming transfer, SEPA reçu, etc.)
+      //
+      // IMPORTANT: Également ignorer "Incoming transfer from" car ce sont des virements
+      // depuis le compte courant vers le CTO (dépôts compensatoires automatiques)
+      // L'application applique déjà ces dépôts compensatoires, donc on ne doit pas
+      // les importer pour éviter la duplication.
       if (description.contains("Versement PEA") || 
           description.contains("Versement d'activation") ||
           fullDescription.contains("Versement PEA") ||
-          fullDescription.contains("Activation PEA")) {
+          fullDescription.contains("Activation PEA") ||
+          description.contains("Incoming transfer from") ||
+          fullDescription.contains("Incoming transfer from")) {
         // Skip internal transfers between accounts
         debugPrint("Skipping internal transfer: $description");
         return; // Ne pas ajouter cette transaction
