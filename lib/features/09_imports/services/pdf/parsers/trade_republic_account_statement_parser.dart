@@ -309,6 +309,20 @@ class TradeRepublicAccountStatementParser implements StatementParser {
         // Keep Virement maybe?
       }
 
+      // IMPORTANT: Détecter et IGNORER les virements inter-comptes (Versement PEA)
+      // Ces virements sont des transferts internes entre compte courant et PEA
+      // - Dans la section "Compte courant": Versement PEA = sortie vers PEA (à ignorer)
+      // - Dans la section "Compte PEA": Versement PEA = entrée depuis compte courant (à ignorer)
+      // On ne garde que les vrais dépôts externes (Incoming transfer, SEPA reçu, etc.)
+      if (description.contains("Versement PEA") || 
+          description.contains("Versement d'activation") ||
+          fullDescription.contains("Versement PEA") ||
+          fullDescription.contains("Activation PEA")) {
+        // Skip internal transfers between accounts
+        debugPrint("Skipping internal transfer: $description");
+        return; // Ne pas ajouter cette transaction
+      }
+
       // Determine TransactionType and AssetType
       TransactionType type = TransactionType.Deposit; // Default
       AssetType assetType = AssetType.Stock; // Default
