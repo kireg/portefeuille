@@ -77,7 +77,7 @@ class RevolutParser implements StatementParser {
         ticker: ticker,
         quantity: quantity,
         price: price,
-        amount: amount,
+        amount: -amount, // Négatif : sortie d'argent
         currency: currency,
         assetType: AssetType.Stock,
       );
@@ -149,7 +149,7 @@ class RevolutParser implements StatementParser {
         ticker: null,
         quantity: 0,
         price: 1,
-        amount: amount,
+        amount: -amount, // Négatif : sortie d'argent
         currency: currency,
         assetType: AssetType.Cash,
       );

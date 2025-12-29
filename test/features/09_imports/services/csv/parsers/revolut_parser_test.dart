@@ -50,7 +50,7 @@ Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
       expect(tx.ticker, 'NVDA');
       expect(tx.quantity, closeTo(16.13, 0.01));
       expect(tx.price, closeTo(123.97, 0.01));
-      expect(tx.amount, closeTo(2000, 0.01));
+      expect(tx.amount, closeTo(-2000, 0.01)); // Négatif: sortie d'argent
       expect(tx.currency, 'USD');
       expect(tx.assetType, AssetType.Stock);
     });

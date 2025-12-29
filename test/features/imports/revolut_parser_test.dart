@@ -21,7 +21,7 @@ Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
 
     final buy = result.firstWhere((tx) => tx.type == TransactionType.Buy);
     expect(buy.ticker, 'NVDA');
-    expect(buy.amount, closeTo(2000, 0.001));
+    expect(buy.amount, closeTo(-2000, 0.001)); // Négatif: sortie d'argent
     expect(buy.price, closeTo(123.97, 0.001));
 
     final dividend = result.firstWhere((tx) => tx.type == TransactionType.Dividend);

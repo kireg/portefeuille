@@ -64,8 +64,8 @@ class ImportSaveService {
         
         // Neutralisation des imports de TOUS les achats ET retraits
         // Logique :
-        // - Buy (montant < 0) : Achat historique, argent déjà dépensé → dépôt compensatoire
-        // - Withdrawal (montant < 0) : Retrait historique, argent déjà retiré → dépôt compensatoire
+        // - Buy : Achat historique, argent déjà dépensé → dépôt compensatoire
+        // - Withdrawal : Retrait historique, argent déjà retiré → dépôt compensatoire
         // 
         // Raison : Lors d'un import, on ajoute l'historique transactionnel d'un compte
         // qui existait DÉJÀ avec des mouvements passés (achats, retraits).
@@ -74,9 +74,8 @@ class ImportSaveService {
         // (faux, car l'argent existait au moment des achats)
         //
         // Les Deposit et Interest NE sont PAS compensés car ils augmentent les liquidités
-        // (le montant négatif des Buy/Withdrawal est équilibré par un Deposit positif)
-        if ((parsed.type == TransactionType.Buy || parsed.type == TransactionType.Withdrawal) 
-            && parsed.amount < 0) {
+        // Note: On utilise .abs() pour être robuste quel que soit le signe retourné par le parser
+        if (parsed.type == TransactionType.Buy || parsed.type == TransactionType.Withdrawal) {
           final dateKey = parsed.date.toIso8601String().substring(0, 10);
           final isCrowdfunding = parsed.assetType == AssetType.RealEstateCrowdfunding;
           

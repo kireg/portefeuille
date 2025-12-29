@@ -133,7 +133,8 @@ void main() {
       );
 
       expect(count, 2);
-      expect(provider.added.length, 1);
+      // 1 nouveau + 1 dépôt compensatoire (le modifié ne crée pas de dépôt)
+      expect(provider.added.length, 2);
       expect(provider.updated.length, 1);
       expect(provider.updated.first.id, 't_mod');
     });
@@ -172,8 +173,11 @@ void main() {
       );
 
       expect(count, 1);
-      expect(provider.added, hasLength(1));
-      expect(provider.added.first.id.length, lessThan(255));
+      // 1 transaction + 1 dépôt compensatoire pour le Buy
+      expect(provider.added, hasLength(2));
+      // Vérifier que la transaction principale a un ID court
+      final mainTx = provider.added.firstWhere((t) => t.type == TransactionType.Buy);
+      expect(mainTx.id.length, lessThan(255));
     });
 
     test('crée un dépôt compensatoire pour les imports crowdfunding', () async {
