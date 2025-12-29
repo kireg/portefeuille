@@ -86,34 +86,92 @@ class BoursoramaParser implements StatementParser {
     // On cherche d'abord l'ISIN qui est le point d'ancrage le plus fiable
     final regexIsin = RegExp(r'\(([A-Z]{2}[A-Z0-9]{10})\)\s*\*');
     
-    for (final isinMatch in regexIsin.allMatches(rawText)) {
+    // Convertir tous les matches en liste pour pouvoir accéder aux indices
+    final allIsinMatches = regexIsin.allMatches(rawText).toList();
+    
+    for (int i = 0; i < allIsinMatches.length; i++) {
       try {
+        final isinMatch = allIsinMatches[i];
         final isin = isinMatch.group(1)!;
         final isinStart = isinMatch.start;
         
         // Chercher en arrière pour trouver quantité + nom
-        // On prend les 100 caractères avant l'ISIN
-        final prefixStart = (isinStart - 100).clamp(0, rawText.length);
-        final prefix = rawText.substring(prefixStart, isinStart);
+        // Déterminer le début de recherche : soit le précédent ISIN, soit max 200 caractères avant
+        int prefixStart;
+        if (i > 0) {
+          // Commencer juste après le précédent ISIN
+          prefixStart = allIsinMatches[i - 1].end;
+        } else {
+          // Premier ISIN : chercher depuis début de section ou 200 chars avant
+          prefixStart = (isinStart - 200).clamp(0, rawText.length);
+        }
         
-        // Pattern: quantité (avec ou sans décimales) + nom de l'actif
-        // Le nom peut contenir des espaces, lettres, points, &, -
-        final regexPrefix = RegExp(r'(\d+(?:[,\.]\d+)?)\s*([A-ZÀ-Ü][A-ZÀ-Ü0-9\s\.&\-]+?)\s*$');
-        final prefixMatch = regexPrefix.firstMatch(prefix);
+        var prefix = rawText.substring(prefixStart, isinStart);
+        
+        // Dans les relevés BoursoBank, chaque section de positions commence par "ACTIONS"
+        // puis suit le format: nombreNOM_ACTIF (ISIN)
+        // Pour éviter de capturer les nombres de la ligne précédente (qui sont collés),
+        // on cherche depuis le dernier mot-clé "ACTIONS", "EUR" ou autres marqueurs de section
+        final sectionMarkers = ['ACTIONS', 'OBLIGATIONS', 'OPCVM', 'EUR', 'USD', 'GBP'];
+        int bestMarkerPos = -1;
+        for (final marker in sectionMarkers) {
+          final pos = prefix.lastIndexOf(marker);
+          if (pos > bestMarkerPos) {
+            bestMarkerPos = pos;
+          }
+        }
+        
+        if (bestMarkerPos >= 0) {
+          // Commencer la recherche après le marqueur
+          prefix = prefix.substring(bestMarkerPos);
+        }
+        
+        // Nouvelle stratégie: 
+        // 1. Chercher le nom de l'actif qui précède l'ISIN (séquence de lettres majuscules)
+        // 2. La quantité est le nombre immédiatement AVANT le nom (peut être collé)
+        //
+        // Format: "163,8810SOCIETE GENERALE" -> on veut "10" (collé à SOCIETE)
+        // Format: "15THALES" -> on veut "15" (collé à THALES)
+        // Format: "20 AM.MS" -> on veut "20" (espace avant AM)
+        //
+        // Problème: "8810" est capturé au lieu de "10" car c'est la séquence complète avant "S"
+        // Solution: Heuristique - si qty > 1000 et précédé d'une virgule, prendre 2 derniers chiffres
+        
+        // Pattern: nombre + nom en majuscules
+        final qtyNamePattern = RegExp(r'(\d+)\s*([A-ZÀ-Ü][A-ZÀ-Ü0-9\s\.&\-]+?)\s*$');
+        final prefixMatch = qtyNamePattern.firstMatch(prefix);
         
         if (prefixMatch == null) {
-          debugPrint('BoursoramaParser: Could not parse prefix for ISIN $isin: "$prefix"');
+          debugPrint('BoursoramaParser: Could not parse quantity+name for ISIN $isin: "$prefix"');
           continue;
         }
         
-        final qtyStr = prefixMatch.group(1)!.replaceAll(',', '.');
+        var quantityStr = prefixMatch.group(1)!;
         final assetName = prefixMatch.group(2)!.trim();
-        final quantity = double.tryParse(qtyStr) ?? 0.0;
         
-        if (quantity <= 0) continue;
+        // Heuristique anti-collage: si qty > 20 ET précédée d'une virgule/point,
+        // c'est probablement un nombre décimal collé
+        // Ex: "163,8810" -> prendre "10" (2 derniers chiffres)
+        // Ex: "16,072" -> prendre "2" (1 dernier chiffre)
+        // Ex: "35,504" -> prendre "4" (1 dernier chiffre)
+        final qty = int.tryParse(quantityStr) ?? 0;
+        if (qty > 20) {
+          // Chercher si juste avant il y a virgule/point
+          final qtyStart = prefixMatch.start + (prefix.substring(prefixMatch.start).indexOf(quantityStr));
+          if (qtyStart > 0) {
+            final charBefore = prefix[qtyStart - 1];
+            if (charBefore == ',' || charBefore == '.') {
+              // Prendre 1 ou 2 derniers chiffres selon la longueur
+              // Si >= 4 chiffres, prendre 2 derniers (ex: 8810 -> 10)
+              // Sinon prendre 1 dernier (ex: 072 -> 2, 444 -> 4)
+              final takeCount = quantityStr.length >= 4 ? 2 : 1;
+              quantityStr = quantityStr.substring(quantityStr.length - takeCount);
+              debugPrint('BoursoramaParser: Applied anti-concatenation heuristic for $assetName: ${prefixMatch.group(1)} -> $quantityStr');
+            }
+          }
+        }
         
-        // Chercher après l'ISIN pour les valeurs numériques
-        // Format après "* ": cours + valorisation + %portef + PRU
+        // Chercher après l'ISIN pour le PRU (Prix de Revient Unitaire)
         final suffixStart = isinMatch.end;
         final suffixEnd = (suffixStart + 150).clamp(0, rawText.length);
         var suffix = rawText.substring(suffixStart, suffixEnd);
@@ -133,37 +191,24 @@ class BoursoramaParser implements StatementParser {
           }
         }
         
-        // Extraire les nombres décimaux (format français: virgule comme séparateur décimal)
-        // Pattern pour capturer des nombres comme "266,60" ou "3 999,00" ou "54,64" ou "163,88"
-        // Un nombre décimal français = chiffres (optionnellement avec espaces) + virgule + 2-3 chiffres décimaux
-        // 
-        // ATTENTION: Dans le format compact du PDF BoursoBank, les nombres peuvent être collés:
-        // "266,603 999,0054,64163,88"
-        // On doit identifier les 4 valeurs: cours, valorisation, %portef, PRU
-        //
-        // Stratégie: extraire tous les nombres décimaux avec le pattern flexible,
-        // puis pour le PRU prendre les derniers chiffres + virgule + 2 chiffres
+        // NOUVELLE STRATEGIE SIMPLIFIEE:
+        // 1. Parser la quantité depuis le prefix (groupe 1 du match regex)
+        // 2. Parser le PRU depuis le suffix (dernier nombre à 2 décimales)
+        // 3. Montant investi = quantité × PRU
         
-        // Première passe: trouver tous les nombres décimaux standards
-        final regexDecimalNumbers = RegExp(r'(\d[\d\s]*,\d{2,3})');
-        final numberMatches = regexDecimalNumbers.allMatches(suffix).toList();
+        // La regex capture désormais le premier entier au début du prefix
+        final quantity = double.tryParse(quantityStr) ?? 0.0;
         
-        double cours = 0.0;
-        double pru = 0.0;
-        
-        if (numberMatches.isNotEmpty) {
-          cours = _parseNumber(numberMatches[0].group(1)!);
+        if (quantity <= 0) {
+          debugPrint('BoursoramaParser: Invalid quantity $quantityStr for $assetName');
+          continue;
         }
         
-        // Pour le PRU, on cherche le dernier nombre du bloc
-        // Dans le format compact "54,64163,88", après le 3ème match, il reste "163,88"
-        // On utilise une approche différente: chercher le dernier pattern \d+,\d{2} dans le suffix
+        // 2. PRU: dernier nombre à 2 décimales dans le suffix
         final allDecimalMatches = RegExp(r'(\d+,\d{2})').allMatches(suffix).toList();
-        if (allDecimalMatches.length >= 4) {
-          // Format normal: prendre le 4ème
-          pru = _parseNumber(allDecimalMatches[3].group(1)!);
-        } else if (allDecimalMatches.isNotEmpty) {
-          // Fallback: prendre le dernier
+        var pru = 0.0;
+        if (allDecimalMatches.isNotEmpty) {
+          // Prendre le dernier (c'est toujours le PRU)
           pru = _parseNumber(allDecimalMatches.last.group(1)!);
         }
         
@@ -189,7 +234,7 @@ class BoursoramaParser implements StatementParser {
           assetType: _inferAssetType(assetName),
         ));
         
-        debugPrint('BoursoramaParser: Parsed position - $assetName ($isin), qty: $quantity, pru: $pru, current: $cours');
+        debugPrint('BoursoramaParser: Parsed position - $assetName ($isin), qty: $quantity, pru: $pru');
       } catch (e) {
         debugPrint('BoursoramaParser: Error parsing position: $e');
       }
