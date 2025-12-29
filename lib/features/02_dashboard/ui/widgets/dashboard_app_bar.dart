@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // 1. IMPORTS CORE UI
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
@@ -9,6 +10,7 @@ import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 
 // 2. IMPORTS DATA & PROVIDERS
 import 'package:portefeuille/core/data/models/portfolio.dart';
+import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/features/00_app/models/background_activity.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -49,6 +51,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     int errors = 0;
     int manual = 0;
     int unsyncable = 0;
+    int warnings = 0;
     
     // Ne compter que les métadonnées des actifs présents dans le portefeuille actif
     for (final ticker in activeTickers) {
@@ -61,6 +64,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
         case SyncStatus.error: errors++; break;
         case SyncStatus.manual: manual++; break;
         case SyncStatus.unsyncable: unsyncable++; break;
+        case SyncStatus.pendingValidation: warnings++; break;
         default: break;
       }
     }
@@ -69,6 +73,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     return {
       'synced': synced + manual,
       'errors': errors,
+      'warnings': warnings,
       'total': total,
     };
   }
@@ -175,6 +180,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
     final stats = _getSyncStats(portfolio);
     final totalCount = stats['total']!;
     final errorsCount = stats['errors']!;
+    final warningsCount = stats['warnings']!;
     final syncedCount = stats['synced']!;
 
     Widget content;
@@ -189,6 +195,9 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
         ],
       );
     } else if (settings.isOnlineMode) {
+      final hasProblems = errorsCount > 0 || warningsCount > 0;
+      final statusColor = errorsCount > 0 ? AppColors.error : (warningsCount > 0 ? AppColors.warning : AppColors.success);
+      
       content = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -202,7 +211,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: errorsCount > 0 ? AppColors.error : AppColors.success,
+                color: statusColor,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -308,13 +317,31 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
   }
 
   void _showStatusMenu(BuildContext context, SettingsProvider settings, PortfolioProvider portfolio) {
-    // ... (Code existant inchangé)
+    final stats = _getSyncStats(portfolio);
+    final errorsCount = stats['errors']!;
+    final warningsCount = stats['warnings']!;
+    final totalProblems = errorsCount + warningsCount;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
       builder: (ctx) {
         return Wrap(
           children: [
+            if (totalProblems > 0)
+              ListTile(
+                leading: Icon(
+                  errorsCount > 0 ? Icons.error_outline : Icons.warning_amber_rounded, 
+                  color: errorsCount > 0 ? AppColors.error : AppColors.warning
+                ),
+                title: Text(
+                  'Voir les problèmes ($totalProblems)', 
+                  style: AppTypography.body.copyWith(
+                    color: errorsCount > 0 ? AppColors.error : AppColors.warning
+                  )
+                ),
+                onTap: () { Navigator.of(ctx).pop(); _showErrorDetails(context, portfolio); },
+              ),
             ListTile(
               leading: Icon(settings.isOnlineMode ? Icons.cloud_off_outlined : Icons.cloud_queue_outlined, color: AppColors.textPrimary),
               title: Text(settings.isOnlineMode ? 'Passer "Hors ligne"' : 'Passer "En ligne"', style: AppTypography.body),
@@ -330,6 +357,232 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
           ],
         );
       },
+    );
+  }
+
+  List<Map<String, dynamic>> _getProblematicAssets(PortfolioProvider portfolio) {
+    final activePortfolio = portfolio.activePortfolio;
+    if (activePortfolio == null) return [];
+
+    final activeTickers = <String>{};
+    for (final institution in activePortfolio.institutions) {
+      for (final account in institution.accounts) {
+        for (final asset in account.assets) {
+          activeTickers.add(asset.ticker);
+        }
+      }
+    }
+
+    final problematicAssets = <Map<String, dynamic>>[];
+    final metadata = portfolio.allMetadata;
+
+    for (final ticker in activeTickers) {
+      final meta = metadata[ticker];
+      if (meta != null && (meta.syncStatus == SyncStatus.error || meta.syncStatus == SyncStatus.pendingValidation)) {
+        // Find asset name if possible (from first occurrence)
+        String? name;
+        for (final institution in activePortfolio.institutions) {
+          for (final account in institution.accounts) {
+            for (final asset in account.assets) {
+              if (asset.ticker == ticker) {
+                name = asset.name;
+                break;
+              }
+            }
+            if (name != null) break;
+          }
+          if (name != null) break;
+        }
+        
+        problematicAssets.add({
+          'ticker': ticker,
+          'name': name ?? ticker,
+          'isin': meta.isin,
+          'lastPrice': meta.currentPrice,
+          'currency': meta.priceCurrency,
+          'status': meta.syncStatus,
+          'metadata': meta,
+        });
+      }
+    }
+    // Sort: Errors first, then Warnings
+    problematicAssets.sort((a, b) {
+      final statusA = a['status'] as SyncStatus;
+      final statusB = b['status'] as SyncStatus;
+      if (statusA == SyncStatus.error && statusB != SyncStatus.error) return -1;
+      if (statusA != SyncStatus.error && statusB == SyncStatus.error) return 1;
+      return 0;
+    });
+
+    return problematicAssets;
+  }
+
+  void _showErrorDetails(BuildContext context, PortfolioProvider portfolio) {
+    final problematicAssets = _getProblematicAssets(portfolio);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimens.radiusM)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(AppDimens.paddingM),
+                  child: Text('Problèmes de synchronisation', style: AppTypography.h3),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    itemCount: problematicAssets.length,
+                    itemBuilder: (context, index) {
+                      final asset = problematicAssets[index];
+                      final ticker = asset['ticker'] as String;
+                      final name = asset['name'] as String;
+                      final isin = asset['isin'] as String?;
+                      final status = asset['status'] as SyncStatus;
+                      final meta = asset['metadata'] as AssetMetadata;
+
+                      final isError = status == SyncStatus.error;
+                      final color = isError ? AppColors.error : AppColors.warning;
+
+                      return ListTile(
+                        leading: Icon(
+                          isError ? Icons.error_outline : Icons.warning_amber_rounded,
+                          color: color,
+                        ),
+                        title: Text(name, style: AppTypography.bodyBold),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(ticker + (isin != null ? ' • $isin' : ''), style: AppTypography.caption),
+                            if (!isError)
+                              Text(
+                                'Nouveau prix: ${meta.pendingPrice} (vs ${meta.currentPrice})',
+                                style: AppTypography.caption.copyWith(color: AppColors.warning),
+                              ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.search, color: AppColors.primary),
+                              onPressed: () => _searchAssetOnWeb(ticker, isin),
+                              tooltip: 'Rechercher sur le web',
+                            ),
+                            if (isError)
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: AppColors.accent),
+                                onPressed: () {
+                                  Navigator.pop(ctx); // Close list to open dialog
+                                  _showUpdatePriceDialog(context, portfolio, ticker, asset['lastPrice'] as double?);
+                                },
+                                tooltip: 'Corriger le prix',
+                              )
+                            else ...[
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: AppColors.accent),
+                                onPressed: () {
+                                  Navigator.pop(ctx); // Close list to open dialog
+                                  _showUpdatePriceDialog(context, portfolio, ticker, asset['lastPrice'] as double?);
+                                },
+                                tooltip: 'Corriger le prix',
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.check, color: AppColors.success),
+                                onPressed: () {
+                                  meta.validatePendingPrice();
+                                  portfolio.saveMetadata(meta);
+                                  Navigator.pop(ctx); // Refresh list (simple way) or setState
+                                  _showErrorDetails(context, portfolio); // Reopen to refresh
+                                },
+                                tooltip: 'Valider',
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                                onPressed: () {
+                                  meta.ignorePendingPrice();
+                                  portfolio.saveMetadata(meta);
+                                  Navigator.pop(ctx);
+                                  _showErrorDetails(context, portfolio);
+                                },
+                                tooltip: 'Ignorer',
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _searchAssetOnWeb(String ticker, String? isin) async {
+    final query = Uri.encodeComponent('$ticker ${isin ?? ''} price');
+    final url = Uri.parse('https://www.google.com/search?q=$query');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _showUpdatePriceDialog(BuildContext context, PortfolioProvider portfolio, String ticker, double? currentPrice) {
+    final controller = TextEditingController(text: currentPrice?.toString() ?? '');
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('Mettre à jour le prix', style: AppTypography.h3),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Ticker: $ticker', style: AppTypography.body),
+            const SizedBox(height: AppDimens.paddingS),
+            TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Nouveau prix',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final newPrice = double.tryParse(controller.text.replaceAll(',', '.'));
+              if (newPrice != null) {
+                portfolio.updateAssetPrice(ticker, newPrice);
+                Navigator.of(ctx).pop();
+              }
+            },
+            child: const Text('Valider'),
+          ),
+        ],
+      ),
     );
   }
 
