@@ -93,11 +93,11 @@ $$ \text{Valeur (EUR)} = \text{Valeur (Devise Origine)} \times \text{Taux de Cha
 *   **Auto-Dépôt automatique :** Un DÉPÔT compensatoire est créé automatiquement pour chaque date d'investissement afin de neutraliser l'impact sur les liquidités. Cela reflète le fait que l'argent était déjà disponible sur la plateforme avant l'import.
 *   **Notes du dépôt :** `"Apport auto - Crowdfunding (mode depuis source)"`
 
-### Import Initial de Positions (Snapshot)
-*   Lors d'un import initial (positions existantes sans historique complet), les achats reconstitués sont également **NÉGATIFS**.
-*   Pour éviter un solde de liquidité fortement négatif, un DÉPÔT compensatoire est créé automatiquement par date d'achat (hors crowdfunding).
-*   **Notes du dépôt :** `"Apport auto - Neutralisation import (mode depuis source)"`
-*   Cette neutralisation s'applique uniquement en mode `initial` et n'affecte pas les imports en mode `supplement` ou `replacement`.
+### Import Initial/Actualisation/Supplément de Positions et Achats
+*   Lors d'un import de positions existantes (snapshot) ou d'achats via Trade Republic, BoursoBank, etc., les achats sont importés avec montants **NÉGATIFS**.
+*   Pour éviter un solde de liquidité fortement négatif, un DÉPÔT compensatoire est créé automatiquement par date d'achat.
+*   Cela s'applique à **TOUS les modes** (initial, actualisation, supplément) car l'argent a déjà été prélevé lors de l'investissement réel sur la plateforme d'investissement.
+*   **Notes du dépôt :** `"Apport auto - Crowdfunding (Actualisation depuis source)"` ou `"Apport auto - Neutralisation import (Import initial depuis source)"`
 
 ### Import PDF/Excel (Banque)
 *   Les achats sont convertis en montants **NÉGATIFS**.

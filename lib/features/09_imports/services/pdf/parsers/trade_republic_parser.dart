@@ -143,6 +143,7 @@ class TradeRepublicParser implements StatementParser {
         date: docDate ?? DateTime.now(), // Fallback si date non trouvée
         type: typeStr == 'achat' ? TransactionType.Buy : TransactionType.Sell,
         assetName: assetName,
+        ticker: assetName.replaceAll(RegExp(r'\s+'), '_').toUpperCase(), // Utiliser le nom comme ticker pour grouper
         quantity: quantity,
         price: price,
         amount: amount,
@@ -222,6 +223,7 @@ class TradeRepublicParser implements StatementParser {
           date: docDate ?? DateTime.now(),
           type: TransactionType.Dividend,
           assetName: assetName,
+          ticker: assetName.replaceAll(RegExp(r'\s+'), '_').toUpperCase(), // Utiliser le nom comme ticker pour grouper
           quantity: quantity,
           price: perShare,
           amount: amount,
@@ -264,6 +266,7 @@ class TradeRepublicParser implements StatementParser {
             date: docDate ?? DateTime.now(),
             type: TransactionType.Dividend,
             assetName: assetName,
+            ticker: assetName.replaceAll(RegExp(r'\s+'), '_').toUpperCase(), // Utiliser le nom comme ticker pour grouper
             quantity: 0,
             price: 0,
             amount: amount,

@@ -180,6 +180,7 @@ class BoursoramaParser implements StatementParser {
           type: TransactionType.Buy,
           assetName: assetName,
           isin: isin,
+          ticker: isin, // Utiliser l'ISIN comme ticker pour grouper les transactions
           quantity: quantity,
           price: pru, // On utilise le PRU comme prix d'achat
           amount: investedAmount,
@@ -236,10 +237,20 @@ class BoursoramaParser implements StatementParser {
           amount = amount.abs();
         }
 
+        // Chercher un ISIN dans le bloc de texte entourant cette transaction
+        String? isin;
+        final isinRegex = RegExp(r'([A-Z]{2}[A-Z0-9]{9}[0-9])');
+        final isinMatch = isinRegex.firstMatch(rawText);
+        if (isinMatch != null) {
+          isin = isinMatch.group(1);
+        }
+
         transactions.add(ParsedTransaction(
           date: docDate ?? DateTime.now(),
           type: typeStr == 'achat' ? TransactionType.Buy : TransactionType.Sell,
           assetName: assetName,
+          isin: isin,
+          ticker: isin ?? assetName.replaceAll(RegExp(r'\s+'), '_').toUpperCase(), // Utiliser ISIN si disponible, sinon le nom
           quantity: quantity,
           price: price,
           amount: amount,
@@ -273,6 +284,7 @@ class BoursoramaParser implements StatementParser {
           date: docDate ?? DateTime.now(),
           type: TransactionType.Dividend,
           assetName: assetName,
+          ticker: assetName.replaceAll(RegExp(r'\s+'), '_').toUpperCase(), // Utiliser le nom comme ticker pour grouper
           quantity: quantity,
           price: 0,
           amount: amount,
@@ -303,6 +315,7 @@ class BoursoramaParser implements StatementParser {
           date: docDate ?? DateTime.now(),
           type: TransactionType.Interest, // Coupon = intérêts d'obligation
           assetName: assetName,
+          ticker: assetName.replaceAll(RegExp(r'\s+'), '_').toUpperCase(), // Utiliser le nom comme ticker pour grouper
           quantity: 0,
           price: 0,
           amount: amount,

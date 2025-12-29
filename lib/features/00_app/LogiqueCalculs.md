@@ -26,9 +26,11 @@ Ce document décrit les règles de calcul utilisées par l’application pour le
 - Sans ticker, les transactions n'étaient pas associées à des actifs et impactaient uniquement les liquidités.
 
 ## Gestion des Liquidités lors des Imports
-- **Import Crowdfunding** : Les achats décrémentent directement les liquidités (pas de dépôt compensatoire automatique).
-- **Import Snapshot (relevé de positions)** : En mode "import initial", un dépôt compensatoire est créé pour neutraliser l'impact sur les liquidités, car on importe "ce que je possède maintenant" sans l'historique complet.
-- Cette distinction garantit que les liquidités reflètent la réalité financière : un investissement de 1000€ sur un compte avec 2000€ de dépôt initial laisse 1000€ de liquidités disponibles.
+- **Principe général** : Lors d'un **import initial** (mode `ImportMode.initial`), on importe des positions DÉJÀ achetées historiquement avec de l'argent qui était disponible.
+- **Dépôt compensatoire automatique** : Pour tous les achats (`TransactionType.Buy`) importés en mode initial, un dépôt compensatoire est créé automatiquement par date pour neutraliser l'impact sur les liquidités.
+- **Raison** : Sans ce dépôt, les liquidités seraient artificiellement négatives. Par exemple, importer 5000€ d'actifs sans historique créerait -5000€ de liquidités, ce qui est incorrec t car cet argent a bien été déposé à un moment donné.
+- **Mode Actualisation** : En mode `ImportMode.update`, aucun dépôt compensatoire n'est créé car on ajoute des transactions récentes à un historique existant.
+- **Tous types d'actifs** : Le mécanisme s'applique uniformément aux actions, ETF, crypto ET crowdfunding en mode initial.
 ## Hypothèses
 - 1 mois ≈ 30 jours pour le calcul des dates de fin (cohérence globale des widgets existants).
 - Le prix unitaire du crowdfunding est considéré à 1 (la quantité représente le montant investi).

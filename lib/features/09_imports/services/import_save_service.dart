@@ -59,20 +59,25 @@ class ImportSaveService {
           assetType: parsed.assetType,
           priceCurrency: parsed.currency,
         ));
-        ));
         
-        // Neutralisation des snapshots (relevés de positions import initial)
-        // Si le parser a marqué la transaction comme Buy (position) ET que le mode est initial,
-        // on ajoute un dépôt compensatoire pour ne pas changer les liquidités.
-        if (parsed.type == TransactionType.Buy &&
-            mode == ImportMode.initial &&
-            parsed.amount < 0 &&
-            parsed.assetType != AssetType.RealEstateCrowdfunding) {
+        // Neutralisation des imports (snapshots/positions existantes OU achats via Trade Republic/BoursoBank)
+        // Que ce soit en mode initial, actualisation ou supplément, on importe des positions/achats
+        // DÉJÀ réalisés avec de l'argent disponible avant l'import du fichier.
+        // On crée un dépôt compensatoire pour que les liquidités reflètent le solde restant,
+        // pas un déficit fictif créé par l'import des achats.
+        // 
+        // Cette logique s'applique à:
+        // - Mode initial: snapshots/positions existantes (tous les Buy)
+        // - Mode actualisation/supplément: achats via Trade Republic, BoursoBank, etc.
+        //   (où l'argent a déjà été prélevé lors de l'investissement réel)
+        if (parsed.type == TransactionType.Buy && parsed.amount < 0) {
           final dateKey = parsed.date.toIso8601String().substring(0, 10);
+          final isCrowdfunding = parsed.assetType == AssetType.RealEstateCrowdfunding;
+          
           crowdfundingDepositsByDate[dateKey] =
               (crowdfundingDepositsByDate[dateKey] ?? 0) + parsed.amount.abs();
           depositIsCrowdfundingByDate[dateKey] =
-            (depositIsCrowdfundingByDate[dateKey] ?? false);
+              (depositIsCrowdfundingByDate[dateKey] ?? false) || isCrowdfunding;
         }
       }
       
