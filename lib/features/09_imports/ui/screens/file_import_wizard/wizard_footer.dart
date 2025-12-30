@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_button.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 
 /// Footer du wizard avec boutons Précédent/Suivant.
 class WizardFooter extends StatelessWidget {
@@ -30,7 +31,7 @@ class WizardFooter extends StatelessWidget {
                 onPressed: onPrevious,
               ),
             ),
-          if (currentStep > 0) const SizedBox(width: 16),
+          if (currentStep > 0) AppSpacing.gapHorizontalMedium,
           Expanded(
             child: AppButton(
               label: currentStep == 2 ? 'Terminer' : 'Suivant',

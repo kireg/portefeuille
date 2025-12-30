@@ -3,13 +3,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:portefeuille/core/data/models/account.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/services/modal_service.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../../core/ui/widgets/account_type_chip.dart';
-import 'package:portefeuille/core/ui/widgets/asset_list_item.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/privacy_blur.dart';
+import '../../../../core/Design_Center/widgets/account_type_chip.dart';
+import 'package:portefeuille/core/Design_Center/widgets/asset_list_item.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/privacy_blur.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
 
@@ -99,7 +103,7 @@ class AccountTile extends StatelessWidget {
             maxLines: 1,
             softWrap: false,
           ),
-          const SizedBox(height: 4),
+          AppSpacing.gapXs,
           AccountTypeChip(
             accountType: account.type,
             isNoviceModeEnabled: settingsProvider.userLevel == UserLevel.novice,
@@ -145,7 +149,7 @@ class AccountTile extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(Icons.edit_outlined),
-                    SizedBox(width: 8),
+                    AppSpacing.gapHorizontalSmall,
                     Text('Modifier'),
                   ],
                 ),
@@ -154,9 +158,9 @@ class AccountTile extends StatelessWidget {
                 value: _AccountAction.delete,
                 child: Row(
                   children: [
-                    Icon(Icons.delete_outline, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Supprimer', style: TextStyle(color: Colors.red)),
+                    Icon(Icons.delete_outline, color: AppColors.error),
+                    AppSpacing.gapHorizontalSmall,
+                    Text('Supprimer', style: TextStyle(color: AppColors.error)),
                   ],
                 ),
               ),
@@ -164,22 +168,22 @@ class AccountTile extends StatelessWidget {
           ),
         ],
       ),
-      childrenPadding: const EdgeInsets.only(left: 16.0),
+      childrenPadding: AppSpacing.screenPaddingHorizontal,
       children: [
         ListTile(
           dense: true,
           leading: Icon(Icons.account_balance_wallet_outlined,
-              color: Colors.grey[400]),
+              color: AppColors.textTertiary),
           title: Text('Liquidités',
-              style: TextStyle(
-                  color: Colors.grey[400], fontStyle: FontStyle.italic)),
+              style: AppTypography.caption.copyWith(
+                  color: AppColors.textTertiary, fontStyle: FontStyle.italic)),
           trailing: SizedBox(
             width: 100, // Largeur fixe pour aligner avec les assets
             child: PrivacyBlur(
               child: Text(
                 CurrencyFormatter.format(account.cashBalance, accountCurrency),
-                style: TextStyle(
-                    color: Colors.grey[300], fontStyle: FontStyle.italic),
+                style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary, fontStyle: FontStyle.italic),
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.right,
               ),
@@ -204,7 +208,7 @@ class AccountTile extends StatelessWidget {
     if (pnl == 0 && pnlPercentage == 0) return const SizedBox.shrink();
 
     final isPositive = pnl >= 0;
-    final color = isPositive ? Colors.green.shade400 : Colors.red.shade400;
+    final color = isPositive ? AppColors.success : AppColors.error;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -212,14 +216,13 @@ class AccountTile extends StatelessWidget {
         Icon(
           isPositive ? Icons.arrow_upward : Icons.arrow_downward,
           color: color,
-          size: 12,
+          size: AppComponentSizes.iconXxSmall,
         ),
-        const SizedBox(width: 2),
+        AppSpacing.gapHTiny,
         Text(
           '${CurrencyFormatter.format(pnl, baseCurrency)} (${NumberFormat.percentPattern().format(pnlPercentage)})',
-          style: theme.textTheme.bodySmall?.copyWith(
+          style: AppTypography.caption.copyWith(
             color: color,
-            fontSize: 11,
           ),
           overflow: TextOverflow.ellipsis,
         ),

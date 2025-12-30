@@ -2,13 +2,15 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
 import 'package:portefeuille/features/09_imports/models/draft_transaction.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 
 class DraftTransactionCard extends StatefulWidget {
   final DraftTransaction draft;
@@ -51,7 +53,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
       suffixStyle: AppTypography.caption.copyWith(color: AppColors.primary),
       filled: true,
       fillColor: AppColors.background, // Contraste avec la carte (Surface)
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      contentPadding: AppSpacing.listItemPaddingCompact,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppDimens.radiusS),
         borderSide: BorderSide(color: AppColors.border),
@@ -87,8 +89,8 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 16),
-                    const SizedBox(width: 8),
+                    const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: AppComponentSizes.iconXSmall),
+                    AppSpacing.gapHorizontalSmall,
                     Text(
                       "Doublon potentiel détecté",
                       style: AppTypography.caption.copyWith(color: AppColors.warning, fontWeight: FontWeight.bold),
@@ -119,7 +121,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
                     onChanged: (v) => setState(() => widget.draft.type = v!),
                   ),
                 ),
-                const SizedBox(width: 12),
+                AppSpacing.gapH12,
 
                 // Type Actif
                 Expanded(
@@ -141,10 +143,10 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
                   ),
                 ),
 
-                const SizedBox(width: 8),
+                AppSpacing.gapHorizontalSmall,
                 // Bouton Supprimer
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.error, size: 20),
+                  icon: const Icon(Icons.close, color: AppColors.error, size: AppComponentSizes.iconMediumSmall),
                   onPressed: widget.onDelete,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -152,7 +154,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
               ],
             ),
 
-            const SizedBox(height: 12),
+            AppSpacing.gap12,
 
             // --- LIGNE 2 : Date & Montant ---
             Row(
@@ -192,7 +194,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
                     },
                   ),
                 ),
-                const SizedBox(width: 12),
+                AppSpacing.gapH12,
                 Expanded(
                   child: TextFormField(
                     initialValue: widget.draft.amount.toStringAsFixed(2),
@@ -205,7 +207,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
               ],
             ),
 
-            const SizedBox(height: 12),
+            AppSpacing.gap12,
 
             // Si pas mouvement de fonds, afficher détails actif
             if (widget.draft.type != TransactionType.Deposit &&
@@ -224,7 +226,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
                       onSaved: (v) => widget.draft.ticker = v ?? '',
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  AppSpacing.gapH12,
                   Expanded(
                     flex: 2,
                     child: TextFormField(
@@ -237,7 +239,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
                 ],
               ),
 
-              const SizedBox(height: 12),
+              AppSpacing.gap12,
 
               // --- LIGNE 4 : Détails Prix ---
               Row(
@@ -251,7 +253,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
                       onSaved: (v) => widget.draft.quantity = double.tryParse(v?.replaceAll(',', '.') ?? '0') ?? 0.0,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  AppSpacing.gapHorizontalSmall,
                   Expanded(
                     child: TextFormField(
                       initialValue: widget.draft.price.toString(),
@@ -261,7 +263,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
                       onSaved: (v) => widget.draft.price = double.tryParse(v?.replaceAll(',', '.') ?? '0') ?? 0.0,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  AppSpacing.gapHorizontalSmall,
                   Expanded(
                     child: TextFormField(
                       initialValue: widget.draft.fees.toString(),

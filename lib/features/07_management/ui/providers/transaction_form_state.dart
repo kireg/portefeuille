@@ -12,6 +12,7 @@ import 'package:portefeuille/core/data/models/repayment_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/core/data/services/geocoding_service.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';
@@ -285,7 +286,7 @@ class TransactionFormState extends ChangeNotifier
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Veuillez sélectionner un compte.'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
             showCloseIcon: true,
           ),
         );
@@ -346,7 +347,7 @@ class TransactionFormState extends ChangeNotifier
            ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Quantité ou Prix manquant.'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
               showCloseIcon: true,
             ),
           );
@@ -363,7 +364,7 @@ class TransactionFormState extends ChangeNotifier
            ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Quantité ou Prix manquant.'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
               showCloseIcon: true,
             ),
           );
@@ -395,7 +396,7 @@ class TransactionFormState extends ChangeNotifier
                 ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                         content: Text("La ville '$location' est introuvable."),
-                        backgroundColor: Colors.red,
+                        backgroundColor: AppColors.error,
                         behavior: SnackBarBehavior.floating,
                     ),
                 );
@@ -486,7 +487,7 @@ class TransactionFormState extends ChangeNotifier
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Enregistré ! Reste $remaining transaction(s)...'),
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: AppColors.primary,
             duration: const Duration(seconds: 2),
             showCloseIcon: true,
           ),
@@ -501,7 +502,7 @@ class TransactionFormState extends ChangeNotifier
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Transaction enregistrée.'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
             showCloseIcon: true,
           ),
         );

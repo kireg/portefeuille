@@ -4,6 +4,9 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
@@ -118,11 +121,11 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
     final apiService = context.read<ApiService>();
 
     return Dialog(
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: const EdgeInsets.all(AppDimens.paddingM),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500),
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(AppDimens.paddingL),
           child: Form(
             key: _formKey,
             child: Column(
@@ -133,9 +136,9 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                   widget.initialAsset == null
                       ? 'Ajouter un actif'
                       : 'Modifier l\'actif',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: AppTypography.h2,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppDimens.paddingL),
                 
                 // Ticker & Type
                 Row(
@@ -156,7 +159,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                               prefixIcon: const Icon(Icons.search),
                               suffixIcon: _isLoadingPrice 
                                 ? const Padding(
-                                    padding: EdgeInsets.all(12.0),
+                                    padding: EdgeInsets.all(AppDimens.paddingS),
                                     child: SizedBox(
                                       width: 16, 
                                       height: 16, 
@@ -188,7 +191,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                                     '${suggestion.price} ${suggestion.currency}',
                                     style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
-                                Text(suggestion.currency, style: const TextStyle(fontSize: 12)),
+                                Text(suggestion.currency, style: AppTypography.micro),
                               ],
                             ),
                           );
@@ -199,16 +202,16 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                           _fetchAndSetPrice(suggestion.ticker);
                         },
                         emptyBuilder: (context) => const Padding(
-                          padding: EdgeInsets.all(8.0),
+                          padding: EdgeInsets.all(AppDimens.paddingS),
                           child: Text('Aucun résultat trouvé'),
                         ),
                         loadingBuilder: (context) => const Padding(
-                          padding: EdgeInsets.all(16.0),
+                          padding: EdgeInsets.all(AppDimens.paddingM),
                           child: Center(child: CircularProgressIndicator()),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    AppSpacing.gapHorizontalMedium,
                     Expanded(
                       flex: 2,
                       child: DropdownButtonFormField<AssetType>(
@@ -229,7 +232,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.gapM,
                 
                 // Nom
                 TextFormField(
@@ -241,11 +244,11 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                   textCapitalization: TextCapitalization.sentences,
                   validator: (v) => v?.isEmpty == true ? 'Requis' : null,
                 ),
-                const SizedBox(height: 24),
+                AppSpacing.gapL,
                 
                 // Quantité & Prix
                 Text('Position', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
+                AppSpacing.gapS,
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -264,7 +267,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                             (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Inv.' : null,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    AppSpacing.gapHorizontalMedium,
                     Expanded(
                       child: TextFormField(
                         controller: _avgPriceController,
@@ -280,7 +283,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.gapM,
                 
                 // Prix Actuel & Rendement
                 Row(
@@ -299,7 +302,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                             (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Inv.' : null,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    AppSpacing.gapHorizontalMedium,
                     Expanded(
                       child: TextFormField(
                         controller: _yieldController,
@@ -314,7 +317,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                   ],
                 ),
                 
-                const SizedBox(height: 16),
+                AppSpacing.gapM,
 
                 // Date de premier achat
                 InkWell(
@@ -342,7 +345,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                   ),
                 ),
                 
-                const SizedBox(height: 32),
+                AppSpacing.gapXl,
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -350,11 +353,11 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Annuler'),
                     ),
-                    const SizedBox(width: 16),
+                    AppSpacing.gapHorizontalMedium,
                     ElevatedButton(
                       onPressed: _submit,
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingXL, vertical: AppDimens.paddingM),
                       ),
                       child: const Text('Valider'),
                     ),

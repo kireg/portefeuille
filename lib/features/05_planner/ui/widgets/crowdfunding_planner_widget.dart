@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
 import 'package:portefeuille/features/00_app/services/crowdfunding_service.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
@@ -169,7 +171,7 @@ class _CrowdfundingPlannerWidgetState extends State<CrowdfundingPlannerWidget> {
                     ),
                     child: AppCard(
                       padding: const EdgeInsets.all(AppDimens.paddingM),
-                      backgroundColor: isCapital ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
+                      backgroundColor: isCapital ? AppColors.primary.withValues(alpha: AppOpacities.lightOverlay) : AppColors.surface,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -178,7 +180,7 @@ class _CrowdfundingPlannerWidgetState extends State<CrowdfundingPlannerWidget> {
                             DateFormat('dd MMM yyyy', 'fr_FR').format(event.date),
                             style: AppTypography.caption,
                           ),
-                          const SizedBox(height: 4),
+                          AppSpacing.gapXs,
                           Text(
                             "${event.amount.toStringAsFixed(2)} €",
                             style: AppTypography.h3.copyWith(
@@ -186,7 +188,7 @@ class _CrowdfundingPlannerWidgetState extends State<CrowdfundingPlannerWidget> {
                               fontSize: 18,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          AppSpacing.gapXs,
                           Text(
                             assetName,
                             style: AppTypography.body.copyWith(fontSize: 12),

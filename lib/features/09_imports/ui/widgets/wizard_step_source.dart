@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
 import 'package:portefeuille/features/09_imports/services/models/import_category.dart';
 import 'package:portefeuille/features/09_imports/services/models/import_mode.dart';
 
@@ -34,25 +38,25 @@ class WizardStepSource extends StatelessWidget {
         id: 'boursorama',
         name: 'Boursobanque',
         assetPath: 'assets/logos/boursorama.png',
-        color: const Color(0xFFD40055),
+        color: AppColors.institutionTradeRepublic,
       ),
       _SourceOption(
         id: 'revolut',
         name: 'Revolut',
         assetPath: 'assets/logos/revolut.png',
-        color: Colors.black,
+        color: AppColors.institutionBlack,
       ),
       _SourceOption(
         id: 'trade_republic',
         name: 'Trade Republic',
         assetPath: 'assets/logos/trade_republic.png',
-        color: Colors.black,
+        color: AppColors.institutionBlack,
       ),
       _SourceOption(
         id: 'la_premiere_brique',
         name: 'La Première Brique',
         icon: Icons.apartment,
-        color: const Color(0xFF00BFA5),
+        color: AppColors.institutionScalable,
       ),
       _SourceOption(
         id: 'other_ai',
@@ -72,26 +76,26 @@ class WizardStepSource extends StatelessWidget {
             style: AppTypography.h2,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           Text(
             'Sélectionnez l\'institution d\'origine du fichier.',
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           if (suggestedSourceId != null && suggestionConfidence != null) ...[
-            const SizedBox(height: 12),
+            AppSpacing.gap12,
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: AppSpacing.formFieldPadding,
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                color: AppColors.success.withValues(alpha: AppOpacities.lightOverlay),
+                borderRadius: BorderRadius.circular(AppDimens.radiusS),
+                border: Border.all(color: AppColors.success.withValues(alpha: AppOpacities.decorative)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.auto_awesome, color: AppColors.success, size: 18),
-                  const SizedBox(width: 8),
+                  const Icon(Icons.auto_awesome, color: AppColors.success, size: AppComponentSizes.iconSmall),
+                  AppSpacing.gapHorizontalSmall,
                   Text(
                     'Source suggérée : ${_getSourceName(suggestedSourceId!)} '
                     '(${(suggestionConfidence! * 100).toInt()}%)',
@@ -101,7 +105,7 @@ class WizardStepSource extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 24),
+          AppSpacing.gapL,
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -119,10 +123,10 @@ class WizardStepSource extends StatelessWidget {
               return _buildSourceCard(source, isSelected);
             },
           ),
-          const SizedBox(height: 16),
+          AppSpacing.gapM,
           _buildImportModeSelector(),
           if (selectedSourceId == 'trade_republic') ...[
-            const SizedBox(height: 16),
+            AppSpacing.gapM,
             _buildTrCategorySelector(),
           ],
         ],
@@ -135,7 +139,7 @@ class WizardStepSource extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Mode d\'import', style: AppTypography.h3),
-        const SizedBox(height: 12),
+        AppSpacing.gap12,
         Center(
           child: Wrap(
             spacing: 12,
@@ -147,19 +151,19 @@ class WizardStepSource extends StatelessWidget {
                   mode == ImportMode.initial ? 'Initial' : 'Actualisation';
               return InkWell(
                 onTap: () => onImportModeChanged(mode),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppDimens.radiusL),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: AppSpacing.wizardStepPadding,
                   decoration: BoxDecoration(
                     color: isSelected 
                         ? AppColors.primary 
                         : AppColors.surface,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(AppDimens.radiusL),
                     border: Border.all(
                       color: isSelected 
                           ? AppColors.primary 
                           : AppColors.border,
-                      width: 2,
+                      width: AppDimens.borderWidthBold,
                     ),
                   ),
                   child: Text(
@@ -189,7 +193,7 @@ class WizardStepSource extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Données Trade Republic à importer', style: AppTypography.h3),
-        const SizedBox(height: 12),
+        AppSpacing.gap12,
         Center(
           child: Wrap(
             spacing: 12,
@@ -199,19 +203,19 @@ class WizardStepSource extends StatelessWidget {
               final isSelected = trCategory == entry.key;
               return InkWell(
                 onTap: () => onTrCategoryChanged(entry.key),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppDimens.radiusL),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: AppSpacing.wizardStepPadding,
                   decoration: BoxDecoration(
                     color: isSelected 
                         ? AppColors.primary 
                         : AppColors.surface,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(AppDimens.radiusL),
                     border: Border.all(
                       color: isSelected 
                           ? AppColors.primary 
                           : AppColors.border,
-                      width: 2,
+                      width: AppDimens.borderWidthBold,
                     ),
                   ),
                   child: Text(
@@ -238,15 +242,15 @@ class WizardStepSource extends StatelessWidget {
           padding: EdgeInsets.zero,
           onTap: () => onSelectSource(source.id),
           backgroundColor:
-              isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
+              isSelected ? AppColors.primary.withValues(alpha: AppOpacities.lightOverlay) : null,
           child: Container(
             decoration: BoxDecoration(
               border: isSelected
-                  ? Border.all(color: AppColors.primary, width: 2)
+                  ? Border.all(color: AppColors.primary, width: AppDimens.borderWidthBold)
                   : isSuggested
-                      ? Border.all(color: AppColors.success.withValues(alpha: 0.5), width: 2)
+                      ? Border.all(color: AppColors.success.withValues(alpha: AppOpacities.semiVisible), width: AppDimens.borderWidthBold)
                       : null,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppDimens.radiusM),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -254,14 +258,14 @@ class WizardStepSource extends StatelessWidget {
                 if (source.assetPath != null)
                   Image.asset(
                     source.assetPath!,
-                    width: 48,
-                    height: 48,
+                    width: AppComponentSizes.institutionLogoSize,
+                    height: AppComponentSizes.institutionLogoSize,
                     errorBuilder: (_, __, ___) =>
-                        Icon(Icons.account_balance, size: 48, color: source.color),
+                        Icon(Icons.account_balance, size: AppComponentSizes.iconXLarge, color: source.color),
                   )
                 else
-                  Icon(source.icon, size: 48, color: source.color),
-                const SizedBox(height: 16),
+                  Icon(source.icon, size: AppComponentSizes.iconXLarge, color: source.color),
+                AppSpacing.gapM,
                 Text(
                   source.name,
                   style: AppTypography.h3.copyWith(
@@ -278,10 +282,10 @@ class WizardStepSource extends StatelessWidget {
             top: 8,
             right: 8,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: AppSpacing.chipPaddingCompact,
               decoration: BoxDecoration(
                 color: AppColors.success,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppDimens.radiusS),
               ),
               child: const Text(
                 '✨',

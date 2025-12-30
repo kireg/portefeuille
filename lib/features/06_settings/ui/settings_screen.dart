@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/widgets/components/app_screen.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_icon.dart';
 
 import 'tabs/general_settings_tab.dart';
 import 'tabs/security_settings_tab.dart';
@@ -27,12 +29,7 @@ class SettingsScreen extends StatelessWidget {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                    AppDimens.paddingL,
-                    AppDimens.paddingL,
-                    AppDimens.paddingM,
-                    0 // Réduit le padding bas pour coller aux tabs
-                ),
+                padding: AppSpacing.settingsHeaderPaddingDefault,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
@@ -50,7 +47,7 @@ class SettingsScreen extends StatelessWidget {
                         icon: Icons.close,
                         onTap: () => Navigator.of(context).pop(),
                         backgroundColor: Colors.transparent,
-                        size: 24,
+                        size: AppComponentSizes.iconMedium,
                       ),
                     ),
                   ],
@@ -72,13 +69,34 @@ class SettingsScreen extends StatelessWidget {
               ),
 
               // TabBarView
-              const Expanded(
+              Expanded(
                 child: TabBarView(
                   children: [
-                    GeneralSettingsTab(),
-                    SecuritySettingsTab(),
-                    AdvancedSettingsTab(),
-                    AboutTab(),
+                    // Padding inférieur pour ne pas cacher le contenu par la nav bar flottante
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: AppDimens.floatingNavBarPaddingBottomFixed,
+                      ),
+                      child: const GeneralSettingsTab(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: AppDimens.floatingNavBarPaddingBottomFixed,
+                      ),
+                      child: const SecuritySettingsTab(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: AppDimens.floatingNavBarPaddingBottomFixed,
+                      ),
+                      child: const AdvancedSettingsTab(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: AppDimens.floatingNavBarPaddingBottomFixed,
+                      ),
+                      child: const AboutTab(),
+                    ),
                   ],
                 ),
               ),

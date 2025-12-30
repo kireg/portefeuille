@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
-import 'package:portefeuille/core/ui/widgets/transaction_list_item.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/widgets/transaction_list_item.dart';
 import 'package:portefeuille/features/04_journal/ui/models/transaction_group.dart';
 
 class TransactionGroupWidget extends StatelessWidget {
@@ -49,8 +50,8 @@ class TransactionGroupWidget extends StatelessWidget {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.primary.withValues(alpha: AppOpacities.lightOverlay),
+                borderRadius: BorderRadius.circular(AppDimens.radius12),
               ),
               child: Text(
                 '${group.transactions.length}',
@@ -83,7 +84,7 @@ class TransactionGroupWidget extends StatelessWidget {
                         Positioned.fill(
                           child: Container(
                             color: isSelected
-                                ? AppColors.primary.withValues(alpha: 0.1)
+                                ? AppColors.primary.withValues(alpha: AppOpacities.lightOverlay)
                                 : Colors.transparent,
                             alignment: Alignment.centerLeft,
                             padding: const EdgeInsets.only(left: 8),

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
 
 class CrowdfundingMapWidget extends StatefulWidget {
   final List<Asset> assets;
@@ -122,17 +125,17 @@ class _CrowdfundingMapWidgetState extends State<CrowdfundingMapWidget> {
           height: 400,
           margin: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppDimens.radiusM),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withValues(alpha: AppOpacities.lightOverlay),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppDimens.radiusM),
             child: Stack(
               children: [
                 FlutterMap(
@@ -180,7 +183,7 @@ class _CrowdfundingMapWidgetState extends State<CrowdfundingMapWidget> {
                   top: 16,
                   right: 16,
                   child: FloatingActionButton.small(
-                    backgroundColor: AppColors.surfaceLight.withValues(alpha: 0.9),
+                    backgroundColor: AppColors.surfaceLight.withValues(alpha: AppOpacities.nearFull),
                     onPressed: _toggleLock,
                     child: Icon(
                       _isLocked ? Icons.lock : Icons.lock_open,
@@ -193,7 +196,7 @@ class _CrowdfundingMapWidgetState extends State<CrowdfundingMapWidget> {
                   bottom: 16,
                   right: 16,
                   child: FloatingActionButton.small(
-                    backgroundColor: AppColors.surfaceLight.withValues(alpha: 0.9),
+                    backgroundColor: AppColors.surfaceLight.withValues(alpha: AppOpacities.nearFull),
                     onPressed: _fitBounds,
                     child: const Icon(Icons.center_focus_strong, color: AppColors.textPrimary),
                   ),
@@ -233,15 +236,15 @@ class _CrowdfundingMapWidgetState extends State<CrowdfundingMapWidget> {
                 asset.projectName ?? asset.name,
                 style: AppTypography.h3,
               ),
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
               _buildDetailRow(Icons.location_on_outlined, 'Localisation', asset.location ?? "Inconnue"),
-              const SizedBox(height: 8),
+              AppSpacing.gapS,
               _buildDetailRow(Icons.trending_up, 'Rendement', '${asset.estimatedAnnualYield.toStringAsFixed(2)}%'),
               if (asset.riskRating != null) ...[
-                const SizedBox(height: 8),
+                AppSpacing.gapS,
                 _buildDetailRow(Icons.shield_outlined, 'Risque', asset.riskRating!),
               ],
-              const SizedBox(height: 24),
+              AppSpacing.gapL,
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -263,8 +266,8 @@ class _CrowdfundingMapWidgetState extends State<CrowdfundingMapWidget> {
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey),
-        const SizedBox(width: 8),
+        Icon(icon, size: AppComponentSizes.iconMediumSmall, color: Colors.grey),
+        AppSpacing.gapHorizontalSmall,
         Text('$label: ', style: AppTypography.body.copyWith(fontWeight: FontWeight.bold)),
         Expanded(child: Text(value, style: AppTypography.body)),
       ],

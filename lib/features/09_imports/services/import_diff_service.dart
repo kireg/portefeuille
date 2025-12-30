@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
-import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/features/09_imports/services/models/import_mode.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
 

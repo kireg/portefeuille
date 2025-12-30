@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 // Core UI
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
-import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
-import 'package:portefeuille/core/ui/widgets/empty_states/app_empty_state.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/widgets/components/app_screen.dart';
+import 'package:portefeuille/core/Design_Center/widgets/fade_in_slide.dart';
+import 'package:portefeuille/core/Design_Center/widgets/empty_states/app_empty_state.dart';
 
 // Logic
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -60,7 +61,7 @@ class CrowdfundingTrackingTab extends StatelessWidget {
               // Titre
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingL),
+                  padding: AppSpacing.sectionTitlePaddingDefault,
                   child: Center(child: Text('Suivi Crowdfunding', style: AppTypography.h2)),
                 ),
               ),
@@ -143,7 +144,7 @@ class CrowdfundingTrackingTab extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 100), // Padding pour la BottomNavBar
+                  const SizedBox(height: AppDimens.floatingNavBarPaddingBottomFixed),
                 ]),
               ),
             ],

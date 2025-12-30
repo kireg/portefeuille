@@ -4,13 +4,16 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'package:portefeuille/core/data/models/institution.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
-import 'package:portefeuille/core/ui/widgets/components/app_tile.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/privacy_blur.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/Design_Center/widgets/components/app_tile.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/privacy_blur.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
 import 'package:portefeuille/features/00_app/services/modal_service.dart';
@@ -56,32 +59,42 @@ class InstitutionTile extends StatelessWidget {
           onExpansionChanged: (expanded) {
             if (expanded) HapticFeedback.lightImpact();
           },
-          tilePadding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.paddingM,
-              vertical: AppDimens.paddingS
-          ),
+          tilePadding: AppSpacing.expansionTilePaddingDefault,
           // Icône de gauche (Banque)
           leading: Builder(
             builder: (context) {
               String? logoPath;
               final normalized = institution.name.toLowerCase().replaceAll(' ', '_');
-              if (normalized.contains('boursorama')) logoPath = 'assets/logos/boursorama.png';
-              else if (normalized.contains('trade_republic')) logoPath = 'assets/logos/trade_republic.png';
-              else if (normalized.contains('revolut')) logoPath = 'assets/logos/revolut.png';
-              else if (normalized.contains('degiro')) logoPath = 'assets/logos/degiro.png';
-              else if (normalized.contains('interactive_brokers')) logoPath = 'assets/logos/interactive_brokers.png';
-              else if (normalized.contains('binance')) logoPath = 'assets/logos/binance.png';
-              else if (normalized.contains('coinbase')) logoPath = 'assets/logos/coinbase.png';
-              else if (normalized.contains('kraken')) logoPath = 'assets/logos/kraken.png';
-              else if (normalized.contains('fortuneo')) logoPath = 'assets/logos/fortuneo.png';
-              else if (normalized.contains('credit_agricole')) logoPath = 'assets/logos/credit_agricole.png';
-              else if (normalized.contains('bnp')) logoPath = 'assets/logos/bnp_paribas.png';
-              else if (normalized.contains('societe_generale')) logoPath = 'assets/logos/societe_generale.png';
+              if (normalized.contains('boursorama')) {
+                logoPath = 'assets/logos/boursorama.png';
+              } else if (normalized.contains('trade_republic')) {
+                logoPath = 'assets/logos/trade_republic.png';
+              } else if (normalized.contains('revolut')) {
+                logoPath = 'assets/logos/revolut.png';
+              } else if (normalized.contains('degiro')) {
+                logoPath = 'assets/logos/degiro.png';
+              } else if (normalized.contains('interactive_brokers')) {
+                logoPath = 'assets/logos/interactive_brokers.png';
+              } else if (normalized.contains('binance')) {
+                logoPath = 'assets/logos/binance.png';
+              } else if (normalized.contains('coinbase')) {
+                logoPath = 'assets/logos/coinbase.png';
+              } else if (normalized.contains('kraken')) {
+                logoPath = 'assets/logos/kraken.png';
+              } else if (normalized.contains('fortuneo')) {
+                logoPath = 'assets/logos/fortuneo.png';
+              } else if (normalized.contains('credit_agricole')) {
+                logoPath = 'assets/logos/credit_agricole.png';
+              } else if (normalized.contains('bnp')) {
+                logoPath = 'assets/logos/bnp_paribas.png';
+              } else if (normalized.contains('societe_generale')) {
+                logoPath = 'assets/logos/societe_generale.png';
+              }
 
               if (logoPath != null) {
                 return Container(
-                  width: 40,
-                  height: 40,
+                  width: AppComponentSizes.avatarSize,
+                  height: AppComponentSizes.avatarSize,
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceLight,
@@ -91,14 +104,14 @@ class InstitutionTile extends StatelessWidget {
                   child: Image.asset(
                     logoPath,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Icon(Icons.account_balance, color: AppColors.primary),
+                    errorBuilder: (_, __, ___) => const Icon(Icons.account_balance, color: AppColors.primary),
                   ),
                 );
               }
 
               return AppIcon(
                 icon: Icons.account_balance,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                backgroundColor: AppColors.primary.withValues(alpha: AppOpacities.lightOverlay),
                 color: AppColors.primary,
               );
             }
@@ -127,7 +140,7 @@ class InstitutionTile extends StatelessWidget {
                       style: AppTypography.bodyBold,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  AppSpacing.gapTiny,
                   // Ligne P/L (Montant + %)
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -135,7 +148,7 @@ class InstitutionTile extends StatelessWidget {
                       Icon(
                         isPositive ? Icons.arrow_drop_up : Icons.arrow_drop_down,
                         color: plColor,
-                        size: 16,
+                        size: AppComponentSizes.iconXSmall,
                       ),
                       // CORRECTION ICI : Suppression de compact: true
                       PrivacyBlur(
@@ -147,11 +160,11 @@ class InstitutionTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      AppSpacing.gapH4,
                       Text(
                         '(${NumberFormat.decimalPercentPattern(decimalDigits: 1).format(institutionPLPercent)})',
                         style: AppTypography.caption.copyWith(
-                            color: plColor.withValues(alpha: 0.8)
+                            color: plColor.withValues(alpha: AppOpacities.veryHigh)
                         ),
                       ),
                     ],
@@ -196,8 +209,8 @@ class InstitutionTile extends StatelessWidget {
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit, size: 20, color: AppColors.textPrimary),
-                        SizedBox(width: 8),
+                        Icon(Icons.edit, size: AppComponentSizes.iconMediumSmall, color: AppColors.textPrimary),
+                        AppSpacing.gapHorizontalSmall,
                         Text('Modifier'),
                       ],
                     ),
@@ -206,8 +219,8 @@ class InstitutionTile extends StatelessWidget {
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, size: 20, color: AppColors.error),
-                        SizedBox(width: 8),
+                        Icon(Icons.delete, size: AppComponentSizes.iconMediumSmall, color: AppColors.error),
+                        AppSpacing.gapHorizontalSmall,
                         Text('Supprimer', style: TextStyle(color: AppColors.error)),
                       ],
                     ),
@@ -229,7 +242,7 @@ class InstitutionTile extends StatelessWidget {
             }),
             AppTile(
               title: 'Ajouter un compte',
-              leading: const Icon(Icons.add_circle_outline, size: 18, color: AppColors.textSecondary),
+              leading: const Icon(Icons.add_circle_outline, size: AppComponentSizes.iconSmall, color: AppColors.textSecondary),
               onTap: () => ModalService.showAddAccount(context, institutionId: institution.id),
             ),
           ],

@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -157,7 +160,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
 
               // Nom du plan
               TextFormField(
@@ -175,7 +178,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
 
               // Montant mensuel
               TextFormField(
@@ -202,7 +205,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
 
               // Sélection de l'actif cible
               if (_groupedAssets.isEmpty)
@@ -213,15 +216,15 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                     child: Column(
                       children: [
                         Icon(Icons.warning_amber,
-                            color: Colors.orange.shade700, size: 32),
-                        const SizedBox(height: 8),
+                            color: Colors.orange.shade700, size: AppComponentSizes.iconLarge),
+                        AppSpacing.gapS,
                         Text(
                           'Aucun actif disponible',
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: Colors.orange.shade900,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        AppSpacing.gapXs,
                         Text(
                           'Vous devez d\'abord ajouter des actifs à votre portefeuille',
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -260,9 +263,9 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
 
               // Affichage des informations de l'actif sélectionné
               if (_selectedAsset != null) ...[
-                const SizedBox(height: 16),
+                AppSpacing.gapM,
                 Card(
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacities.decorative),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
@@ -272,7 +275,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                           'Informations de l\'actif sélectionné',
                           style: theme.textTheme.labelLarge,
                         ),
-                        const SizedBox(height: 8),
+                        AppSpacing.gapS,
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -285,7 +288,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        AppSpacing.gapXs,
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -300,7 +303,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        AppSpacing.gapXs,
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -324,7 +327,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                 ),
               ],
 
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
 
               // Plan actif/inactif
               SwitchListTile(
@@ -345,7 +348,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                   color: _isActive ? Colors.green : Colors.grey,
                 ),
               ),
-              const SizedBox(height: 24),
+              AppSpacing.gapL,
 
               // Bouton de soumission
               SizedBox(
@@ -360,7 +363,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                 ),
               ),
 
-              const SizedBox(height: 8),
+              AppSpacing.gapS,
             ],
           ),
         ),
@@ -461,7 +464,7 @@ class _AddSavingsPlanScreenState extends State<AddSavingsPlanScreen> {
                           Text(
                             '${(asset.estimatedAnnualYield * 100).toStringAsFixed(1)}%${isin != null && isin.isNotEmpty ? ' • ISIN: $isin' : ''}',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurface.withValues(alpha: AppOpacities.prominent),
                             ),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,

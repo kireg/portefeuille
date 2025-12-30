@@ -2,6 +2,8 @@
 // REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart'; // NOUVEL IMPORT
@@ -88,7 +90,7 @@ class _AppSettingsState extends State<AppSettings> {
             "Statut des Prix",
             style: theme.textTheme.titleSmall,
           ),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           // Conteneur pour le défilement horizontal si nécessaire
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -99,7 +101,7 @@ class _AppSettingsState extends State<AppSettings> {
               headingRowHeight: 40,
               decoration: BoxDecoration(
                 border: Border.all(color: theme.dividerColor, width: 1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppDimens.radiusS),
               ),
               columns: [
                 DataColumn(
@@ -169,13 +171,13 @@ class _AppSettingsState extends State<AppSettings> {
                   "Clé API FMP (Optionnel)",
                   style: theme.textTheme.titleSmall,
                 ),
-                const SizedBox(height: 4),
+                AppSpacing.gapXs,
                 Text(
                   "Fournir une clé Financial Modeling Prep améliore la fiabilité de la récupération des prix.",
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
-                const SizedBox(height: 12),
+                AppSpacing.gap12,
                 Row(
                   children: [
                     Expanded(
@@ -198,7 +200,7 @@ class _AppSettingsState extends State<AppSettings> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    AppSpacing.gapHorizontalSmall,
                     IconButton.filledTonal(
                       icon: const Icon(Icons.save_outlined),
                       tooltip: "Sauvegarder la clé",

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/initial_setup_wizard.dart';
 
@@ -72,13 +73,48 @@ class PortfolioManagementSettings extends StatelessWidget {
                       style: TextStyle(color: theme.colorScheme.error)),
                   onPressed: portfolioProvider.activePortfolio == null
                       ? null
-                      : () {
-                    // TODO: Ajouter confirmation
-                    portfolioProvider.deletePortfolio(
-                        portfolioProvider.activePortfolio!.id);
-                  },
+                      : () => _showDeleteConfirmation(context, portfolioProvider),
                 ),
               ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, PortfolioProvider provider) {
+    final portfolioName = provider.activePortfolio?.name ?? 'ce portefeuille';
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirmer la suppression'),
+          content: Text(
+            'Êtes-vous sûr de vouloir supprimer "$portfolioName" ?\n\n'
+            'Cette action est irréversible. Tous les comptes, transactions et actifs '
+            'associés à ce portefeuille seront définitivement supprimés.',
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Annuler'),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+              onPressed: () {
+                provider.deletePortfolio(provider.activePortfolio!.id);
+                Navigator.of(dialogContext).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Portefeuille "$portfolioName" supprimé'),
+                  ),
+                );
+              },
+              child: const Text('Supprimer'),
             ),
           ],
         );
@@ -140,7 +176,7 @@ class PortfolioManagementSettings extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text('Comment souhaitez-vous créer votre nouveau portefeuille ?'),
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
               TextFormField(
                 controller: nameController,
                 decoration: const InputDecoration(

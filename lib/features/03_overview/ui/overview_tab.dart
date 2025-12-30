@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 
 // Core UI
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_icon_button.dart';
-import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
-import 'package:portefeuille/core/ui/widgets/portfolio_header.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/widgets/components/app_screen.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_icon_button.dart';
+import 'package:portefeuille/core/Design_Center/widgets/fade_in_slide.dart';
+import 'package:portefeuille/core/Design_Center/widgets/portfolio_header.dart';
 
 // Features
 import '../../00_app/providers/portfolio_provider.dart';
@@ -22,7 +25,7 @@ import 'widgets/allocation_chart.dart';
 import 'widgets/asset_type_allocation_chart.dart';
 import 'widgets/sync_alerts_card.dart';
 import 'package:portefeuille/features/03_overview/ui/widgets/institution_tile.dart';
-import 'package:portefeuille/core/ui/widgets/empty_states/app_empty_state.dart';
+import 'package:portefeuille/core/Design_Center/widgets/empty_states/app_empty_state.dart';
 
 class OverviewTab extends StatelessWidget {
   const OverviewTab({super.key});
@@ -44,7 +47,7 @@ class OverviewTab extends StatelessWidget {
 
     // Calcul de l'espace nécessaire en haut pour la barre flottante
     // Hauteur Barre (60) + Marge (4) + SafeArea + un peu d'air (20)
-    final double topPadding = MediaQuery.of(context).padding.top + 90;
+    final double topPadding = MediaQuery.of(context).padding.top + AppDimens.floatingAppBarPaddingTopFixed;
 
     return AppScreen(
       withSafeArea: false, // Important pour que le gradient monte tout en haut
@@ -55,12 +58,7 @@ class OverviewTab extends StatelessWidget {
                 padding: EdgeInsets.only(top: topPadding),
                 sliver: SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppDimens.paddingL,
-                        0, // On a déjà géré le top avec le SliverPadding
-                        AppDimens.paddingL,
-                        AppDimens.paddingM
-                    ),
+                    padding: AppSpacing.overviewHeaderPaddingDefault,
                     child: FadeInSlide(
                       delay: 0.0,
                       child: Text(
@@ -75,7 +73,7 @@ class OverviewTab extends StatelessWidget {
 
               // Contenu principal
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+                padding: AppSpacing.contentHorizontalPaddingDefault,
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // 1. Header (Total)
@@ -190,7 +188,7 @@ class OverviewTab extends StatelessWidget {
                                 delay: alertsDelay > 0.8 ? 0.8 : alertsDelay,
                                 child: const SyncAlertsCard(),
                               ),
-                              const SizedBox(height: 100), // Espace pour la nav bar flottante du BAS
+                              AppSpacing.gap100, // Espace pour la nav bar flottante du BAS
                             ],
                           );
                         }
@@ -228,12 +226,12 @@ class OverviewTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              AppIcon(icon: icon, size: 18, color: AppColors.primary, backgroundColor: Colors.transparent),
-              const SizedBox(width: 8),
+              AppIcon(icon: icon, size: AppComponentSizes.iconSmall, color: AppColors.primary, backgroundColor: Colors.transparent),
+              AppSpacing.gapHorizontalSmall,
               Text(
                 title.toUpperCase(),
                 style: AppTypography.label.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: AppOpacities.strong),
                 ),
               ),
             ],
@@ -241,7 +239,7 @@ class OverviewTab extends StatelessWidget {
           if (onAdd != null)
             AppIconButton(
               icon: Icons.add,
-              size: 16,
+              size: AppComponentSizes.iconXSmall,
               color: AppColors.textPrimary,
               backgroundColor: AppColors.surfaceLight,
               borderColor: AppColors.border,

@@ -1,0 +1,279 @@
+import 'package:flutter/material.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_animated_value.dart';
+import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:intl/intl.dart';
+
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/privacy_blur.dart';
+import 'package:portefeuille/core/utils/currency_formatter.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
+
+class PortfolioHeader extends StatelessWidget {
+  const PortfolioHeader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<PortfolioProvider>();
+    final calculationProvider = context.watch<PortfolioCalculationProvider>();
+    
+    final baseCurrency = calculationProvider.currentBaseCurrency;
+    final isProcessing = provider.isProcessingInBackground || calculationProvider.isCalculating;
+
+    final totalValue = calculationProvider.activePortfolioTotalValue;
+    final totalPL = calculationProvider.activePortfolioTotalPL;
+    final totalPLPercentage = calculationProvider.activePortfolioTotalPLPercentage;
+    final isPositive = totalPL >= 0;
+
+    return AppCard(
+      backgroundColor: Colors.transparent,
+      padding: AppSpacing.headerPaddingDefault,
+      child: Column(
+        // ▼▼▼ MODIFICATION : Centrage Horizontal ▼▼▼
+        crossAxisAlignment: CrossAxisAlignment.center,
+        // ▲▲▲ FIN MODIFICATION ▲▲▲
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Solde total'.toUpperCase(),
+                style: AppTypography.label.copyWith(
+                  color: AppColors.textSecondary,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              if (calculationProvider.hasConversionError) ...[
+                AppSpacing.gapHorizontalSmall,
+                GestureDetector(
+                  onTap: () => _showConversionErrorDialog(
+                    context,
+                    calculationProvider.failedConversions,
+                  ),
+                  child: const Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.warning,
+                    size: AppComponentSizes.iconSmall,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppDimens.paddingS),
+
+          if (isProcessing)
+            _buildShimmer()
+          else
+            PrivacyBlur(
+              child: AppAnimatedValue(
+                value: totalValue,
+                currency: baseCurrency,
+                style: AppTypography.hero.copyWith(
+                  fontSize: 36,
+                ),
+              ),
+            ),
+
+          const SizedBox(height: AppDimens.paddingL),
+
+          // --- GRILLE DE SYNTHÈSE (4 CARDS) ---
+          Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryCard(
+                      context,
+                      label: 'Capital Investi',
+                      value: calculationProvider.activePortfolioTotalInvested,
+                      currency: baseCurrency,
+                      color: AppColors.primary,
+                      icon: Icons.account_balance_wallet,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimens.paddingM),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      context,
+                      label: 'Intérêts Latents',
+                      value: totalPL,
+                      currency: baseCurrency,
+                      color: isPositive ? AppColors.success : AppColors.error,
+                      icon: isPositive ? Icons.trending_up : Icons.trending_down,
+                      showSign: true,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimens.paddingM),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryCard(
+                      context,
+                      label: 'Liquidités',
+                      value: calculationProvider.activePortfolioCashValue,
+                      currency: baseCurrency,
+                      color: Colors.orange,
+                      icon: Icons.savings,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimens.paddingM),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      context,
+                      label: 'Performance',
+                      value: totalPLPercentage,
+                      currency: null, // Pourcentage
+                      isPercentage: true,
+                      color: isPositive ? AppColors.success : AppColors.error,
+                      icon: Icons.percent,
+                      showSign: true,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(
+    BuildContext context, {
+    required String label,
+    required double value,
+    String? currency,
+    required Color color,
+    required IconData icon,
+    bool isPercentage = false,
+    bool showSign = false,
+  }) {
+    final formattedValue = isPercentage
+        ? NumberFormat.percentPattern().format(value)
+        : CurrencyFormatter.format(value, currency ?? 'EUR');
+    
+    final displayValue = (showSign && value > 0 && !isPercentage) 
+        ? '+$formattedValue' 
+        : formattedValue;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.paddingM),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: AppOpacities.lightOverlay),
+        borderRadius: BorderRadius.circular(AppDimens.radiusM),
+        border: Border.all(
+          color: color.withValues(alpha: AppOpacities.border),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: AppComponentSizes.iconXSmall, color: color),
+              AppSpacing.gapHorizontalSmall,
+              Flexible(
+                child: Text(
+                  label,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+          AppSpacing.gapS,
+          PrivacyBlur(
+            child: Text(
+              displayValue,
+              style: AppTypography.h3.copyWith(
+                color: color,
+                fontSize: 18,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmer() {
+    return Shimmer.fromColors(
+      baseColor: AppColors.surfaceLight,
+      highlightColor: AppColors.surface,
+      child: Container(
+        width: 200,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(AppDimens.radiusS),
+        ),
+      ),
+    );
+  }
+
+  void _showConversionErrorDialog(BuildContext context, List<String> failedCurrencies) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
+            AppSpacing.gapHorizontalSmall,
+            Text('Erreur de conversion', style: AppTypography.h3),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Impossible de récupérer les taux de change pour les devises suivantes :',
+              style: AppTypography.body,
+            ),
+            AppSpacing.gapM,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: failedCurrencies.map((currency) {
+                return Chip(
+                  label: Text(currency, style: AppTypography.caption),
+                  backgroundColor: AppColors.surfaceLight,
+                  side: BorderSide.none,
+                );
+              }).toList(),
+            ),
+            AppSpacing.gapM,
+            Text(
+              'Un taux de 1.0 a été utilisé par défaut. Vérifiez votre connexion internet.',
+              style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}

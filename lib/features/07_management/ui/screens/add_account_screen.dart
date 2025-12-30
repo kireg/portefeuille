@@ -7,11 +7,11 @@ import 'package:portefeuille/core/data/models/account_type.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 
 // Core UI
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
-import 'package:portefeuille/core/ui/widgets/inputs/app_text_field.dart';
-import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_button.dart';
+import 'package:portefeuille/core/Design_Center/widgets/inputs/app_text_field.dart';
+import 'package:portefeuille/core/Design_Center/widgets/inputs/app_dropdown.dart';
 
 class AddAccountScreen extends StatefulWidget {
   final String institutionId;

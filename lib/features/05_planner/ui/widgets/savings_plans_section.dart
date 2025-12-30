@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_icon_button.dart';
-import 'package:portefeuille/core/ui/widgets/components/app_tile.dart';
-import 'package:portefeuille/core/ui/widgets/empty_states/app_empty_state.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_icon_button.dart';
+import 'package:portefeuille/core/Design_Center/widgets/components/app_tile.dart';
+import 'package:portefeuille/core/Design_Center/widgets/empty_states/app_empty_state.dart';
 
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -96,17 +99,17 @@ class SavingsPlansSection extends StatelessWidget {
                     children: [
                       const AppIcon(
                           icon: Icons.savings_outlined,
-                          size: 18,
+                          size: AppComponentSizes.iconSmall,
                           color: AppColors.primary,
                           backgroundColor: Colors.transparent),
-                      const SizedBox(width: 8),
+                      AppSpacing.gapHorizontalSmall,
                       Text('PLANS D\'ÉPARGNE',
                           style: AppTypography.label.copyWith(color: AppColors.textTertiary)),
                     ],
                   ),
                   AppIconButton(
                     icon: Icons.add,
-                    size: 16,
+                    size: AppComponentSizes.iconXSmall,
                     color: AppColors.textPrimary,
                     backgroundColor: AppColors.surfaceLight,
                     borderColor: AppColors.border,
@@ -132,11 +135,11 @@ class SavingsPlansSection extends StatelessWidget {
                         icon: Icons.rocket_launch,
                         color: plan.isActive ? AppColors.success : AppColors.textSecondary,
                         backgroundColor: (plan.isActive ? AppColors.success : AppColors.textSecondary)
-                            .withValues(alpha: 0.1),
+                            .withValues(alpha: AppOpacities.lightOverlay),
                       ),
                       onTap: () => _openPlanForm(context, existingPlan: plan),
                       trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 18),
+                        icon: const Icon(Icons.delete_outline, size: AppComponentSizes.iconSmall),
                         color: AppColors.textTertiary,
                         onPressed: () => _showDeleteConfirmation(
                           context, provider, plan.id, plan.name,

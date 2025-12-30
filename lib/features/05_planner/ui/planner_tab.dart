@@ -3,10 +3,10 @@ import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:provider/provider.dart';
 
 // Core UI
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
-import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/widgets/components/app_screen.dart';
+import 'package:portefeuille/core/Design_Center/widgets/fade_in_slide.dart';
 
 // Logic
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -42,13 +42,13 @@ class _PlannerTabState extends State<PlannerTab> {
               // Titre
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingL),
+                  padding: AppSpacing.sectionTitlePaddingDefault,
                   child: Center(child: Text('Planification', style: AppTypography.h2)),
                 ),
               ),
 
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+                padding: AppSpacing.contentHorizontalPaddingDefault,
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // 1. Section Plans d'Épargne
@@ -57,7 +57,7 @@ class _PlannerTabState extends State<PlannerTab> {
                       child: SavingsPlansSection(),
                     ),
 
-                    const SizedBox(height: AppDimens.paddingM),
+                    AppSpacing.gapM,
 
                     // 2. Section Projection (Graphique + Stats)
                     FadeInSlide(
@@ -70,7 +70,7 @@ class _PlannerTabState extends State<PlannerTab> {
                       ),
                     ),
 
-                    const SizedBox(height: 100), // Padding pour éviter le chevauchement avec la BottomNavBar
+                    AppSpacing.gap90, // Espace pour la nav bar flottante
                   ]),
                 ),
               ),

@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
 import 'package:portefeuille/features/00_app/services/crowdfunding_service.dart';
 
 class CrowdfundingProjectionChart extends StatefulWidget {
@@ -129,7 +131,7 @@ class _CrowdfundingProjectionChartState extends State<CrowdfundingProjectionChar
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppDimens.radiusM),
                 ),
                 child: BarChart(
                   BarChartData(
@@ -249,14 +251,14 @@ class _CrowdfundingProjectionChartState extends State<CrowdfundingProjectionChar
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            AppSpacing.gapS,
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingL),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _buildLegendItem(AppColors.primary, "Capital"),
-                  const SizedBox(width: 16),
+                  AppSpacing.gapHorizontalMedium,
                   _buildLegendItem(AppColors.success, "Intérêts"),
                 ],
               ),
@@ -293,7 +295,7 @@ class _CrowdfundingProjectionChartState extends State<CrowdfundingProjectionChar
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimens.radius12),
           border: Border.all(color: AppColors.border),
         ),
         child: Column(
@@ -302,7 +304,7 @@ class _CrowdfundingProjectionChartState extends State<CrowdfundingProjectionChar
               dateFormat.format(state.date).toUpperCase(),
               style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            AppSpacing.gapS,
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -348,14 +350,14 @@ class _CrowdfundingProjectionChartState extends State<CrowdfundingProjectionChar
               _selectedState = null; // Reset selection on range change
               _projectionsFuture = _calculateProjectionsAsync();
             }),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimens.radius12),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppDimens.radius12),
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.3),
+                  color: isSelected ? AppColors.primary : AppColors.textSecondary.withValues(alpha: AppOpacities.decorative),
                 ),
               ),
               child: Text(
@@ -381,7 +383,7 @@ class _CrowdfundingProjectionChartState extends State<CrowdfundingProjectionChar
           height: 12,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 4),
+        AppSpacing.gapH4,
         Text(label, style: AppTypography.caption),
       ],
     );

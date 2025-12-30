@@ -135,7 +135,7 @@ class TradeRepublicParser implements StatementParser {
         final rawAmount = quantity * price;
         final amount = (typeStr == 'achat') ? -rawAmount.abs() : rawAmount.abs();
       final assetType = _inferAssetType(assetName);
-      final ImportCategory? category = assetType == AssetType.Crypto
+      final ImportCategory category = assetType == AssetType.Crypto
           ? ImportCategory.crypto
           : ImportCategory.unknown;
 
@@ -176,7 +176,7 @@ class TradeRepublicParser implements StatementParser {
       final price = double.tryParse(priceStr) ?? 0.0;
       final total = double.tryParse(totalStr) ?? 0.0;
       final assetType = _inferAssetType(assetName);
-      final ImportCategory? category = assetType == AssetType.Crypto
+      final ImportCategory category = assetType == AssetType.Crypto
           ? ImportCategory.crypto
           : ImportCategory.unknown;
 
@@ -215,7 +215,7 @@ class TradeRepublicParser implements StatementParser {
         final amount = (quantity * perShare).abs(); // Dividende toujours positif
 
         final assetType = _inferAssetType(assetName);
-        final ImportCategory? category = assetType == AssetType.Crypto
+        final ImportCategory category = assetType == AssetType.Crypto
             ? ImportCategory.crypto
             : ImportCategory.unknown;
 
@@ -258,7 +258,7 @@ class TradeRepublicParser implements StatementParser {
         
         if (!alreadyExists) {
           final assetType = _inferAssetType(assetName);
-          final ImportCategory? category = assetType == AssetType.Crypto
+          final ImportCategory category = assetType == AssetType.Crypto
               ? ImportCategory.crypto
               : ImportCategory.unknown;
 

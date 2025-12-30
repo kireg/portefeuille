@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
 import 'package:portefeuille/features/09_imports/services/import_diff_service.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
 import 'package:portefeuille/features/09_imports/ui/widgets/transaction_edit_dialog.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
 
 /// Widget affichant une transaction candidate à l'import.
 /// 
@@ -44,7 +48,7 @@ class WizardCandidateCard extends StatelessWidget {
           children: [
             _buildCheckbox(),
             _buildDirectionIcon(isInflow),
-            const SizedBox(width: 12),
+            AppSpacing.gapH12,
             Expanded(child: _buildTransactionInfo(tx)),
             _buildAmountInfo(tx),
             _buildPopupMenu(context, tx),
@@ -66,14 +70,14 @@ class WizardCandidateCard extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: isInflow
-            ? AppColors.success.withValues(alpha: 0.1)
-            : AppColors.error.withValues(alpha: 0.1),
+            ? AppColors.success.withValues(alpha: AppOpacities.lightOverlay)
+            : AppColors.error.withValues(alpha: AppOpacities.lightOverlay),
         shape: BoxShape.circle,
       ),
       child: Icon(
         isInflow ? Icons.arrow_downward : Icons.arrow_upward,
         color: isInflow ? AppColors.success : AppColors.error,
-        size: 16,
+        size: AppComponentSizes.iconXSmall,
       ),
     );
   }
@@ -116,8 +120,8 @@ class WizardCandidateCard extends StatelessWidget {
       margin: const EdgeInsets.only(left: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.warning.withValues(alpha: AppOpacities.surfaceTint),
+        borderRadius: BorderRadius.circular(AppDimens.radius12),
       ),
       child: Text(
         "Modifié",
@@ -161,13 +165,13 @@ class WizardCandidateCard extends StatelessWidget {
           onDelete();
         }
       },
-      itemBuilder: (context) => const [
+      itemBuilder: (context) => [
         PopupMenuItem(
           value: 'edit',
           child: Row(
             children: [
-              Icon(Icons.edit, size: 18, color: AppColors.textPrimary),
-              SizedBox(width: 8),
+              Icon(Icons.edit, size: AppComponentSizes.iconSmall, color: AppColors.textPrimary),
+              AppSpacing.gapHorizontalSmall,
               Text("Modifier"),
             ],
           ),
@@ -176,8 +180,8 @@ class WizardCandidateCard extends StatelessWidget {
           value: 'delete',
           child: Row(
             children: [
-              Icon(Icons.delete, size: 18, color: AppColors.error),
-              SizedBox(width: 8),
+              Icon(Icons.delete, size: AppComponentSizes.iconSmall, color: AppColors.error),
+              AppSpacing.gapHorizontalSmall,
               Text("Supprimer", style: TextStyle(color: AppColors.error)),
             ],
           ),

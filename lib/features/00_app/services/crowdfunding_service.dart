@@ -78,8 +78,9 @@ class CrowdfundingService {
         final asset = assets
             .where((a) => a.ticker == t.assetTicker || a.id == t.assetTicker)
             .firstOrNull;
-        if (asset != null && asset.type == AssetType.RealEstateCrowdfunding)
+        if (asset != null && asset.type == AssetType.RealEstateCrowdfunding) {
           return true;
+        }
       }
       return false;
     }).toList();
@@ -208,14 +209,16 @@ class CrowdfundingService {
         final asset = assets
             .where((a) => a.ticker == t.assetTicker || a.id == t.assetTicker)
             .firstOrNull;
-        if (asset != null && asset.type == AssetType.RealEstateCrowdfunding)
+        if (asset != null && asset.type == AssetType.RealEstateCrowdfunding) {
           return true;
+        }
       }
 
       // Or linked to a Crowdfunding Account
       final account = accounts.where((a) => a.id == t.accountId).firstOrNull;
-      if (account != null && account.type == AccountType.crowdfunding)
+      if (account != null && account.type == AccountType.crowdfunding) {
         return true;
+      }
 
       // Or specific Auto-Deposit from Import
       if ((t.type == TransactionType.Deposit ||
@@ -320,7 +323,9 @@ class CrowdfundingService {
 
       for (final event in futureEvents) {
         if (event.date.isAfter(
-            now.add(Duration(days: (projectionMonths * 30.44).round())))) break;
+            now.add(Duration(days: (projectionMonths * 30.44).round())))) {
+          break;
+        }
 
         final amount = event.amount;
 

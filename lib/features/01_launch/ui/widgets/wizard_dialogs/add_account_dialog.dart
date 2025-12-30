@@ -3,6 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:portefeuille/core/data/models/account_type.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/wizard_dialogs/add_asset_dialog.dart';
 
@@ -54,18 +59,18 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: AppSpacing.dialogInsetPaddingDefault,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 600, maxHeight: 800),
-        padding: const EdgeInsets.all(24),
+        padding: AppSpacing.dialogPaddingDefault,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               widget.initialAccount == null ? 'Ajouter un compte' : 'Modifier le compte',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: AppTypography.h2,
             ),
-            const SizedBox(height: 24),
+            AppSpacing.gapL,
             Expanded(
               child: Form(
                 key: _formKey,
@@ -110,18 +115,31 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                               String? logoPath;
                               final normalized = suggestion.toLowerCase().replaceAll(' ', '_');
                               // Check common names
-                              if (normalized.contains('boursorama')) logoPath = 'assets/logos/boursorama.png';
-                              else if (normalized.contains('trade_republic')) logoPath = 'assets/logos/trade_republic.png';
-                              else if (normalized.contains('revolut')) logoPath = 'assets/logos/revolut.png';
-                              else if (normalized.contains('degiro')) logoPath = 'assets/logos/degiro.png';
-                              else if (normalized.contains('interactive_brokers')) logoPath = 'assets/logos/interactive_brokers.png';
-                              else if (normalized.contains('binance')) logoPath = 'assets/logos/binance.png';
-                              else if (normalized.contains('coinbase')) logoPath = 'assets/logos/coinbase.png';
-                              else if (normalized.contains('kraken')) logoPath = 'assets/logos/kraken.png';
-                              else if (normalized.contains('fortuneo')) logoPath = 'assets/logos/fortuneo.png';
-                              else if (normalized.contains('credit_agricole')) logoPath = 'assets/logos/credit_agricole.png';
-                              else if (normalized.contains('bnp')) logoPath = 'assets/logos/bnp_paribas.png';
-                              else if (normalized.contains('societe_generale')) logoPath = 'assets/logos/societe_generale.png';
+                              if (normalized.contains('boursorama')) {
+                                logoPath = 'assets/logos/boursorama.png';
+                              } else if (normalized.contains('trade_republic')) {
+                                logoPath = 'assets/logos/trade_republic.png';
+                              } else if (normalized.contains('revolut')) {
+                                logoPath = 'assets/logos/revolut.png';
+                              } else if (normalized.contains('degiro')) {
+                                logoPath = 'assets/logos/degiro.png';
+                              } else if (normalized.contains('interactive_brokers')) {
+                                logoPath = 'assets/logos/interactive_brokers.png';
+                              } else if (normalized.contains('binance')) {
+                                logoPath = 'assets/logos/binance.png';
+                              } else if (normalized.contains('coinbase')) {
+                                logoPath = 'assets/logos/coinbase.png';
+                              } else if (normalized.contains('kraken')) {
+                                logoPath = 'assets/logos/kraken.png';
+                              } else if (normalized.contains('fortuneo')) {
+                                logoPath = 'assets/logos/fortuneo.png';
+                              } else if (normalized.contains('credit_agricole')) {
+                                logoPath = 'assets/logos/credit_agricole.png';
+                              } else if (normalized.contains('bnp')) {
+                                logoPath = 'assets/logos/bnp_paribas.png';
+                              } else if (normalized.contains('societe_generale')) {
+                                logoPath = 'assets/logos/societe_generale.png';
+                              }
 
                               return ListTile(
                                 leading: logoPath != null 
@@ -135,7 +153,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                             },
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        AppSpacing.gapHorizontalMedium,
                         Expanded(
                           flex: 2,
                           child: DropdownButtonFormField<AccountType>(
@@ -159,7 +177,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppDimens.paddingM),
                     
                     // Nom & Cash
                     Row(
@@ -178,7 +196,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                             validator: (v) => v?.trim().isEmpty == true ? 'Requis' : null,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: AppDimens.paddingM),
                         Expanded(
                           flex: 1,
                           child: TextFormField(
@@ -198,7 +216,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                       ],
                     ),
                     
-                    const SizedBox(height: 32),
+                    const SizedBox(height: AppDimens.paddingXL),
                     
                     // Assets Section
                     Row(
@@ -207,7 +225,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                         Flexible(
                           child: Text(
                             'Actifs (${_assets.length})',
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: AppTypography.h3,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -220,12 +238,12 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                     ),
                     const Divider(),
                     if (_assets.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
+                      Padding(
+                        padding: const EdgeInsets.all(AppDimens.paddingM),
                         child: Center(
                           child: Text(
                             'Aucun actif. Ajoutez des actions, cryptos, etc. si ce compte en contient.',
-                            style: TextStyle(color: Colors.grey),
+                            style: AppTypography.caption,
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -245,12 +263,12 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.edit, size: 20),
+                              icon: const Icon(Icons.edit, size: AppComponentSizes.iconMediumSmall),
                               onPressed: () => _editAsset(asset),
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete,
-                                  size: 20, color: Colors.red),
+                                  size: AppComponentSizes.iconMediumSmall, color: AppColors.error),
                               onPressed: () =>
                                   setState(() => _assets.remove(asset)),
                             ),
@@ -261,7 +279,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimens.paddingM),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -269,11 +287,11 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Annuler'),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppDimens.paddingM),
                 ElevatedButton(
                   onPressed: _submit,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingXL, vertical: AppDimens.paddingM),
                   ),
                   child: const Text('Enregistrer le compte'),
                 ),

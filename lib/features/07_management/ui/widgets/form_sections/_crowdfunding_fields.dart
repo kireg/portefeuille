@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/data/models/repayment_type.dart';
 import 'package:portefeuille/features/07_management/ui/providers/transaction_form_state.dart';
-import 'package:portefeuille/core/ui/widgets/inputs/app_text_field.dart';
-import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/widgets/inputs/app_text_field.dart';
+import 'package:portefeuille/core/Design_Center/widgets/inputs/app_dropdown.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
 
 class CrowdfundingFields extends StatelessWidget {
   const CrowdfundingFields({super.key});

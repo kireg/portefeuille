@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_button.dart';
 import 'package:portefeuille/features/07_management/ui/providers/transaction_form_state.dart';
 
 import 'form_sections/_account_selector.dart';

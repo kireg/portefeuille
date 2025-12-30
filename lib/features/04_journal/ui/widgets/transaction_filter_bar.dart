@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/account.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
 import 'package:portefeuille/features/04_journal/ui/models/transaction_sort_option.dart';
 
 class TransactionFilterBar extends StatelessWidget {
@@ -83,14 +86,14 @@ class TransactionFilterBar extends StatelessWidget {
                 children: [
                   ElevatedButton.icon(
                     onPressed: onImportHub,
-                    icon: const Icon(Icons.add, size: 18),
+                    icon: const Icon(Icons.add, size: AppComponentSizes.iconSmall),
                     label: const Text("Ajouter / Importer"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.textPrimary,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(AppDimens.radius20),
                       ),
                     ),
                   ),
@@ -125,8 +128,8 @@ class TransactionFilterBar extends StatelessWidget {
                           value: 'clear',
                           child: Row(
                             children: [
-                              Icon(Icons.clear, size: 18, color: AppColors.error),
-                              SizedBox(width: 8),
+                              Icon(Icons.clear, size: AppComponentSizes.iconSmall, color: AppColors.error),
+                              AppSpacing.gapHorizontalSmall,
                               Text('Effacer les filtres'),
                             ],
                           ),
@@ -186,22 +189,22 @@ class TransactionFilterBar extends StatelessWidget {
                     child: Chip(
                       label: Text(
                         'Compte: ${accounts[filterAccountId]?.name ?? "Inconnu"}',
-                        style: const TextStyle(fontSize: 12),
+                        style: AppTypography.caption,
                       ),
-                      deleteIcon: const Icon(Icons.close, size: 16),
+                      deleteIcon: const Icon(Icons.close, size: AppComponentSizes.iconXSmall),
                       onDeleted: onClearFilters,
-                      backgroundColor: AppColors.success.withValues(alpha: 0.2),
+                      backgroundColor: AppColors.success.withValues(alpha: AppOpacities.border),
                     ),
                   ),
                 if (filterInstitutionName != null)
                   Chip(
                     label: Text(
                       'Institution: $filterInstitutionName',
-                      style: const TextStyle(fontSize: 12),
+                      style: AppTypography.caption,
                     ),
-                    deleteIcon: const Icon(Icons.close, size: 16),
+                    deleteIcon: const Icon(Icons.close, size: AppComponentSizes.iconXSmall),
                     onDeleted: onClearFilters,
-                    backgroundColor: AppColors.success.withValues(alpha: 0.2),
+                    backgroundColor: AppColors.success.withValues(alpha: AppOpacities.border),
                   ),
               ],
             ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/features/07_management/ui/providers/transaction_form_state.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_icon.dart';
 
 class FormHeader extends StatelessWidget {
   const FormHeader({super.key});
@@ -20,7 +22,7 @@ class FormHeader extends StatelessWidget {
           Center(
             child: Padding(
               // Padding horizontal pour éviter que le texte ne touche le bouton croix sur petits écrans
-              padding: const EdgeInsets.symmetric(horizontal: 40.0),
+              padding: AppSpacing.modalHeaderPadding,
               child: Text(
                 state.isEditing ? 'Modifier' : 'Nouvelle Transaction',
                 style: AppTypography.h2,
@@ -39,7 +41,7 @@ class FormHeader extends StatelessWidget {
                 icon: Icons.close,
                 onTap: () => Navigator.of(context).pop(),
                 backgroundColor: Colors.transparent,
-                size: 24,
+                size: AppComponentSizes.iconMedium,
               ),
             ),
           ),

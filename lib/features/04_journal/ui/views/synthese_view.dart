@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 // Core UI
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
-import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/widgets/components/app_screen.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/widgets/fade_in_slide.dart';
 
 // Logic
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -38,7 +40,7 @@ class _SyntheseViewState extends State<SyntheseView> {
   @override
   Widget build(BuildContext context) {
     // Calcul du padding pour aligner le titre sous la navbar/status bar
-    final double topPadding = MediaQuery.of(context).padding.top + 90;
+    final double topPadding = MediaQuery.of(context).padding.top + AppDimens.floatingAppBarPaddingTopFixed;
 
     return Consumer3<PortfolioProvider, PortfolioCalculationProvider, SettingsProvider>(
       builder: (context, portfolioProvider, calculationProvider, settingsProvider, child) {
@@ -97,15 +99,15 @@ class _SyntheseViewState extends State<SyntheseView> {
                                     selected: _syncFilter == true,
                                     onSelected: (selected) => setState(() => _syncFilter = selected ? true : null),
                                   ),
-                                  const SizedBox(width: 8),
+                                  AppSpacing.gapHorizontalSmall,
                                   FilterChip(
                                     label: const Text("Non Synchronisés"),
                                     selected: _syncFilter == false,
                                     onSelected: (selected) => setState(() => _syncFilter = selected ? false : null),
                                   ),
-                                  const SizedBox(width: 8),
+                                  AppSpacing.gapHorizontalSmall,
                                   Container(width: 1, height: 24, color: AppColors.border),
-                                  const SizedBox(width: 8),
+                                  AppSpacing.gapHorizontalSmall,
                                   ...AssetType.values.map((type) {
                                     final isSelected = _selectedFilters.contains(type);
                                     return Padding(
@@ -174,7 +176,7 @@ class _SyntheseViewState extends State<SyntheseView> {
               if (isProcessing)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.5),
+                    color: Colors.black.withValues(alpha: AppOpacities.semiVisible),
                     child: Center(
                       child: AppCard(
                         padding: const EdgeInsets.all(AppDimens.paddingL),

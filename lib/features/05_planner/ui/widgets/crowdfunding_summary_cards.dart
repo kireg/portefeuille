@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
 
 class CrowdfundingSummaryCards extends StatelessWidget {
   final List<Asset> assets;
@@ -118,15 +121,15 @@ class CrowdfundingSummaryCards extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(AppDimens.paddingM),
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.6),
+            color: AppColors.surface.withValues(alpha: AppOpacities.prominent),
             borderRadius: BorderRadius.circular(AppDimens.radiusM),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
+              color: Colors.white.withValues(alpha: AppOpacities.lightOverlay),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withValues(alpha: AppOpacities.lightOverlay),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -135,7 +138,7 @@ class CrowdfundingSummaryCards extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 28),
+              Icon(icon, color: color, size: AppComponentSizes.iconMediumLarge),
               const SizedBox(height: AppDimens.paddingS),
               Text(
                 value,
@@ -148,7 +151,7 @@ class CrowdfundingSummaryCards extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               if (subtitle != null) ...[
-                const SizedBox(height: 4),
+                AppSpacing.gapXs,
                 Text(
                   subtitle,
                   style: AppTypography.caption.copyWith(

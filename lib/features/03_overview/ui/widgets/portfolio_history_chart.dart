@@ -5,8 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/core/data/models/portfolio_value_history_point.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_chart_styles.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 
 enum ChartTimeRange { day, month, year, max }
@@ -40,7 +44,7 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
           children: [
             // En-tête avec Titre et Filtres
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              padding: AppSpacing.chartHeaderPaddingDefault,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -117,7 +121,7 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppDimens.radiusS),
       ),
       padding: const EdgeInsets.all(2),
       child: Row(
@@ -136,12 +140,12 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
     final isSelected = _selectedRange == range;
     return InkWell(
       onTap: () => setState(() => _selectedRange = range),
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(AppDimens.radius6),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppDimens.radius6),
         ),
         child: Text(
           label,
@@ -173,12 +177,17 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
     // Tri
     history.sort((a, b) => a.date.compareTo(b.date));
 
-    final spots = history.map((point) {
+    // Conservation des données complètes pour le tooltip
+    final fullHistory = history;
+    final fullSpots = history.map((point) {
       return FlSpot(
         point.date.millisecondsSinceEpoch.toDouble(),
         point.value,
       );
     }).toList();
+
+    // Échantillonnage intelligent pour la courbe affichée
+    final displaySpots = _sampleDataPoints(fullSpots, AppChartStyles.maxVisualDataPoints);
 
     // Min/Max
     double minY = history.map((e) => e.value).reduce((curr, next) => curr < next ? curr : next);
@@ -204,7 +213,7 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
             reservedSize: 30,
             interval: _calculateDateInterval(history),
             getTitlesWidget: (value, meta) {
-              if (value == spots.last.x) return const SizedBox.shrink();
+              if (value == displaySpots.last.x) return const SizedBox.shrink();
               final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
               return Padding(
                 padding: const EdgeInsets.only(top: 8.0),
@@ -232,30 +241,30 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
           ),
         ),
       ),
-      minX: spots.first.x,
-      maxX: spots.last.x,
+      minX: displaySpots.first.x,
+      maxX: displaySpots.last.x,
       minY: minY,
       maxY: maxY,
       lineBarsData: [
         LineChartBarData(
-          spots: spots,
+          spots: displaySpots,
           isCurved: true,
-          curveSmoothness: 0.35,
+          curveSmoothness: AppChartStyles.lineCurveSmoothness,
           color: primaryColor,
-          barWidth: 3,
+          barWidth: AppChartStyles.lineWidth,
           isStrokeCapRound: true,
-          dotData: const FlDotData(show: false),
+          dotData: FlDotData(show: AppChartStyles.showDots),
           shadow: Shadow(
-            color: AppColors.primary.withValues(alpha: 0.6),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: AppColors.primary.withValues(alpha: AppOpacities.prominent),
+            blurRadius: AppChartStyles.lineShadowBlurRadius,
+            offset: Offset(AppChartStyles.lineShadowOffsetX, AppChartStyles.lineShadowOffsetY),
           ),
           belowBarData: BarAreaData(
             show: true,
             gradient: LinearGradient(
               colors: [
-                AppColors.primary.withValues(alpha: 0.3),
-                AppColors.primary.withValues(alpha: 0.0),
+                AppColors.primary.withValues(alpha: AppOpacities.decorative),
+                AppColors.primary.withValues(alpha: AppOpacities.transparent),
               ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -270,8 +279,10 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
           tooltipBorder: BorderSide(color: AppColors.border),
           getTooltipItems: (touchedSpots) {
             return touchedSpots.map((LineBarSpot touchedSpot) {
-              final date = DateTime.fromMillisecondsSinceEpoch(touchedSpot.x.toInt());
-              final formattedValue = CurrencyFormatter.format(touchedSpot.y, currencyCode);
+              // Trouver la vraie valeur la plus proche dans les données complètes
+              final realSpot = _findClosestRealValue(touchedSpot.x, fullSpots);
+              final date = DateTime.fromMillisecondsSinceEpoch(realSpot.x.toInt());
+              final formattedValue = CurrencyFormatter.format(realSpot.y, currencyCode);
               return LineTooltipItem(
                 '${DateFormat('dd MMM', 'fr_FR').format(date)}\n',
                 AppTypography.caption,
@@ -311,5 +322,43 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
     final diff = history.last.date.difference(history.first.date).inMilliseconds;
     if (diff == 0) return 1.0;
     return diff / 4;
+  }
+
+  /// Échantillonne les points de données pour avoir un nombre maximum de points
+  /// Garde toujours le premier et le dernier point
+  List<FlSpot> _sampleDataPoints(List<FlSpot> spots, int maxPoints) {
+    if (spots.length <= maxPoints) return spots;
+    
+    final sampled = <FlSpot>[];
+    sampled.add(spots.first); // Toujours garder le premier point
+    
+    final step = (spots.length - 1) / (maxPoints - 1);
+    
+    for (int i = 1; i < maxPoints - 1; i++) {
+      final index = (i * step).round();
+      sampled.add(spots[index]);
+    }
+    
+    sampled.add(spots.last); // Toujours garder le dernier point
+    
+    return sampled;
+  }
+
+  /// Trouve la vraie valeur la plus proche dans les données complètes
+  FlSpot _findClosestRealValue(double x, List<FlSpot> fullSpots) {
+    if (fullSpots.isEmpty) return FlSpot(x, 0);
+    
+    FlSpot closest = fullSpots.first;
+    double minDistance = (fullSpots.first.x - x).abs();
+    
+    for (var spot in fullSpots) {
+      final distance = (spot.x - x).abs();
+      if (distance < minDistance) {
+        minDistance = distance;
+        closest = spot;
+      }
+    }
+    
+    return closest;
   }
 }

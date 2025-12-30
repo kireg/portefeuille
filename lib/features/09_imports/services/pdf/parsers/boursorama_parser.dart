@@ -149,7 +149,7 @@ class BoursoramaParser implements StatementParser {
           continue;
         }
         
-        var quantityStr = prefixMatch.group(1)!;
+        final quantityStr = prefixMatch.group(1)!;
         final assetName = prefixMatch.group(2)!.trim();
         
         // Heuristique anti-collage et gestion des décimales
@@ -260,7 +260,7 @@ class BoursoramaParser implements StatementParser {
     final List<ParsedTransaction> transactions = [];
     
     // Extraction de la date d'exécution (plusieurs formats possibles)
-    DateTime? docDate = _extractDate(rawText);
+    final DateTime? docDate = _extractDate(rawText);
 
     // --- 1. Achats/Ventes au comptant ---
     // "Achat au comptant de 10 LVMH à 850,00 EUR"

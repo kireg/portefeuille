@@ -3,6 +3,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
 import 'package:portefeuille/features/01_launch/ui/providers/setup_wizard_provider.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/wizard_dialogs/add_account_dialog.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
@@ -71,7 +77,7 @@ class _WizardContentState extends State<_WizardContent> {
           children: [
             LinearProgressIndicator(
               value: (_currentStep + 1) / _totalSteps,
-              backgroundColor: Colors.grey[200],
+              backgroundColor: AppColors.border,
             ),
             Expanded(
               child: _buildStepContent(context, provider),
@@ -101,12 +107,12 @@ class _WizardContentState extends State<_WizardContent> {
     final canProceed = _canProceed(provider);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimens.paddingM),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.blackOverlay05,
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -139,7 +145,7 @@ class _WizardContentState extends State<_WizardContent> {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
                   )
                 : Icon(isLastStep ? Icons.check : Icons.arrow_forward),
             label: Text(isLastStep
@@ -178,7 +184,7 @@ class _WizardContentState extends State<_WizardContent> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.error),
         );
       }
     }
@@ -197,7 +203,7 @@ class _WizardContentState extends State<_WizardContent> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Quitter'),
           ),
         ],
@@ -217,15 +223,15 @@ class _Step1Config extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(AppDimens.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Commençons par les bases',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: AppTypography.h2,
           ),
-          const SizedBox(height: 24),
+          AppSpacing.gapL,
           TextFormField(
             initialValue: provider.portfolioName,
             decoration: const InputDecoration(
@@ -235,7 +241,7 @@ class _Step1Config extends StatelessWidget {
             ),
             onChanged: provider.setPortfolioName,
           ),
-          const SizedBox(height: 32),
+          AppSpacing.gapXl,
           SwitchListTile(
             title: const Text('Activer le mode en ligne'),
             subtitle: const Text(
@@ -262,18 +268,18 @@ class _Step2Accounts extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(AppDimens.paddingL),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Vos comptes d\'investissement',
-                style: Theme.of(context).textTheme.headlineSmall,
+                style: AppTypography.h2,
               ),
-              const SizedBox(height: 8),
+              AppSpacing.gapS,
               const Text(
                 'Ajoutez vos comptes (PEA, CTO, Crypto...) et leurs actifs.',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -282,12 +288,12 @@ class _Step2Accounts extends StatelessWidget {
           child: provider.accounts.isEmpty
               ? _buildEmptyState(context)
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
                   itemCount: provider.accounts.length,
                   itemBuilder: (context, index) {
                     final account = provider.accounts[index];
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
+                      margin: const EdgeInsets.only(bottom: AppDimens.paddingS),
                       child: ListTile(
                         leading: CircleAvatar(
                           child: Icon(_getIconForType(account)),
@@ -311,7 +317,7 @@ class _Step2Accounts extends StatelessWidget {
                                 ),
                                 const PopupMenuItem(
                                   value: 'delete',
-                                  child: Text('Supprimer', style: TextStyle(color: Colors.red)),
+                                  child: Text('Supprimer', style: TextStyle(color: AppColors.error)),
                                 ),
                               ],
                               onSelected: (value) {
@@ -331,7 +337,7 @@ class _Step2Accounts extends StatelessWidget {
                 ),
         ),
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppDimens.paddingM),
           child: SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -339,7 +345,7 @@ class _Step2Accounts extends StatelessWidget {
               icon: const Icon(Icons.add),
               label: const Text('AJOUTER UN COMPTE'),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppDimens.paddingM),
               ),
             ),
           ),
@@ -353,11 +359,11 @@ class _Step2Accounts extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.account_balance_wallet_outlined, size: 64, color: Colors.grey[300]),
-          const SizedBox(height: 16),
+          Icon(Icons.account_balance_wallet_outlined, size: AppComponentSizes.iconXxLarge, color: AppColors.textTertiary),
+          AppSpacing.gapM,
           Text(
             'Aucun compte ajouté',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -412,17 +418,17 @@ class _Step3Summary extends StatelessWidget {
     final totalAssets = provider.accounts.fold(0, (sum, a) => sum + a.assets.length);
 
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(AppDimens.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Récapitulatif',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: AppTypography.h2,
           ),
-          const SizedBox(height: 24),
+          AppSpacing.gapL,
           _buildSummaryCard(context, 'Portefeuille', provider.portfolioName, Icons.folder),
-          const SizedBox(height: 16),
+          AppSpacing.gapM,
           _buildSummaryCard(
             context,
             'Valeur Totale Estimée',
@@ -430,9 +436,9 @@ class _Step3Summary extends StatelessWidget {
             Icons.savings,
             isHighlight: true,
           ),
-          const SizedBox(height: 24),
+          AppSpacing.gapL,
           const Text('Détails', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           _buildDetailRow('Comptes', '${provider.accounts.length}'),
           _buildDetailRow('Actifs totaux', '$totalAssets'),
           _buildDetailRow('Mode en ligne', provider.enableOnlineMode ? 'Activé' : 'Désactivé'),
@@ -443,18 +449,18 @@ class _Step3Summary extends StatelessWidget {
 
   Widget _buildSummaryCard(BuildContext context, String title, String value, IconData icon, {bool isHighlight = false}) {
     return Card(
-      color: isHighlight ? Theme.of(context).primaryColor.withValues(alpha: 0.1) : null,
+      color: isHighlight ? Theme.of(context).primaryColor.withValues(alpha: AppOpacities.lightOverlay) : null,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(AppDimens.radius12),
+        side: BorderSide(color: Colors.grey.withValues(alpha: AppOpacities.border)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            Icon(icon, size: 32, color: isHighlight ? Theme.of(context).primaryColor : Colors.grey),
-            const SizedBox(width: 16),
+            Icon(icon, size: AppComponentSizes.iconLarge, color: isHighlight ? Theme.of(context).primaryColor : Colors.grey),
+            AppSpacing.gapHorizontalMedium,
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
