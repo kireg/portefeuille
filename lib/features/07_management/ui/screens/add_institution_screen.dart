@@ -194,7 +194,6 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
                                   "Autre banque",
                                   textAlign: TextAlign.center,
                                   style: AppTypography.caption.copyWith(
-                                    fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textPrimary,
                                   ),
@@ -260,7 +259,6 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
                                 inst.name,
                                 textAlign: TextAlign.center,
                                 style: AppTypography.caption.copyWith(
-                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
                                 ),

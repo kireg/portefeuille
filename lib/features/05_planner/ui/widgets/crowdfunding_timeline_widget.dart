@@ -8,6 +8,7 @@ import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
 import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
 import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
+import 'package:portefeuille/features/07_management/ui/screens/edit_transaction_screen.dart';
 
 class CrowdfundingTimelineWidget extends StatefulWidget {
   final List<Asset> assets;
@@ -335,12 +336,30 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(
-                  _isExpanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  color: AppColors.textSecondary,
-                  size: AppComponentSizes.iconMediumSmall,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Bouton crayon pour éditer la transaction
+                    if (_isExpanded)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: InkWell(
+                          onTap: () => _editTransactionForAsset(context, asset),
+                          child: Icon(
+                            Icons.edit_outlined,
+                            color: AppColors.primary,
+                            size: AppComponentSizes.iconSmall,
+                          ),
+                        ),
+                      ),
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: AppColors.textSecondary,
+                      size: AppComponentSizes.iconMediumSmall,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -426,5 +445,30 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
     // On base l'estimation sur la durée maximale si disponible
     final duration = asset.maxDuration ?? asset.targetDuration ?? 0;
     return start.add(Duration(days: duration * 30));
+  }
+
+  /// Ouvre l'écran de modification pour la première transaction d'achat du projet
+  void _editTransactionForAsset(BuildContext context, Asset asset) {
+    // Trouver la première transaction Buy pour éditer les données du projet
+    try {
+      final buyTransaction = asset.transactions
+          .firstWhere((t) => t.type == TransactionType.Buy);
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => EditTransactionScreen(
+            existingTransaction: buyTransaction,
+          ),
+        ),
+      );
+    } catch (e) {
+      // Pas de transaction Buy trouvée
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Aucune transaction à modifier pour ce projet'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 }

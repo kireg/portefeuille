@@ -95,7 +95,7 @@ class AssetFields extends StatelessWidget {
                                 children: [
                                   Text(
                                     '${suggestion.price} ${suggestion.currency}',
-                                    style: AppTypography.bodyBold.copyWith(fontSize: 12),
+                                    style: AppTypography.caption,
                                   ),
                                 ],
                               )

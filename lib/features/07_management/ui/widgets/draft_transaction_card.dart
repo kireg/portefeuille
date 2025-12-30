@@ -53,7 +53,7 @@ class _DraftTransactionCardState extends State<DraftTransactionCard> {
       suffixStyle: AppTypography.caption.copyWith(color: AppColors.primary),
       filled: true,
       fillColor: AppColors.background, // Contraste avec la carte (Surface)
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      contentPadding: AppSpacing.listItemPaddingCompact,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppDimens.radiusS),
         borderSide: BorderSide(color: AppColors.border),

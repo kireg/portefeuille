@@ -122,7 +122,7 @@ class EmptyTransactionsWidget extends StatelessWidget {
               Center(
                 child: SizedBox(
                   width: 300,
-                  height: 180,
+                  height: AppComponentSizes.importCardHeight,
                   child: _ActionCard(
                     title: "Ajouter / Importer",
                     subtitle: "Saisie manuelle ou Import de fichier",

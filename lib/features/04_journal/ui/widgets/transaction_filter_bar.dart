@@ -189,7 +189,7 @@ class TransactionFilterBar extends StatelessWidget {
                     child: Chip(
                       label: Text(
                         'Compte: ${accounts[filterAccountId]?.name ?? "Inconnu"}',
-                        style: const TextStyle(fontSize: 12),
+                        style: AppTypography.caption,
                       ),
                       deleteIcon: const Icon(Icons.close, size: AppComponentSizes.iconXSmall),
                       onDeleted: onClearFilters,
@@ -200,7 +200,7 @@ class TransactionFilterBar extends StatelessWidget {
                   Chip(
                     label: Text(
                       'Institution: $filterInstitutionName',
-                      style: const TextStyle(fontSize: 12),
+                      style: AppTypography.caption,
                     ),
                     deleteIcon: const Icon(Icons.close, size: AppComponentSizes.iconXSmall),
                     onDeleted: onClearFilters,
