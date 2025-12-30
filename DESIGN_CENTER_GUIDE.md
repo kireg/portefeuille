@@ -161,6 +161,75 @@ SizedBox(height: AppDimens.paddingXS)
 | `16` | (utiliser `radiusL` = 12) |
 | `20` | (utiliser `radiusL` = 12) |
 
+### 📊 Hauteurs des Tab Bars
+
+Pour les écrans avec barres flottantes (supérieure ou inférieure), utilisez les constantes prédéfinies:
+
+| ❌ Hardcodé | ✅ AppDimens | Usage |
+|-----------|-----------|-------|
+| `90` | `floatingAppBarPaddingTopFixed` | Padding TOP pour écrans avec AppBar flottante (Dashboard, Synthèse, Transactions) |
+| `100` ou `80` | `floatingNavBarPaddingBottomFixed` | Padding BOTTOM pour écrans avec BottomNavBar flottante (Planification, Crowdfunding, Settings) |
+| `60` | `floatingAppBarHeight` | Hauteur réelle de la barre supérieure |
+| `80` | `floatingNavBarHeight` | Hauteur réelle de la barre de navigation inférieure |
+| `56` | `tabBarHeight` | Hauteur standard d'une TabBar Material |
+
+#### Exemple : Top Padding (AppBar flottante supérieure)
+```dart
+// ❌ NE PAS FAIRE
+final double topPadding = MediaQuery.of(context).padding.top + 90;
+
+// ✅ À FAIRE
+final double topPadding = MediaQuery.of(context).padding.top + AppDimens.floatingAppBarPaddingTopFixed;
+
+// Dans CustomScrollView avec SliverPadding
+SliverPadding(
+  padding: EdgeInsets.only(top: topPadding),
+  sliver: ...,
+)
+```
+
+#### Exemple : Bottom Padding (BottomNavBar flottante)
+```dart
+// ❌ NE PAS FAIRE
+Padding(padding: EdgeInsets.only(bottom: 100))
+SizedBox(height: 80)
+
+// ✅ À FAIRE
+Padding(
+  padding: EdgeInsets.only(bottom: AppDimens.floatingNavBarPaddingBottomFixed),
+  child: ...,
+)
+
+// Dans ListView
+ListView.builder(
+  padding: const EdgeInsets.fromLTRB(
+    AppDimens.paddingM, 
+    0, 
+    AppDimens.paddingM, 
+    AppDimens.floatingNavBarPaddingBottomFixed
+  ),
+  itemBuilder: ...,
+)
+```
+
+#### Exemple : TabBar avec contenu
+```dart
+// ✅ PATTERN POUR SETTINGS SCREEN
+Expanded(
+  child: TabBarView(
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(
+          bottom: AppDimens.floatingNavBarPaddingBottomFixed,
+        ),
+        child: const GeneralSettingsTab(),
+      ),
+      // ... autres tabs
+    ],
+  ),
+)
+```
+
 ---
 
 ## 🔧 **Processus de Correction Pas à Pas**

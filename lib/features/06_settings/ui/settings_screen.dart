@@ -72,13 +72,34 @@ class SettingsScreen extends StatelessWidget {
               ),
 
               // TabBarView
-              const Expanded(
+              Expanded(
                 child: TabBarView(
                   children: [
-                    GeneralSettingsTab(),
-                    SecuritySettingsTab(),
-                    AdvancedSettingsTab(),
-                    AboutTab(),
+                    // Padding inférieur pour ne pas cacher le contenu par la nav bar flottante
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: AppDimens.floatingNavBarPaddingBottomFixed,
+                      ),
+                      child: const GeneralSettingsTab(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: AppDimens.floatingNavBarPaddingBottomFixed,
+                      ),
+                      child: const SecuritySettingsTab(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: AppDimens.floatingNavBarPaddingBottomFixed,
+                      ),
+                      child: const AdvancedSettingsTab(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: AppDimens.floatingNavBarPaddingBottomFixed,
+                      ),
+                      child: const AboutTab(),
+                    ),
                   ],
                 ),
               ),

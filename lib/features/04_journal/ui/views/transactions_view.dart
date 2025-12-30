@@ -264,7 +264,7 @@ class _TransactionsViewState extends State<TransactionsView> {
 
   @override
   Widget build(BuildContext context) {
-    final double topPadding = MediaQuery.of(context).padding.top + 90;
+    final double topPadding = MediaQuery.of(context).padding.top + AppDimens.floatingAppBarPaddingTopFixed;
 
     return Consumer<PortfolioProvider>(
       builder: (context, provider, child) {
@@ -381,7 +381,7 @@ class _TransactionsViewState extends State<TransactionsView> {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(AppDimens.paddingM, 0, AppDimens.paddingM, 80),
+                        padding: const EdgeInsets.fromLTRB(AppDimens.paddingM, 0, AppDimens.paddingM, AppDimens.floatingNavBarPaddingBottomFixed),
                         itemCount: sortedGroupKeys.length,
                         itemBuilder: (context, groupIndex) {
                           final key = sortedGroupKeys[groupIndex];

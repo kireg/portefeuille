@@ -21,6 +21,7 @@ AppTypography:
   
 AppDimens:
   ✓ Structure existante (aucune modification nécessaire)
+  ✓ +4 constantes pour tab bar heights (NEW - 30 Déc 2025)
 ```
 
 ### **Fichiers Corrigés: 9** ✅

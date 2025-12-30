@@ -38,7 +38,7 @@ class _SyntheseViewState extends State<SyntheseView> {
   @override
   Widget build(BuildContext context) {
     // Calcul du padding pour aligner le titre sous la navbar/status bar
-    final double topPadding = MediaQuery.of(context).padding.top + 90;
+    final double topPadding = MediaQuery.of(context).padding.top + AppDimens.floatingAppBarPaddingTopFixed;
 
     return Consumer3<PortfolioProvider, PortfolioCalculationProvider, SettingsProvider>(
       builder: (context, portfolioProvider, calculationProvider, settingsProvider, child) {

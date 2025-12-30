@@ -44,7 +44,7 @@ class OverviewTab extends StatelessWidget {
 
     // Calcul de l'espace nécessaire en haut pour la barre flottante
     // Hauteur Barre (60) + Marge (4) + SafeArea + un peu d'air (20)
-    final double topPadding = MediaQuery.of(context).padding.top + 90;
+    final double topPadding = MediaQuery.of(context).padding.top + AppDimens.floatingAppBarPaddingTopFixed;
 
     return AppScreen(
       withSafeArea: false, // Important pour que le gradient monte tout en haut

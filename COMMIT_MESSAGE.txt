@@ -1,13 +1,42 @@
-🎨 feat(design-center): Migration Design Center - Phase 1 & 2 (92% conformité)
+🎨 feat(design-center): Migration Design Center - Phase 1, 2 & 3 (Normalisation Tab Bars)
 
 ## 🎯 Objectif
-Centraliser tous les éléments d'UI (couleurs, typographie, espacements) dans un Design Center unique pour garantir maintenabilité, cohérence visuelle et scalabilité.
+Centraliser tous les éléments d'UI (couleurs, typographie, espacements, hauteurs de barres) 
+dans un Design Center unique pour garantir maintenabilité, cohérence visuelle et scalabilité.
 
 ## ✅ Résultats
+
+### Phase 1 & 2 (Antérieur)
 - **Conformité globale:** 30% → 92% (+62%)
 - **Violations éliminées:** 152 → 118 (-34 violations, soit -22%)
 - **Fichiers corrigés:** 12 fichiers critiques (wizards, screens, imports)
 - **Aucune erreur de compilation:** ✅ Code 100% fonctionnel
+
+### Phase 3 (Nouvelle - 30 Décembre 2025) - Normalisation des Tab Bars
+**Objectif:** Vérifier que tous les écrans ont le padding nécessaire pour ne pas cacher 
+les éléments présents sur l'écran avec les barres flottantes (supérieure/inférieure).
+
+**Approche:** Centraliser via le Design Center (comme le Dashboard bien configuré).
+
+**Changements:**
+- ✅ 4 constantes ajoutées à `AppDimens` pour les hauteurs de tab bars
+- ✅ 6 fichiers d'écrans normalisés (overview, synthèse, transactions, planner, crowdfunding, settings)
+- ✅ Documentation complètement mise à jour (DESIGN_CENTER_GUIDE.md + nouveau document)
+- ✅ 0 erreur de compilation, 100% compatible
+
+**Fichiers modifiés:**
+```
+lib/core/ui/theme/app_dimens.dart                                  (4 constantes)
+lib/features/03_overview/ui/overview_tab.dart                      (normalisation)
+lib/features/04_journal/ui/views/synthese_view.dart               (normalisation)
+lib/features/04_journal/ui/views/transactions_view.dart            (normalisation)
+lib/features/05_planner/ui/planner_tab.dart                        (normalisation)
+lib/features/05_planner/ui/crowdfunding_tracking_tab.dart          (normalisation)
+lib/features/06_settings/ui/settings_screen.dart                   (padding inférieur ajouté)
+DESIGN_CENTER_GUIDE.md                                             (nouvelle section)
+DESIGN_CENTER_SUMMARY.md                                           (mise à jour)
+docs/TAB_BAR_PADDING_NORMALIZATION.md                              (documentation complète)
+```
 
 ## 🎨 Design Center Enrichi
 

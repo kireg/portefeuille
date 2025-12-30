@@ -143,7 +143,7 @@ class CrowdfundingTrackingTab extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 100), // Padding pour la BottomNavBar
+                  const SizedBox(height: AppDimens.floatingNavBarPaddingBottomFixed),
                 ]),
               ),
             ],
