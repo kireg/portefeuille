@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 // Core UI
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
@@ -55,12 +56,7 @@ class OverviewTab extends StatelessWidget {
                 padding: EdgeInsets.only(top: topPadding),
                 sliver: SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppDimens.paddingL,
-                        0, // On a déjà géré le top avec le SliverPadding
-                        AppDimens.paddingL,
-                        AppDimens.paddingM
-                    ),
+                    padding: AppSpacing.overviewHeaderPaddingDefault,
                     child: FadeInSlide(
                       delay: 0.0,
                       child: Text(
@@ -75,7 +71,7 @@ class OverviewTab extends StatelessWidget {
 
               // Contenu principal
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+                padding: AppSpacing.contentHorizontalPaddingDefault,
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // 1. Header (Total)

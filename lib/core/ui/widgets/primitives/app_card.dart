@@ -2,6 +2,8 @@ import 'dart:ui'; // Nécessaire pour ImageFilter
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_dimens.dart';
+import '../../theme/app_elevations.dart';
+import '../../theme/app_spacing.dart';
 
 class AppCard extends StatelessWidget {
   final Widget child;
@@ -38,21 +40,12 @@ class AppCard extends StatelessWidget {
       ),
 
       // Ombre portée
-      boxShadow: withShadow
-          ? [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.3),
-          blurRadius: 24,
-          offset: const Offset(0, 8),
-          spreadRadius: -4, // Ombre plus diffuse
-        ),
-      ]
-          : null,
+      boxShadow: withShadow ? AppElevations.lg : null,
     );
 
     Widget content = Container(
       width: double.infinity,
-      padding: padding ?? const EdgeInsets.all(AppDimens.paddingM),
+      padding: padding ?? AppSpacing.cardPaddingDefault,
       child: child,
     );
 

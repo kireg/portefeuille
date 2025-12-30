@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_elevations.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/core/data/models/aggregated_asset.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
@@ -48,13 +50,7 @@ class _AssetCardState extends State<AssetCard> {
               color: Colors.white.withValues(alpha: 0.1),
               width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: AppElevations.sm,
           ),
           child: Column(
             children: [
@@ -66,11 +62,11 @@ class _AssetCardState extends State<AssetCard> {
                   });
                 },
                 child: Padding(
-                  padding: const EdgeInsets.all(AppDimens.paddingM),
+                  padding: AppSpacing.assetCardHeaderPaddingDefault,
                   child: Row(
                     children: [
                       _buildAssetIcon(),
-                      const SizedBox(width: AppDimens.paddingM),
+                      AppSpacing.gapM,
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

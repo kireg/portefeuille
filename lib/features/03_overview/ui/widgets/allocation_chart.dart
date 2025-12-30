@@ -5,6 +5,7 @@ import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class AllocationChart extends StatefulWidget {
   final Portfolio portfolio;
@@ -35,7 +36,7 @@ class _AllocationChartState extends State<AllocationChart> {
           style: AppTypography.h3,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
+        AppSpacing.gapL,
 
         if (hasData) ...[
           // Zone graphique à hauteur fixe/uniforme

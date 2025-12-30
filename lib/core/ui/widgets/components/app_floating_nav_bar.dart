@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_dimens.dart';
-import '../../theme/app_typography.dart'; // Nécessaire pour le style du Tooltip
+import '../../theme/app_typography.dart';
+import '../../theme/app_animations.dart';
+import '../../theme/app_elevations.dart';
+import '../../theme/app_spacing.dart';
 
 class AppFloatingNavBar extends StatelessWidget {
   final int currentIndex;
@@ -22,24 +25,18 @@ class AppFloatingNavBar extends StatelessWidget {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        margin: const EdgeInsets.fromLTRB(
-            AppDimens.paddingL,
+        margin: EdgeInsets.fromLTRB(
+            AppSpacing.navBarMarginHorizontal,
             0,
-            AppDimens.paddingL,
-            AppDimens.paddingL
+            AppSpacing.navBarMarginHorizontal,
+            AppSpacing.navBarMarginBottom
         ),
-        height: 64,
+        height: AppDimens.floatingNavBarHeight,
         decoration: BoxDecoration(
           color: AppColors.surface.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(32),
           border: Border.all(color: AppColors.border, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
+          boxShadow: AppElevations.lg,
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(32),
@@ -75,19 +72,13 @@ class AppFloatingNavBar extends StatelessWidget {
         color: AppColors.surface, // Fond sombre
         borderRadius: BorderRadius.circular(AppDimens.radiusS),
         border: Border.all(color: AppColors.border), // Bordure subtile
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppElevations.sm,
       ),
       textStyle: AppTypography.caption.copyWith(
         color: AppColors.textPrimary,
         fontWeight: FontWeight.w500,
       ),
-      waitDuration: const Duration(milliseconds: 500), // Léger délai avant affichage
+      waitDuration: AppAnimations.delayTooltip,
 
       // Zone interactive
       child: Material(
@@ -105,7 +96,7 @@ class AppFloatingNavBar extends StatelessWidget {
             height: double.infinity,
             alignment: Alignment.center,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: AppAnimations.normal,
               padding: const EdgeInsets.all(10), // Padding interne de l'icône
               decoration: BoxDecoration(
                 // Si sélectionné : fond subtil. Sinon transparent.

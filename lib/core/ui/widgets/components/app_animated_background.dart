@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_animations.dart';
 
 class AppAnimatedBackground extends StatefulWidget {
   final Widget child;
@@ -22,7 +23,7 @@ class _AppAnimatedBackgroundState extends State<AppAnimatedBackground>
     // Animation très lente (10 secondes) pour un effet "respiration"
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 10),
+      duration: AppAnimations.slowest,
     )..repeat(reverse: true);
 
     // Mouvements sinusoïdaux décalés

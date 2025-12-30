@@ -9,6 +9,7 @@ import 'package:shimmer/shimmer.dart';
 // Design System
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_animations.dart';
 // ignore: unused_import
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
@@ -38,18 +39,18 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
     // 1. Animation lente et infinie pour les orbes d'arrière-plan
     _backgroundController = AnimationController(
-      duration: const Duration(seconds: 10),
+      duration: AppAnimations.slowest,
       vsync: this,
     )..repeat(reverse: true);
 
     // 2. Animation d'entrée du contenu (Fade in + Slide up)
     _entranceController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: AppAnimations.slower,
       vsync: this,
     );
 
     // Démarrage après un petit délai pour laisser l'UI se monter
-    Future.delayed(const Duration(milliseconds: 100), () {
+    Future.delayed(AppAnimations.delayFast, () {
       _entranceController.forward();
     });
   }

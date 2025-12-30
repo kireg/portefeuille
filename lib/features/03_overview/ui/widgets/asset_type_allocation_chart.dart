@@ -4,6 +4,7 @@ import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class AssetTypeAllocationChart extends StatefulWidget {
   final Map<AssetType, double> allocationData;
@@ -38,7 +39,7 @@ class _AssetTypeAllocationChartState extends State<AssetTypeAllocationChart> {
           style: AppTypography.h3,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
+        AppSpacing.gapL,
 
         if (hasData) ...[
           SizedBox(

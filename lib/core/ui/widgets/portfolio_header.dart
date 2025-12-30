@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/privacy_blur.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
@@ -31,7 +32,7 @@ class PortfolioHeader extends StatelessWidget {
 
     return AppCard(
       backgroundColor: Colors.transparent,
-      padding: const EdgeInsets.all(AppDimens.paddingL),
+      padding: AppSpacing.headerPaddingDefault,
       child: Column(
         // ▼▼▼ MODIFICATION : Centrage Horizontal ▼▼▼
         crossAxisAlignment: CrossAxisAlignment.center,

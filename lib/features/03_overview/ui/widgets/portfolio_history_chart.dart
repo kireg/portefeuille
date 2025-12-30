@@ -7,6 +7,7 @@ import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/core/data/models/portfolio_value_history_point.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 
 enum ChartTimeRange { day, month, year, max }
@@ -40,7 +41,7 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
           children: [
             // En-tête avec Titre et Filtres
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              padding: AppSpacing.chartHeaderPaddingDefault,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

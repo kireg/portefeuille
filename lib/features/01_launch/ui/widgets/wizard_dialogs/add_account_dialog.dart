@@ -6,6 +6,7 @@ import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/wizard_dialogs/add_asset_dialog.dart';
 
@@ -57,10 +58,10 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(AppDimens.paddingM),
+      insetPadding: AppSpacing.dialogInsetPaddingDefault,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 600, maxHeight: 800),
-        padding: const EdgeInsets.all(AppDimens.paddingL),
+        padding: AppSpacing.dialogPaddingDefault,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -68,7 +69,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
               widget.initialAccount == null ? 'Ajouter un compte' : 'Modifier le compte',
               style: AppTypography.h2,
             ),
-            const SizedBox(height: AppDimens.paddingL),
+            AppSpacing.gapL,
             Expanded(
               child: Form(
                 key: _formKey,

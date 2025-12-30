@@ -4,6 +4,7 @@ import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/repayment_type.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart'; // IMPORTANT
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -34,8 +35,8 @@ class AssetListItem extends StatelessWidget {
     final isPositive = pnlConverted >= 0;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      padding: const EdgeInsets.all(16),
+      margin: AppSpacing.assetListItemMargin,
+      padding: AppSpacing.assetListItemPadding,
       decoration: BoxDecoration(
         color: AppColors.surface, // Carte sombre
         borderRadius: BorderRadius.circular(16),
@@ -46,7 +47,7 @@ class AssetListItem extends StatelessWidget {
           // 1. Icône / Logo (Placeholder avec initiales colorées)
           _buildAssetIcon(),
 
-          const SizedBox(width: 16),
+          AppSpacing.gapM,
 
           // 2. Nom et quantité
           Expanded(

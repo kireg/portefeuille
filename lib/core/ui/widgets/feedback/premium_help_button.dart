@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_elevations.dart';
 
 class PremiumHelpButton extends StatelessWidget {
   final String title;
@@ -70,13 +71,7 @@ class _PremiumHelpSheet extends StatelessWidget {
               width: 1,
             ),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
+          boxShadow: AppElevations.md,
         ),
         padding: EdgeInsets.only(
           left: 24,

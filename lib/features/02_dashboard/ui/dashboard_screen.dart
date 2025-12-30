@@ -15,6 +15,7 @@ import '../../06_settings/ui/settings_screen.dart';
 // UI Components
 import 'package:portefeuille/core/ui/theme/app_colors.dart'; // Pour le fond par défaut
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_floating_nav_bar.dart';
 import 'widgets/dashboard_app_bar.dart';
@@ -48,7 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text("Aucun portefeuille n'est sélectionné."),
-              const SizedBox(height: 20),
+              AppSpacing.gapL,
               ElevatedButton(
                   onPressed: () {
                     showModalBottomSheet(

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 // Core UI
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
 import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
 import 'package:portefeuille/core/ui/widgets/empty_states/app_empty_state.dart';
@@ -60,7 +61,7 @@ class CrowdfundingTrackingTab extends StatelessWidget {
               // Titre
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingL),
+                  padding: AppSpacing.sectionTitlePaddingDefault,
                   child: Center(child: Text('Suivi Crowdfunding', style: AppTypography.h2)),
                 ),
               ),

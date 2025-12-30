@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
+import '../../theme/app_animations.dart';
 
 class AppAnimatedValue extends StatefulWidget {
   final double value;
@@ -12,7 +13,7 @@ class AppAnimatedValue extends StatefulWidget {
     required this.value,
     required this.currency,
     this.style,
-    this.duration = const Duration(milliseconds: 1500),
+    this.duration = AppAnimations.slowest,
   });
 
   @override

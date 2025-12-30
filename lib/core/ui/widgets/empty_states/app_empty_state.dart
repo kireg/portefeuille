@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 
 class AppEmptyState extends StatelessWidget {
@@ -24,12 +24,12 @@ class AppEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppDimens.paddingL),
+        padding: AppSpacing.emptyStatePaddingDefault,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(AppDimens.paddingL),
+              padding: AppSpacing.emptyStateIconPaddingDefault,
               decoration: const BoxDecoration(
                 color: AppColors.surfaceLight,
                 shape: BoxShape.circle,
@@ -40,20 +40,20 @@ class AppEmptyState extends StatelessWidget {
                 color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: AppDimens.paddingM),
+            AppSpacing.gapM,
             Text(
               title,
               style: AppTypography.h3.copyWith(color: AppColors.textPrimary),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppDimens.paddingS),
+            AppSpacing.gapS,
             Text(
               message,
               style: AppTypography.body.copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
             if (buttonLabel != null && onAction != null) ...[
-              const SizedBox(height: AppDimens.paddingL),
+              AppSpacing.gapL,
               AppButton(
                 label: buttonLabel!,
                 onPressed: onAction!,

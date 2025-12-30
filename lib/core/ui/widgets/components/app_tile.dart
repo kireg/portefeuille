@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_dimens.dart';
 import '../../theme/app_typography.dart';
+import '../../theme/app_spacing.dart';
 
 class AppTile extends StatelessWidget {
   final String title;
@@ -29,16 +30,13 @@ class AppTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppDimens.radiusM),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimens.paddingS,
-            vertical: AppDimens.paddingM,
-          ),
+          padding: AppSpacing.tilePaddingDefault,
           child: Row(
             children: [
               // 1. Leading (Icône)
               if (leading != null) ...[
                 leading!,
-                const SizedBox(width: AppDimens.paddingM),
+                AppSpacing.gapM,
               ],
 
               // 2. Textes (Titre + Sous-titre)
@@ -69,7 +67,7 @@ class AppTile extends StatelessWidget {
 
               // 3. Trailing (Valeur ou Action)
               if (trailing != null) ...[
-                const SizedBox(width: AppDimens.paddingM),
+                AppSpacing.gapM,
                 trailing!,
               ],
             ],

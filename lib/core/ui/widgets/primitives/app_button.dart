@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_dimens.dart';
 import '../../theme/app_typography.dart';
+import '../../theme/app_animations.dart';
+import '../../theme/app_component_sizes.dart';
+import '../../theme/app_spacing.dart';
 
 enum AppButtonType { primary, secondary, ghost }
 
@@ -41,7 +44,7 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
+      duration: AppAnimations.fast,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
@@ -69,8 +72,8 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
         onTap: isDisabled ? null : widget.onPressed,
         child: AnimatedScale(
           scale: _isHovered ? 1.02 : 1.0,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutBack,
+          duration: AppAnimations.normal,
+          curve: AppAnimations.curveEaseOutBack,
           child: ScaleTransition(
             scale: _scaleAnimation,
             child: Opacity(
@@ -78,10 +81,7 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
               child: Container(
                 width: widget.isFullWidth ? double.infinity : null,
                 alignment: Alignment.center, // Fix: Center content to prevent loader stretching
-                padding: const EdgeInsets.symmetric(
-                  vertical: 14,
-                  horizontal: 24,
-                ),
+                padding: AppSpacing.buttonPaddingStandard,
                 decoration: _getDecoration(),
                 child: widget.isLoading
                     ? _buildLoader()
@@ -90,8 +90,8 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (widget.icon != null) ...[
-                      Icon(widget.icon, size: 18, color: _getTextColor()),
-                      const SizedBox(width: 8),
+                      Icon(widget.icon, size: AppComponentSizes.iconSmall, color: _getTextColor()),
+                      AppSpacing.gapS,
                     ],
                     Text(
                       widget.label.toUpperCase(),

@@ -7,6 +7,7 @@ import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_tile.dart';
@@ -56,10 +57,7 @@ class InstitutionTile extends StatelessWidget {
           onExpansionChanged: (expanded) {
             if (expanded) HapticFeedback.lightImpact();
           },
-          tilePadding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.paddingM,
-              vertical: AppDimens.paddingS
-          ),
+          tilePadding: AppSpacing.expansionTilePaddingDefault,
           // Icône de gauche (Banque)
           leading: Builder(
             builder: (context) {

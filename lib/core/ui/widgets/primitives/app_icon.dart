@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
-import '../../theme/app_dimens.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_component_sizes.dart';
 
 class AppIcon extends StatelessWidget {
   final IconData icon;
@@ -21,10 +22,10 @@ class AppIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final widget = Container(
-      padding: const EdgeInsets.all(AppDimens.paddingS),
+      padding: AppSpacing.iconPaddingStandard,
       decoration: BoxDecoration(
         color: backgroundColor ?? AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(AppDimens.radiusS + 4), // Forme "Squircle"
+        borderRadius: BorderRadius.circular(AppComponentSizes.iconBorderRadius),
         border: Border.all(color: AppColors.border),
       ),
       child: Icon(

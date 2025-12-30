@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 
 // 2. IMPORTS DATA & PROVIDERS
@@ -66,15 +67,12 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
       bottom: false,
       child: Container(
         height: 60,
-        margin: const EdgeInsets.symmetric(
-          horizontal: AppDimens.paddingM,
-          vertical: AppDimens.paddingS / 2,
-        ),
+        margin: AppSpacing.appBarMarginDefault,
         child: AppCard(
           isGlass: true,
           withShadow: true,
           backgroundColor: AppColors.surface.withValues(alpha: 0.85),
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingS),
+          padding: AppSpacing.appBarPaddingDefault,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

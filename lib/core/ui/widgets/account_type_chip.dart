@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/account_type.dart';
+import '../theme/app_spacing.dart';
 
 
 class AccountTypeChip extends StatelessWidget {
@@ -23,7 +24,7 @@ class AccountTypeChip extends StatelessWidget {
       ),
       backgroundColor: Colors.blueGrey[100],
       side: BorderSide.none,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+      padding: AppSpacing.chipPaddingDefault,
       visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_animations.dart';
+import '../../theme/app_spacing.dart';
 
 class AppIconButton extends StatefulWidget {
   final IconData icon;
@@ -38,9 +40,9 @@ class _AppIconButtonState extends State<AppIconButton> {
       onExit: isDisabled ? null : (_) => setState(() => _isHovered = false),
       cursor: isDisabled ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
       child: AnimatedScale(
-        scale: _isHovered ? 1.1 : 1.0, // Reduced scale for better UX
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutBack,
+        scale: _isHovered ? 1.1 : 1.0,
+        duration: AppAnimations.normal,
+        curve: AppAnimations.curveEaseOutBack,
         child: Container(
           decoration: BoxDecoration(
             color: widget.backgroundColor,
@@ -52,8 +54,8 @@ class _AppIconButtonState extends State<AppIconButton> {
             color: widget.color,
             tooltip: widget.tooltip,
             onPressed: widget.onPressed,
-            padding: const EdgeInsets.all(8), // Standard padding
-            constraints: const BoxConstraints(), // Remove min size constraints if needed
+            padding: AppSpacing.iconButtonPadding,
+            constraints: const BoxConstraints(),
             style: IconButton.styleFrom(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(widget.borderRadius),

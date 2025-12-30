@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_animations.dart';
 
 class FadeInSlide extends StatefulWidget {
   final Widget child;
@@ -9,7 +10,7 @@ class FadeInSlide extends StatefulWidget {
     super.key,
     required this.child,
     this.delay = 0.0,
-    this.duration = 0.5,
+    this.duration = AppAnimations.normalMs / 1000.0,
   });
 
   @override
