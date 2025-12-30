@@ -9,7 +9,7 @@ class PdfAnonymizerService {
     final PdfDocument document = PdfDocument(inputBytes: file.bytes != null ? file.bytes! : File(file.path!).readAsBytesSync());
 
     // 2. Extract Text
-    String text = PdfTextExtractor(document).extractText();
+    final String text = PdfTextExtractor(document).extractText();
     
     // Dispose document
     document.dispose();

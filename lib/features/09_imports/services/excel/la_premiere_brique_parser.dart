@@ -37,11 +37,11 @@ class LaPremiereBriqueParser {
   }
 
   List<ParsedCrowdfundingProject> _processSheets(Sheet loansSheet, Sheet? scheduleSheet) {
-    List<ParsedCrowdfundingProject> projects = [];
+    final List<ParsedCrowdfundingProject> projects = [];
     
     // --- 1. Parse Loans Sheet ---
     int headerRowIndex = -1;
-    Map<String, int> headers = {};
+    final Map<String, int> headers = {};
     
     for (int i = 0; i < loansSheet.maxRows; i++) {
       final row = loansSheet.row(i);
@@ -80,15 +80,15 @@ class LaPremiereBriqueParser {
         final dateMinIdx = headers['Date de remboursement minimale (JJ/MM/AAAA)'];
         final dateMaxIdx = headers['Date de remboursement maximale (JJ/MM/AAAA)'];
         
-        DateTime? startDate = (dateSignIdx != null && dateSignIdx < row.length) 
+        final DateTime? startDate = (dateSignIdx != null && dateSignIdx < row.length) 
             ? _parseDate(row[dateSignIdx]) 
             : null;
             
-        DateTime? minDate = (dateMinIdx != null && dateMinIdx < row.length) 
+        final DateTime? minDate = (dateMinIdx != null && dateMinIdx < row.length) 
             ? _parseDate(row[dateMinIdx]) 
             : null;
 
-        DateTime? maxDate = (dateMaxIdx != null && dateMaxIdx < row.length) 
+        final DateTime? maxDate = (dateMaxIdx != null && dateMaxIdx < row.length) 
             ? _parseDate(row[dateMaxIdx]) 
             : null;
 
@@ -133,7 +133,7 @@ class LaPremiereBriqueParser {
         }
         
         // RepaymentType
-        RepaymentType type = repaymentTypes[projectName] ?? RepaymentType.InFine;
+        final RepaymentType type = repaymentTypes[projectName] ?? RepaymentType.InFine;
         
         projects.add(ParsedCrowdfundingProject(
           projectName: projectName,
@@ -157,10 +157,10 @@ class LaPremiereBriqueParser {
   }
   
   Map<String, RepaymentType> _parseRepaymentTypes(Sheet sheet) {
-    Map<String, RepaymentType> types = {};
+    final Map<String, RepaymentType> types = {};
     
     int headerRowIndex = -1;
-    Map<String, int> headers = {};
+    final Map<String, int> headers = {};
     
     for (int i = 0; i < sheet.maxRows; i++) {
       final row = sheet.row(i);
@@ -176,7 +176,7 @@ class LaPremiereBriqueParser {
     
     if (headerRowIndex == -1) return {};
     
-    Map<String, List<Map<String, double>>> projectSchedules = {};
+    final Map<String, List<Map<String, double>>> projectSchedules = {};
     
     final projectIdx = headers['Projet'];
     final interestIdx = headers['Part des intérêts'];
@@ -209,8 +209,8 @@ class LaPremiereBriqueParser {
     }
     
     projectSchedules.forEach((name, rows) {
-      int rowsWithInterest = rows.where((r) => r['interest']! > 0).length;
-      int rowsWithCapital = rows.where((r) => r['capital']! > 0).length;
+      final int rowsWithInterest = rows.where((r) => r['interest']! > 0).length;
+      final int rowsWithCapital = rows.where((r) => r['capital']! > 0).length;
       
       if (rowsWithCapital > 1) {
         types[name] = RepaymentType.Amortizing;
@@ -279,7 +279,7 @@ class LaPremiereBriqueParser {
     if (val is DoubleCellValue) return val.value;
     if (val is IntCellValue) return val.value.toDouble();
     if (val is TextCellValue) {
-      String clean = val.value.toString().replaceAll(RegExp(r'[^\d.,]'), '').replaceAll(',', '.');
+      final String clean = val.value.toString().replaceAll(RegExp(r'[^\d.,]'), '').replaceAll(',', '.');
       return double.tryParse(clean);
     }
     return null;

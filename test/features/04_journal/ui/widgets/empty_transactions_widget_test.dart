@@ -9,14 +9,13 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
 
     // Arrange
-    bool importHubPressed = false;
     
     // Act
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: EmptyTransactionsWidget(
-            onImportHub: () => importHubPressed = true,
+            onImportHub: () {},
           ),
         ),
       ),

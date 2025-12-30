@@ -30,7 +30,7 @@ class AppEmptyState extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(AppDimens.paddingL),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.surfaceLight,
                 shape: BoxShape.circle,
               ),

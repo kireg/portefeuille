@@ -5,6 +5,7 @@ import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/features/00_app/services/security_service.dart';
+import 'package:portefeuille/features/06_settings/ui/screens/change_pin_screen.dart';
 
 class SecuritySettingsTab extends StatefulWidget {
   const SecuritySettingsTab({super.key});
@@ -83,7 +84,7 @@ class _SecuritySettingsTabState extends State<SecuritySettingsTab> {
                 subtitle: const Text('Demander une authentification au démarrage'),
                 value: _isSecurityEnabled,
                 onChanged: _toggleSecurity,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
               ),
               if (_isSecurityEnabled && _canCheckBiometrics) ...[
                 const Divider(),
@@ -107,10 +108,11 @@ class _SecuritySettingsTabState extends State<SecuritySettingsTab> {
                 ListTile(
                   title: const Text('Modifier le code PIN'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    // TODO: Implémenter l'écran de changement de PIN
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Fonctionnalité à venir')),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const ChangePinScreen(),
+                      ),
                     );
                   },
                 ),

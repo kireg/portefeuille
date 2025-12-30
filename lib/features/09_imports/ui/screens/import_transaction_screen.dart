@@ -1,7 +1,6 @@
 // lib/features/07_management/ui/screens/import_transaction_screen.dart
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui; // Nécessaire pour la manipulation d'image
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

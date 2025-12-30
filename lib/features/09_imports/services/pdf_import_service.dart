@@ -31,7 +31,7 @@ class PdfImportService {
       final PdfDocument document = PdfDocument(inputBytes: bytes);
 
       // Extract text from all pages.
-      String text = PdfTextExtractor(document).extractText();
+      final String text = PdfTextExtractor(document).extractText();
       
       // Dispose the document.
       document.dispose();
@@ -40,7 +40,7 @@ class PdfImportService {
       // Print text in chunks to avoid truncation
       const int chunkSize = 800;
       for (int i = 0; i < text.length; i += chunkSize) {
-        int end = (i + chunkSize < text.length) ? i + chunkSize : text.length;
+        final int end = (i + chunkSize < text.length) ? i + chunkSize : text.length;
         debugPrint(text.substring(i, end));
       }
       debugPrint("--- PDF CONTENT END ---");

@@ -211,6 +211,8 @@ Savings plan execution PEA ETF, quantity: 1
       expect(progress, lessThanOrEqualTo(1.0));
     });
 
+    // Verify progress callback was called
+    expect(lastProgress, greaterThan(0.0));
     // Since the text is short, it might not trigger many updates, but it should at least run.
     // The parser implementation updates progress every 50 lines.
     // Our fake text is about 60 lines.

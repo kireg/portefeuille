@@ -72,13 +72,48 @@ class PortfolioManagementSettings extends StatelessWidget {
                       style: TextStyle(color: theme.colorScheme.error)),
                   onPressed: portfolioProvider.activePortfolio == null
                       ? null
-                      : () {
-                    // TODO: Ajouter confirmation
-                    portfolioProvider.deletePortfolio(
-                        portfolioProvider.activePortfolio!.id);
-                  },
+                      : () => _showDeleteConfirmation(context, portfolioProvider),
                 ),
               ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, PortfolioProvider provider) {
+    final portfolioName = provider.activePortfolio?.name ?? 'ce portefeuille';
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirmer la suppression'),
+          content: Text(
+            'Êtes-vous sûr de vouloir supprimer "$portfolioName" ?\n\n'
+            'Cette action est irréversible. Tous les comptes, transactions et actifs '
+            'associés à ce portefeuille seront définitivement supprimés.',
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Annuler'),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+              onPressed: () {
+                provider.deletePortfolio(provider.activePortfolio!.id);
+                Navigator.of(dialogContext).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Portefeuille "$portfolioName" supprimé'),
+                  ),
+                );
+              },
+              child: const Text('Supprimer'),
             ),
           ],
         );

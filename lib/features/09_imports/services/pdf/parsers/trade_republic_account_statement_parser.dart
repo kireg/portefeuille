@@ -199,9 +199,6 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // Amounts are like "9,97 €" or "1 234,56 €"
       // We look from the end of the block.
 
-      double? amountIn;
-      double? amountOut;
-
       // Helper to parse amount string "1 234,56 €" -> 1234.56
       double? parseAmount(String s) {
         if (!s.contains('€')) return null;
@@ -222,13 +219,11 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // It seems the columns are flattened.
 
       // Let's iterate backwards to find amounts.
-      int amountIndex = -1;
       for (int i = block.length - 1; i >= 0; i--) {
         if (block[i].contains('€')) {
           // This is likely the balance or an amount.
           // The last one is Balance.
           // The one before is the transaction amount.
-          amountIndex = i;
           break;
         }
       }
@@ -246,7 +241,7 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // In the text extraction, empty columns might be skipped.
 
       // Strategy: Parse all amounts at the end of the block.
-      List<double> amounts = [];
+      final List<double> amounts = [];
       int lastAmountLineIndex = -1;
 
       for (int i = block.length - 1; i >= 0; i--) {
@@ -286,7 +281,7 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // In split format, Type might be split too.
       // We join everything from index 1 to lastAmountLineIndex.
 
-      int descEndIndex =
+      final int descEndIndex =
           lastAmountLineIndex > 0 ? lastAmountLineIndex : block.length;
       String fullDescription = "";
 
@@ -296,7 +291,7 @@ class TradeRepublicAccountStatementParser implements StatementParser {
 
       // Clean up Type from Description
       // Known types: "Exécution d'ordre", "Intérêts créditeur", "Virement"
-      String typeStr = fullDescription; // For type detection
+      final String typeStr = fullDescription; // For type detection
       String description = fullDescription;
 
       if (fullDescription.contains("Exécution d'ordre")) {
@@ -400,8 +395,9 @@ class TradeRepublicAccountStatementParser implements StatementParser {
           .trim();
 
       if (assetName.startsWith("-")) assetName = assetName.substring(1).trim();
-      if (assetName.endsWith(","))
+      if (assetName.endsWith(",")) {
         assetName = assetName.substring(0, assetName.length - 1).trim();
+      }
       if (assetName.isEmpty) assetName = "Unknown Asset";
 
       // Infer Asset Type

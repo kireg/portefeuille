@@ -22,7 +22,7 @@ class PremiumHelpButton extends StatelessWidget {
     return IconButton(
       icon: Icon(
         Icons.info_outline_rounded,
-        color: (iconColor ?? AppColors.textSecondary).withOpacity(0.6),
+        color: (iconColor ?? AppColors.textSecondary).withValues(alpha: 0.6),
         size: 20,
       ),
       splashRadius: 20,
@@ -62,17 +62,17 @@ class _PremiumHelpSheet extends StatelessWidget {
       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface.withOpacity(0.85),
+          color: AppColors.surface.withValues(alpha: 0.85),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           border: Border(
             top: BorderSide(
-              color: AppColors.textPrimary.withOpacity(0.1),
+              color: AppColors.textPrimary.withValues(alpha: 0.1),
               width: 1,
             ),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -94,7 +94,7 @@ class _PremiumHelpSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withOpacity(0.3),
+                  color: AppColors.textSecondary.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -116,10 +116,10 @@ class _PremiumHelpSheet extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.background.withOpacity(0.5),
+                  color: AppColors.background.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.textSecondary.withOpacity(0.1),
+                    color: AppColors.textSecondary.withValues(alpha: 0.1),
                   ),
                 ),
                 child: visual,
@@ -148,7 +148,7 @@ class _PremiumHelpSheet extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                 ),
                 child: Text(
                   'Compris',

@@ -6,7 +6,6 @@ import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/09_imports/services/import_diff_service.dart';
-import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
 import 'package:portefeuille/features/09_imports/i18n/strings.dart';
 import 'package:portefeuille/features/09_imports/ui/screens/file_import_wizard/wizard_candidate_card.dart';
 import 'package:portefeuille/features/09_imports/ui/screens/file_import_wizard/wizard_state.dart';

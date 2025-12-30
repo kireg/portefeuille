@@ -49,5 +49,36 @@ linter:
     sized_box_for_whitespace: true
     use_build_context_synchronously: true
 
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    # Garder les erreurs critiques même dans les tests
+    unused_import: error
+    dead_code: error
+    invalid_use_of_protected_member: error
+    
+  # Règles spécifiques aux tests
+  language:
+    strict-casts: false
+    strict-inference: false
+    strict-raw-types: false
+
+# Ignorer certains lints non-critiques dans les tests
+# (Les erreurs bloquantes restent actives)
+linter:
+  rules:
+    # Désactiver dans test/ uniquement via ignore_for_file si nécessaire
+    # Les règles ci-dessous restent actives en production
+    avoid_print: true
+    prefer_const_constructors: true
+    prefer_final_locals: true
+    
+    # Règles relaxées pour tout le projet
+    avoid_function_literals_in_foreach_calls: false
+    prefer_interpolation_to_compose_strings: false
+    unnecessary_brace_in_string_interps: false
+
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

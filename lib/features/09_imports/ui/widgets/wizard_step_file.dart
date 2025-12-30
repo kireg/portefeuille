@@ -128,10 +128,14 @@ class WizardStepFile extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surfaceLight.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(AppDimens.radiusL),
-          border: Border.all(
+        ),
+        foregroundDecoration: ShapeDecoration(
+          shape: DashedBorder(
             color: AppColors.primary.withValues(alpha: 0.3),
             width: 2,
-            style: BorderStyle.solid, // TODO: Dotted border would be nicer
+            dashLength: 8,
+            gapLength: 4,
+            radius: AppDimens.radiusL,
           ),
         ),
         child: Column(
@@ -228,3 +232,104 @@ class WizardStepFile extends StatelessWidget {
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 }
+
+/// Custom border painter pour créer une bordure en pointillés
+class DashedBorder extends ShapeBorder {
+  final Color color;
+  final double width;
+  final double dashLength;
+  final double gapLength;
+  final double radius;
+
+  const DashedBorder({
+    required this.color,
+    required this.width,
+    required this.dashLength,
+    required this.gapLength,
+    required this.radius,
+  });
+
+  @override
+  EdgeInsetsGeometry get dimensions => EdgeInsets.all(width);
+
+  @override
+  Path getInnerPath(Rect rect, {TextDirection? textDirection}) {
+    return Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        rect.deflate(width),
+        Radius.circular(radius),
+      ));
+  }
+
+  @override
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
+    return Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        rect,
+        Radius.circular(radius),
+      ));
+  }
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = width
+      ..style = PaintingStyle.stroke;
+
+    final rrect = RRect.fromRectAndRadius(
+      rect.deflate(width / 2),
+      Radius.circular(radius),
+    );
+
+    // Calculer le périmètre approximatif
+    final perimeter = 2 * (rrect.width + rrect.height);
+    final dashCount = (perimeter / (dashLength + gapLength)).floor();
+
+    // Dessiner les traits en pointillés sur chaque côté
+    _drawDashedLine(canvas, paint, rrect.left, rrect.top, rrect.right, rrect.top, dashCount ~/ 4); // Top
+    _drawDashedLine(canvas, paint, rrect.right, rrect.top, rrect.right, rrect.bottom, dashCount ~/ 4); // Right
+    _drawDashedLine(canvas, paint, rrect.right, rrect.bottom, rrect.left, rrect.bottom, dashCount ~/ 4); // Bottom
+    _drawDashedLine(canvas, paint, rrect.left, rrect.bottom, rrect.left, rrect.top, dashCount ~/ 4); // Left
+  }
+
+  void _drawDashedLine(Canvas canvas, Paint paint, double x1, double y1, double x2, double y2, int segments) {
+    final dx = x2 - x1;
+    final dy = y2 - y1;
+    final lineLength = (dx * dx + dy * dy);
+    if (lineLength == 0) return;
+
+    final unitDx = dx / lineLength;
+    final unitDy = dy / lineLength;
+
+    double currentX = x1;
+    double currentY = y1;
+    bool drawing = true;
+
+    for (int i = 0; i < segments * 2; i++) {
+      final segmentLength = drawing ? dashLength : gapLength;
+      final nextX = currentX + unitDx * segmentLength;
+      final nextY = currentY + unitDy * segmentLength;
+
+      if (drawing) {
+        canvas.drawLine(Offset(currentX, currentY), Offset(nextX, nextY), paint);
+      }
+
+      currentX = nextX;
+      currentY = nextY;
+      drawing = !drawing;
+    }
+  }
+
+  @override
+  ShapeBorder scale(double t) {
+    return DashedBorder(
+      color: color,
+      width: width * t,
+      dashLength: dashLength * t,
+      gapLength: gapLength * t,
+      radius: radius * t,
+    );
+  }
+}
+

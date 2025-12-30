@@ -65,18 +65,31 @@ class InstitutionTile extends StatelessWidget {
             builder: (context) {
               String? logoPath;
               final normalized = institution.name.toLowerCase().replaceAll(' ', '_');
-              if (normalized.contains('boursorama')) logoPath = 'assets/logos/boursorama.png';
-              else if (normalized.contains('trade_republic')) logoPath = 'assets/logos/trade_republic.png';
-              else if (normalized.contains('revolut')) logoPath = 'assets/logos/revolut.png';
-              else if (normalized.contains('degiro')) logoPath = 'assets/logos/degiro.png';
-              else if (normalized.contains('interactive_brokers')) logoPath = 'assets/logos/interactive_brokers.png';
-              else if (normalized.contains('binance')) logoPath = 'assets/logos/binance.png';
-              else if (normalized.contains('coinbase')) logoPath = 'assets/logos/coinbase.png';
-              else if (normalized.contains('kraken')) logoPath = 'assets/logos/kraken.png';
-              else if (normalized.contains('fortuneo')) logoPath = 'assets/logos/fortuneo.png';
-              else if (normalized.contains('credit_agricole')) logoPath = 'assets/logos/credit_agricole.png';
-              else if (normalized.contains('bnp')) logoPath = 'assets/logos/bnp_paribas.png';
-              else if (normalized.contains('societe_generale')) logoPath = 'assets/logos/societe_generale.png';
+              if (normalized.contains('boursorama')) {
+                logoPath = 'assets/logos/boursorama.png';
+              } else if (normalized.contains('trade_republic')) {
+                logoPath = 'assets/logos/trade_republic.png';
+              } else if (normalized.contains('revolut')) {
+                logoPath = 'assets/logos/revolut.png';
+              } else if (normalized.contains('degiro')) {
+                logoPath = 'assets/logos/degiro.png';
+              } else if (normalized.contains('interactive_brokers')) {
+                logoPath = 'assets/logos/interactive_brokers.png';
+              } else if (normalized.contains('binance')) {
+                logoPath = 'assets/logos/binance.png';
+              } else if (normalized.contains('coinbase')) {
+                logoPath = 'assets/logos/coinbase.png';
+              } else if (normalized.contains('kraken')) {
+                logoPath = 'assets/logos/kraken.png';
+              } else if (normalized.contains('fortuneo')) {
+                logoPath = 'assets/logos/fortuneo.png';
+              } else if (normalized.contains('credit_agricole')) {
+                logoPath = 'assets/logos/credit_agricole.png';
+              } else if (normalized.contains('bnp')) {
+                logoPath = 'assets/logos/bnp_paribas.png';
+              } else if (normalized.contains('societe_generale')) {
+                logoPath = 'assets/logos/societe_generale.png';
+              }
 
               if (logoPath != null) {
                 return Container(
@@ -91,7 +104,7 @@ class InstitutionTile extends StatelessWidget {
                   child: Image.asset(
                     logoPath,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Icon(Icons.account_balance, color: AppColors.primary),
+                    errorBuilder: (_, __, ___) => const Icon(Icons.account_balance, color: AppColors.primary),
                   ),
                 );
               }

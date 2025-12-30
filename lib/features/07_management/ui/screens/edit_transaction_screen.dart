@@ -79,10 +79,10 @@ class EditTransactionScreen extends StatelessWidget {
                   },
                 ),
               ),
-              body: SingleChildScrollView(
+              body: const SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: const TransactionFormUI(),
+                  padding: EdgeInsets.all(16.0),
+                  child: TransactionFormUI(),
                 ),
               ),
             ),
