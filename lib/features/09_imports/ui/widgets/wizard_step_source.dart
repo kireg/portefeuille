@@ -38,25 +38,25 @@ class WizardStepSource extends StatelessWidget {
         id: 'boursorama',
         name: 'Boursobanque',
         assetPath: 'assets/logos/boursorama.png',
-        color: const Color(0xFFD40055),
+        color: AppColors.institutionTradeRepublic,
       ),
       _SourceOption(
         id: 'revolut',
         name: 'Revolut',
         assetPath: 'assets/logos/revolut.png',
-        color: Colors.black,
+        color: AppColors.institutionBlack,
       ),
       _SourceOption(
         id: 'trade_republic',
         name: 'Trade Republic',
         assetPath: 'assets/logos/trade_republic.png',
-        color: Colors.black,
+        color: AppColors.institutionBlack,
       ),
       _SourceOption(
         id: 'la_premiere_brique',
         name: 'La Première Brique',
         icon: Icons.apartment,
-        color: const Color(0xFF00BFA5),
+        color: AppColors.institutionScalable,
       ),
       _SourceOption(
         id: 'other_ai',
@@ -85,7 +85,7 @@ class WizardStepSource extends StatelessWidget {
           if (suggestedSourceId != null && suggestionConfidence != null) ...[
             AppSpacing.gap12,
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: AppSpacing.formFieldPadding,
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: AppOpacities.lightOverlay),
                 borderRadius: BorderRadius.circular(AppDimens.radiusS),
@@ -153,7 +153,7 @@ class WizardStepSource extends StatelessWidget {
                 onTap: () => onImportModeChanged(mode),
                 borderRadius: BorderRadius.circular(AppDimens.radiusL),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: AppSpacing.wizardStepPadding,
                   decoration: BoxDecoration(
                     color: isSelected 
                         ? AppColors.primary 
@@ -163,7 +163,7 @@ class WizardStepSource extends StatelessWidget {
                       color: isSelected 
                           ? AppColors.primary 
                           : AppColors.border,
-                      width: 2,
+                      width: AppDimens.borderWidthBold,
                     ),
                   ),
                   child: Text(
@@ -205,7 +205,7 @@ class WizardStepSource extends StatelessWidget {
                 onTap: () => onTrCategoryChanged(entry.key),
                 borderRadius: BorderRadius.circular(AppDimens.radiusL),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: AppSpacing.wizardStepPadding,
                   decoration: BoxDecoration(
                     color: isSelected 
                         ? AppColors.primary 
@@ -215,7 +215,7 @@ class WizardStepSource extends StatelessWidget {
                       color: isSelected 
                           ? AppColors.primary 
                           : AppColors.border,
-                      width: 2,
+                      width: AppDimens.borderWidthBold,
                     ),
                   ),
                   child: Text(
@@ -246,9 +246,9 @@ class WizardStepSource extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               border: isSelected
-                  ? Border.all(color: AppColors.primary, width: 2)
+                  ? Border.all(color: AppColors.primary, width: AppDimens.borderWidthBold)
                   : isSuggested
-                      ? Border.all(color: AppColors.success.withValues(alpha: AppOpacities.semiVisible), width: 2)
+                      ? Border.all(color: AppColors.success.withValues(alpha: AppOpacities.semiVisible), width: AppDimens.borderWidthBold)
                       : null,
               borderRadius: BorderRadius.circular(AppDimens.radiusM),
             ),
@@ -258,8 +258,8 @@ class WizardStepSource extends StatelessWidget {
                 if (source.assetPath != null)
                   Image.asset(
                     source.assetPath!,
-                    width: 48,
-                    height: 48,
+                    width: AppComponentSizes.institutionLogoSize,
+                    height: AppComponentSizes.institutionLogoSize,
                     errorBuilder: (_, __, ___) =>
                         Icon(Icons.account_balance, size: AppComponentSizes.iconXLarge, color: source.color),
                   )
@@ -282,7 +282,7 @@ class WizardStepSource extends StatelessWidget {
             top: 8,
             right: 8,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: AppSpacing.chipPaddingCompact,
               decoration: BoxDecoration(
                 color: AppColors.success,
                 borderRadius: BorderRadius.circular(AppDimens.radiusS),

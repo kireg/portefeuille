@@ -93,8 +93,8 @@ class InstitutionTile extends StatelessWidget {
 
               if (logoPath != null) {
                 return Container(
-                  width: 40,
-                  height: 40,
+                  width: AppComponentSizes.avatarSize,
+                  height: AppComponentSizes.avatarSize,
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceLight,

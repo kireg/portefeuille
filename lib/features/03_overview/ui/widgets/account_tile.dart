@@ -6,6 +6,7 @@ import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
 import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/services/modal_service.dart';
 import 'package:provider/provider.dart';
@@ -167,7 +168,7 @@ class AccountTile extends StatelessWidget {
           ),
         ],
       ),
-      childrenPadding: const EdgeInsets.only(left: 16.0),
+      childrenPadding: AppSpacing.screenPaddingHorizontal,
       children: [
         ListTile(
           dense: true,
@@ -215,14 +216,13 @@ class AccountTile extends StatelessWidget {
         Icon(
           isPositive ? Icons.arrow_upward : Icons.arrow_downward,
           color: color,
-          size: 12,
+          size: AppComponentSizes.iconXxSmall,
         ),
         AppSpacing.gapHTiny,
         Text(
           '${CurrencyFormatter.format(pnl, baseCurrency)} (${NumberFormat.percentPattern().format(pnlPercentage)})',
-          style: theme.textTheme.bodySmall?.copyWith(
+          style: AppTypography.caption.copyWith(
             color: color,
-            fontSize: 11,
           ),
           overflow: TextOverflow.ellipsis,
         ),

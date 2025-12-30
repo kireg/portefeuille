@@ -4,6 +4,7 @@ import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
 import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
 import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
 
 /// Header du wizard avec poignée de glissement et titre.
 class WizardHeader extends StatelessWidget {
@@ -18,8 +19,8 @@ class WizardHeader extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: 40,
-            height: 4,
+            width: AppComponentSizes.progressIndicatorWidth,
+            height: AppComponentSizes.progressIndicatorHeight,
             decoration: BoxDecoration(
               color: AppColors.textSecondary.withValues(alpha: AppOpacities.decorative),
               borderRadius: BorderRadius.circular(AppDimens.radiusXs),

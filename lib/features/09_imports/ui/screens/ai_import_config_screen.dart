@@ -215,8 +215,8 @@ class _AiImportConfigScreenState extends State<AiImportConfigScreen> {
       child: Column(
         children: [
           Container(
-            width: 40,
-            height: 4,
+            width: AppComponentSizes.progressIndicatorWidth,
+            height: AppComponentSizes.progressIndicatorHeight,
             decoration: BoxDecoration(
               color: AppColors.textSecondary.withValues(alpha: AppOpacities.decorative),
               borderRadius: BorderRadius.circular(AppDimens.radiusXs),

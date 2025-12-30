@@ -28,8 +28,8 @@ class ImportHubScreen extends StatelessWidget {
             // Drag Handle
             Center(
               child: Container(
-                width: 40,
-                height: 4,
+                width: AppComponentSizes.progressIndicatorWidth,
+                height: AppComponentSizes.progressIndicatorHeight,
                 decoration: BoxDecoration(
                   color: AppColors.textSecondary.withValues(alpha: AppOpacities.decorative),
                   borderRadius: BorderRadius.circular(AppDimens.radiusXs),
@@ -106,7 +106,7 @@ class ImportHubScreen extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Container(
-      height: 180,
+      height: AppComponentSizes.previewCardHeight,
       decoration: BoxDecoration(
         gradient: AppColors.surfaceGradient,
         borderRadius: BorderRadius.circular(AppDimens.radiusL),
