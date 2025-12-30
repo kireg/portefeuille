@@ -26,8 +26,41 @@ class AppColors {
 
   // --- SÉMANTIQUE (Pastel/Néon pour être lisible sur fond sombre) ---
   static const Color success = Color(0xFF10B981); // Vert émeraude
+  static const Color successLight = Color(0xFF2EBD85); // Vert clair pour backgrounds
   static const Color error = Color(0xFFEF4444);   // Rouge vif
+  static const Color errorLight = Color(0xFFEC4899); // Rose/magenta pour backgrounds
   static const Color warning = Color(0xFFF59E0B); // Ambre
+  static const Color warningLight = Color(0xFFFCA5A5); // Orange clair pour backgrounds
+
+  // --- VARIANTS (Utilisation dans les overlays, backgrounds, etc.) ---
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color black = Color(0xFF000000);
+  static const Color transparent = Color(0x00000000);
+
+  // --- OVERLAYS & SEMI-TRANSPARENTS ---
+  static Color whiteOverlay05 = white.withValues(alpha: 0.05);
+  static Color whiteOverlay10 = white.withValues(alpha: 0.1);
+  static Color whiteOverlay15 = white.withValues(alpha: 0.15);
+  static Color whiteOverlay20 = white.withValues(alpha: 0.2);
+  static Color whiteOverlay30 = white.withValues(alpha: 0.3);
+  static Color whiteOverlay50 = white.withValues(alpha: 0.5);
+  static Color whiteOverlay60 = white.withValues(alpha: 0.6);
+
+  static Color blackOverlay05 = black.withValues(alpha: 0.05);
+  static Color blackOverlay10 = black.withValues(alpha: 0.1);
+  static Color blackOverlay20 = black.withValues(alpha: 0.2);
+  static Color blackOverlay30 = black.withValues(alpha: 0.3);
+  static Color blackOverlay50 = black.withValues(alpha: 0.5);
+  static Color blackOverlay60 = black.withValues(alpha: 0.6);
+
+  // --- ORANGE VARIANTS (pour les avertissements/infos) ---
+  static const Color orange = Color(0xFFFF9800);
+  static const Color orangeDark = Color(0xFFE65100);
+  static const Color orangeLight = Color(0xFFFFE0B2);
+
+  // --- CYAN/TEAL VARIANTS ---
+  static const Color cyan = Color(0xFF00BCD4);
+  static const Color cyanDark = Color(0xFF00838F);
 
   // --- GRADIENTS ---
   static const LinearGradient primaryGradient = LinearGradient(

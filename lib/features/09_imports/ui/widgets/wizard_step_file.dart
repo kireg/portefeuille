@@ -67,7 +67,7 @@ class WizardStepFile extends StatelessWidget {
     final result = detectionResult!;
     
     return AppCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimens.paddingM),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -95,10 +95,10 @@ class WizardStepFile extends StatelessWidget {
           Expanded(
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppDimens.paddingS),
               decoration: BoxDecoration(
                 color: AppColors.surfaceLight.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppDimens.radiusM),
               ),
               child: SingleChildScrollView(
                 child: Text(
@@ -107,7 +107,7 @@ class WizardStepFile extends StatelessWidget {
                       : 'Aperçu non disponible',
                   style: AppTypography.caption.copyWith(
                     fontFamily: 'monospace',
-                    fontSize: 11,
+                    fontSize: AppTypography.small.fontSize,
                   ),
                 ),
               ),
@@ -179,16 +179,16 @@ class WizardStepFile extends StatelessWidget {
     switch (extension) {
       case 'pdf':
         icon = Icons.picture_as_pdf;
-        color = Colors.redAccent;
+        color = AppColors.error;
         break;
       case 'csv':
         icon = Icons.grid_on;
-        color = Colors.greenAccent;
+        color = AppColors.success;
         break;
       case 'xlsx':
       case 'xls':
         icon = Icons.table_view;
-        color = Colors.green;
+        color = AppColors.success;
         break;
       default:
         icon = Icons.insert_drive_file;
@@ -196,7 +196,7 @@ class WizardStepFile extends StatelessWidget {
     }
 
     return AppCard(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppDimens.paddingL),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

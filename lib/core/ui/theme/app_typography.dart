@@ -62,4 +62,35 @@ class AppTypography {
     fontWeight: FontWeight.w700,
     letterSpacing: 0.5,
   );
+
+  // --- PETITES TAILLES ADDITIONNELLES ---
+  // Micro (Ex: Badges, small indicators)
+  static TextStyle micro = GoogleFonts.manrope(
+    fontSize: 10,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textTertiary,
+  );
+
+  // Small (Ex: Helpers, infos secondaires)
+  static TextStyle small = GoogleFonts.manrope(
+    fontSize: 11,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textSecondary,
+  );
+
+  // --- VARIANTS AVEC COLORATION ---
+  // Body avec couleur personnalisée (utile pour les états)
+  static TextStyle bodyWithColor(Color color) => GoogleFonts.manrope(
+    fontSize: 14,
+    fontWeight: FontWeight.normal,
+    color: color,
+    height: 1.5,
+  );
+
+  // Caption colorisé
+  static TextStyle captionWithColor(Color color) => GoogleFonts.manrope(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: color,
+  );
 }

@@ -97,7 +97,7 @@ class _BoxSandScreenState extends State<BoxSandScreen> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.white,
                   ),
                 ),
 
@@ -111,14 +111,14 @@ class _BoxSandScreenState extends State<BoxSandScreen> {
                       children: [
                         Icon(
                           _isError ? Icons.error_outline : Icons.check_circle_outline,
-                          color: _isError ? Colors.red : Colors.green,
+                          color: _isError ? AppColors.error : AppColors.success,
                           size: 32,
                         ),
                         const SizedBox(height: 8),
                         SelectableText(
                           _statusMessage!,
                           style: AppTypography.body.copyWith(
-                            color: _isError ? Colors.red : Colors.green[800],
+                            color: _isError ? AppColors.error : AppColors.success,
                             fontFamily: 'monospace',
                           ),
                           textAlign: TextAlign.center,

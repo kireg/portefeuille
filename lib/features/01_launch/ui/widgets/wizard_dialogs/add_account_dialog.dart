@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:portefeuille/core/data/models/account_type.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/wizard_dialogs/add_asset_dialog.dart';
 
@@ -54,18 +57,18 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: const EdgeInsets.all(AppDimens.paddingM),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 600, maxHeight: 800),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppDimens.paddingL),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               widget.initialAccount == null ? 'Ajouter un compte' : 'Modifier le compte',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: AppTypography.h2,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppDimens.paddingL),
             Expanded(
               child: Form(
                 key: _formKey,
@@ -172,7 +175,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppDimens.paddingM),
                     
                     // Nom & Cash
                     Row(
@@ -191,7 +194,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                             validator: (v) => v?.trim().isEmpty == true ? 'Requis' : null,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: AppDimens.paddingM),
                         Expanded(
                           flex: 1,
                           child: TextFormField(
@@ -211,7 +214,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                       ],
                     ),
                     
-                    const SizedBox(height: 32),
+                    const SizedBox(height: AppDimens.paddingXL),
                     
                     // Assets Section
                     Row(
@@ -220,7 +223,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                         Flexible(
                           child: Text(
                             'Actifs (${_assets.length})',
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: AppTypography.h3,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -233,12 +236,12 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                     ),
                     const Divider(),
                     if (_assets.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
+                      Padding(
+                        padding: const EdgeInsets.all(AppDimens.paddingM),
                         child: Center(
                           child: Text(
                             'Aucun actif. Ajoutez des actions, cryptos, etc. si ce compte en contient.',
-                            style: TextStyle(color: Colors.grey),
+                            style: AppTypography.caption,
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -263,7 +266,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete,
-                                  size: 20, color: Colors.red),
+                                  size: 20, color: AppColors.error),
                               onPressed: () =>
                                   setState(() => _assets.remove(asset)),
                             ),
@@ -274,7 +277,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimens.paddingM),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -282,11 +285,11 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Annuler'),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppDimens.paddingM),
                 ElevatedButton(
                   onPressed: _submit,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingXL, vertical: AppDimens.paddingM),
                   ),
                   child: const Text('Enregistrer le compte'),
                 ),

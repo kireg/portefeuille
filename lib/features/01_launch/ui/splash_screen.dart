@@ -158,7 +158,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
           // --- COUCHE 2 : Effet "Grain" ou Overlay sombre pour le contraste ---
           Container(
-            color: Colors.black.withValues(alpha: 0.3), // Assombrit légèrement pour faire ressortir le verre
+            color: AppColors.blackOverlay30, // Assombrit légèrement pour faire ressortir le verre
           ),
 
           // --- COUCHE 3 : Contenu Glassmorphism ---
@@ -219,7 +219,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             Positioned(
               top: size.height * 0.3 + (math.sin(progress * math.pi) * 50),
               left: size.width * 0.2,
-              child: _buildOrb(Colors.white, size.width * 0.4, opacity: 0.05),
+              child: _buildOrb(AppColors.white, size.width * 0.4, opacity: 0.05),
             ),
           ],
         );
@@ -262,20 +262,20 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             color: AppColors.surface.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(30),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
+              color: AppColors.whiteOverlay10,
               width: 1.5,
             ),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withValues(alpha: 0.15),
-                Colors.white.withValues(alpha: 0.05),
+                AppColors.whiteOverlay15,
+                AppColors.whiteOverlay05,
               ],
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
+                color: AppColors.blackOverlay20,
                 blurRadius: 30,
                 spreadRadius: -5,
                 offset: const Offset(0, 20),
@@ -293,8 +293,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Shimmer.fromColors(
-                  baseColor: Colors.white,
-                  highlightColor: Colors.white.withValues(alpha: 0.5),
+                  baseColor: AppColors.white,
+                  highlightColor: AppColors.whiteOverlay50,
                   period: const Duration(milliseconds: 2500),
                   child: Text(
                     'PORTEFEUILLE',
@@ -302,7 +302,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       fontSize: 24,
                       letterSpacing: 8,
                       fontWeight: FontWeight.w300,
-                      color: Colors.white,
+                      color: AppColors.white,
                     ),
                   ),
                 ),
@@ -318,7 +318,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     height: 12,
                     child: CircularProgressIndicator(
                       strokeWidth: 1.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withValues(alpha: 0.5)),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.whiteOverlay50),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -326,7 +326,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     child: Text(
                       'Initialisation sécurisée',
                       style: AppTypography.caption.copyWith(
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: AppColors.whiteOverlay60,
                         letterSpacing: 1,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -362,7 +362,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             offset: const Offset(0, 10),
           ),
         ],
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
+        border: Border.all(color: AppColors.whiteOverlay20, width: 1),
       ),
       child: const Center(
         child: Text(
@@ -370,7 +370,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppColors.white,
             fontFamily: 'Cinzel', // Si dispo, ou garde défaut
           ),
         ),

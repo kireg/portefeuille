@@ -8,9 +8,10 @@ import 'package:crop_your_image/crop_your_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/data/services/ai_service.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
 
 class ImportTransactionScreen extends StatefulWidget {
   const ImportTransactionScreen({super.key});
@@ -44,7 +45,7 @@ class _ImportTransactionScreenState extends State<ImportTransactionScreen> {
     // 1. On remplit tout en BLANC
     canvas.drawRect(
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-        Paint()..color = Colors.white
+        Paint()..color = AppColors.white
     );
 
     // 2. On dessine l'image (PDF) par dessus
@@ -124,7 +125,7 @@ class _ImportTransactionScreenState extends State<ImportTransactionScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text("Vérification Image"),
         content: Container(
-            decoration: BoxDecoration(border: Border.all(color: Colors.red)),
+            decoration: BoxDecoration(border: Border.all(color: AppColors.error)),
             child: Image.memory(croppedData)
         ),
         actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Envoyer à l'IA"))],
@@ -164,7 +165,7 @@ class _ImportTransactionScreenState extends State<ImportTransactionScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: Colors.red,
+        backgroundColor: AppColors.error,
         showCloseIcon: true,
       ),
     );
@@ -185,7 +186,7 @@ class _ImportTransactionScreenState extends State<ImportTransactionScreen> {
           : _imageData == null
           ? Center(child: ElevatedButton(onPressed: _pickFile, child: const Text("Sélectionner un fichier")))
           : Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppDimens.paddingM),
         child: Crop(
           image: _imageData!,
           controller: _cropController,
@@ -193,7 +194,7 @@ class _ImportTransactionScreenState extends State<ImportTransactionScreen> {
           // Le baseColor ne sert que visuellement pour le Crop,
           // mais notre image _imageData a maintenant son propre fond blanc "incrusté".
           baseColor: AppColors.background,
-          maskColor: Colors.black.withValues(alpha: 0.6),
+          maskColor: AppColors.blackOverlay60,
           initialSize: 0.7,
           interactive: !_isLoading,
         ),

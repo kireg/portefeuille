@@ -3,13 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/institution_metadata.dart';
-import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
-
-// Core UI
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/core/ui/widgets/inputs/app_text_field.dart';
+import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 
 class AddInstitutionScreen extends StatefulWidget {
   final void Function(Institution)? onInstitutionCreated;
@@ -153,7 +152,7 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
             
             Text(
               'Suggestions',
-              style: AppTypography.caption.copyWith(color: Colors.grey),
+              style: AppTypography.caption,
             ),
             const SizedBox(height: AppDimens.paddingS),
 
@@ -177,9 +176,9 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
                           borderRadius: BorderRadius.circular(AppDimens.radiusM),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.white,
                               borderRadius: BorderRadius.circular(AppDimens.radiusM),
-                              border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+                              border: Border.all(color: AppColors.border, style: BorderStyle.solid),
                             ),
                             padding: const EdgeInsets.all(AppDimens.paddingS),
                             child: Column(
@@ -187,8 +186,8 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 24,
-                                  backgroundColor: Colors.grey.shade100,
-                                  child: const Icon(Icons.add, color: Colors.black54),
+                                  backgroundColor: AppColors.surfaceLight,
+                                  child: Icon(Icons.add, color: AppColors.textPrimary),
                                 ),
                                 const SizedBox(height: AppDimens.paddingS),
                                 Text(
@@ -197,7 +196,7 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
                                   style: AppTypography.caption.copyWith(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.grey[800],
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ],
@@ -212,16 +211,16 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
                         borderRadius: BorderRadius.circular(AppDimens.radiusM),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.white,
                             borderRadius: BorderRadius.circular(AppDimens.radiusM),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
+                                color: AppColors.blackOverlay05,
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
                             ],
-                            border: Border.all(color: Colors.grey.shade200),
+                            border: Border.all(color: AppColors.border),
                           ),
                           padding: const EdgeInsets.all(AppDimens.paddingS),
                           child: Column(
@@ -237,10 +236,10 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
                                           errorBuilder: (context, error, stackTrace) {
                                             return CircleAvatar(
                                               backgroundColor: inst.primaryColor,
-                                              foregroundColor: Colors.white,
+                                              foregroundColor: AppColors.white,
                                               child: Text(
                                                 inst.name.isNotEmpty ? inst.name[0].toUpperCase() : '?',
-                                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                                style: TextStyle(fontWeight: FontWeight.bold),
                                               ),
                                             );
                                           },
@@ -249,10 +248,10 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
                                     : CircleAvatar(
                                         radius: 24,
                                         backgroundColor: inst.primaryColor,
-                                        foregroundColor: Colors.white,
+                                        foregroundColor: AppColors.white,
                                         child: Text(
                                           inst.name.isNotEmpty ? inst.name[0].toUpperCase() : '?',
-                                          style: const TextStyle(fontWeight: FontWeight.bold),
+                                          style: TextStyle(fontWeight: FontWeight.bold),
                                         ),
                                       ),
                               ),
@@ -263,7 +262,7 @@ class _AddInstitutionScreenState extends State<AddInstitutionScreen> {
                                 style: AppTypography.caption.copyWith(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.grey[800],
+                                  color: AppColors.textPrimary,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,

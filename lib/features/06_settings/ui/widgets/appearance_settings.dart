@@ -2,16 +2,18 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
-// Liste des couleurs prédéfinies
+// Liste des couleurs prédéfinies - Utilise AppColors + palette personnalisée
 final List<Color> _colorOptions = [
-  const Color(0xFF00bcd4), // Cyan (Défaut)
-  Colors.blue,
-  Colors.green,
-  const Color(0xFFab47bc), // Violet (Secondaire)
-  Colors.orange,
-  Colors.redAccent,
+  AppColors.primary,     // Bleu principal
+  AppColors.accent,      // Violet secondaire
+  AppColors.cyan,        // Cyan
+  AppColors.success,     // Vert
+  AppColors.warning,     // Orange/Ambre
+  AppColors.error,       // Rouge
 ];
 
 class AppearanceSettings extends StatelessWidget {
@@ -32,7 +34,7 @@ class AppearanceSettings extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           'Cette couleur sera utilisée pour les boutons, les icônes et les éléments actifs de l\'interface.',
-          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+          style: AppTypography.caption,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -98,7 +100,7 @@ class _ColorChipState extends State<_ColorChip> {
             color: widget.color,
             shape: BoxShape.circle,
             border: Border.all(
-              color: widget.isSelected ? Colors.white : Colors.transparent,
+              color: widget.isSelected ? AppColors.white : Colors.transparent,
               width: widget.isSelected ? 4 : 0,
             ),
             boxShadow: [
@@ -110,7 +112,7 @@ class _ColorChipState extends State<_ColorChip> {
             ],
           ),
           child: widget.isSelected
-              ? const Icon(Icons.check, color: Colors.white, size: 24)
+              ? const Icon(Icons.check, color: AppColors.white, size: 24)
               : null,
         ),
       ),

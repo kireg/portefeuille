@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:portefeuille/core/data/models/account.dart';
+import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/services/modal_service.dart';
 import 'package:provider/provider.dart';
@@ -154,9 +156,9 @@ class AccountTile extends StatelessWidget {
                 value: _AccountAction.delete,
                 child: Row(
                   children: [
-                    Icon(Icons.delete_outline, color: Colors.red),
+                    Icon(Icons.delete_outline, color: AppColors.error),
                     SizedBox(width: 8),
-                    Text('Supprimer', style: TextStyle(color: Colors.red)),
+                    Text('Supprimer', style: TextStyle(color: AppColors.error)),
                   ],
                 ),
               ),
@@ -169,17 +171,17 @@ class AccountTile extends StatelessWidget {
         ListTile(
           dense: true,
           leading: Icon(Icons.account_balance_wallet_outlined,
-              color: Colors.grey[400]),
+              color: AppColors.textTertiary),
           title: Text('Liquidités',
-              style: TextStyle(
-                  color: Colors.grey[400], fontStyle: FontStyle.italic)),
+              style: AppTypography.caption.copyWith(
+                  color: AppColors.textTertiary, fontStyle: FontStyle.italic)),
           trailing: SizedBox(
             width: 100, // Largeur fixe pour aligner avec les assets
             child: PrivacyBlur(
               child: Text(
                 CurrencyFormatter.format(account.cashBalance, accountCurrency),
-                style: TextStyle(
-                    color: Colors.grey[300], fontStyle: FontStyle.italic),
+                style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary, fontStyle: FontStyle.italic),
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.right,
               ),
@@ -204,7 +206,7 @@ class AccountTile extends StatelessWidget {
     if (pnl == 0 && pnlPercentage == 0) return const SizedBox.shrink();
 
     final isPositive = pnl >= 0;
-    final color = isPositive ? Colors.green.shade400 : Colors.red.shade400;
+    final color = isPositive ? AppColors.success : AppColors.error;
 
     return Row(
       mainAxisSize: MainAxisSize.min,

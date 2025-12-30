@@ -4,6 +4,8 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
+import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
@@ -118,11 +120,11 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
     final apiService = context.read<ApiService>();
 
     return Dialog(
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: const EdgeInsets.all(AppDimens.paddingM),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500),
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(AppDimens.paddingL),
           child: Form(
             key: _formKey,
             child: Column(
@@ -133,9 +135,9 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                   widget.initialAsset == null
                       ? 'Ajouter un actif'
                       : 'Modifier l\'actif',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: AppTypography.h2,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppDimens.paddingL),
                 
                 // Ticker & Type
                 Row(
@@ -156,7 +158,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                               prefixIcon: const Icon(Icons.search),
                               suffixIcon: _isLoadingPrice 
                                 ? const Padding(
-                                    padding: EdgeInsets.all(12.0),
+                                    padding: EdgeInsets.all(AppDimens.paddingS),
                                     child: SizedBox(
                                       width: 16, 
                                       height: 16, 
@@ -188,7 +190,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                                     '${suggestion.price} ${suggestion.currency}',
                                     style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
-                                Text(suggestion.currency, style: const TextStyle(fontSize: 12)),
+                                Text(suggestion.currency, style: AppTypography.micro),
                               ],
                             ),
                           );
@@ -199,11 +201,11 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                           _fetchAndSetPrice(suggestion.ticker);
                         },
                         emptyBuilder: (context) => const Padding(
-                          padding: EdgeInsets.all(8.0),
+                          padding: EdgeInsets.all(AppDimens.paddingS),
                           child: Text('Aucun résultat trouvé'),
                         ),
                         loadingBuilder: (context) => const Padding(
-                          padding: EdgeInsets.all(16.0),
+                          padding: EdgeInsets.all(AppDimens.paddingM),
                           child: Center(child: CircularProgressIndicator()),
                         ),
                       ),
@@ -354,7 +356,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                     ElevatedButton(
                       onPressed: _submit,
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingXL, vertical: AppDimens.paddingM),
                       ),
                       child: const Text('Valider'),
                     ),
