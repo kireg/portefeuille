@@ -1,0 +1,48 @@
+dart-code-metrics:
+  rules:
+    # --- COMPLEXITÉ ---
+    - cyclomatic-complexity: 20
+    - maximum-nesting-level: 5
+    - lines-for-function: 100
+    
+    # --- DEAD CODE & EXPORTS ---
+    - avoid-dead-code: true
+    - avoid-unused-parameters: true
+    
+    # --- DUPLICATION ---
+    - avoid-duplicate-chain-calls: true
+    - avoid-long-functions: true
+    
+    # --- BEST PRACTICES ---
+    - avoid-nested-conditional-expressions: true
+    - prefer-enums-by-name: true
+    - avoid-returning-widgets: true
+    
+    # --- CORRECTNESS ---
+    - avoid-non-null-assertion: true
+    - avoid-unnecessary-type-assertions: true
+    - avoid-unrelated-type-assertions: true
+    
+    # --- STYLE ---
+    - no-empty-block: true
+    - always-put-control-body-on-new-line: true
+    - always-put-required-named-parameters-first: true
+
+  metrics:
+    cyclomatic-complexity: 20
+    lines-for-function: 100
+    maximum-nesting-level: 5
+
+  exclude:
+    - test/**
+    - build/**
+    - lib/generated/**
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+  anti-patterns:
+    - long-method
+    - long-parameter-list
+
+  metrics-exclude:
+    - test/**

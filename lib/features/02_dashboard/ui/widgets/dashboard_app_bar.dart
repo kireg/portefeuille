@@ -17,6 +17,9 @@ import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/06_settings/ui/settings_screen.dart';
 
+// 3. LOCAL IMPORTS
+import 'dashboard_app_bar_helpers.dart';
+
 class DashboardAppBar extends StatefulWidget implements PreferredSizeWidget {
   const DashboardAppBar({
     super.key,
@@ -31,52 +34,6 @@ class DashboardAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _DashboardAppBarState extends State<DashboardAppBar> {
   bool _isSnackBarVisible = false;
-
-  Map<String, int> _getSyncStats(PortfolioProvider portfolio) {
-    final activePortfolio = portfolio.activePortfolio;
-    if (activePortfolio == null) return {'synced': 0, 'errors': 0, 'total': 0};
-
-    // Récupérer tous les tickers du portefeuille actif
-    final activeTickers = <String>{};
-    for (final institution in activePortfolio.institutions) {
-      for (final account in institution.accounts) {
-        for (final asset in account.assets) {
-          activeTickers.add(asset.ticker);
-        }
-      }
-    }
-
-    final metadata = portfolio.allMetadata;
-    int synced = 0;
-    int errors = 0;
-    int manual = 0;
-    int unsyncable = 0;
-    int warnings = 0;
-    
-    // Ne compter que les métadonnées des actifs présents dans le portefeuille actif
-    for (final ticker in activeTickers) {
-      final meta = metadata[ticker];
-      if (meta == null) continue;
-
-      final status = meta.syncStatus ?? SyncStatus.never;
-      switch (status) {
-        case SyncStatus.synced: synced++; break;
-        case SyncStatus.error: errors++; break;
-        case SyncStatus.manual: manual++; break;
-        case SyncStatus.unsyncable: unsyncable++; break;
-        case SyncStatus.pendingValidation: warnings++; break;
-        default: break;
-      }
-    }
-    
-    final total = activeTickers.length - unsyncable;
-    return {
-      'synced': synced + manual,
-      'errors': errors,
-      'warnings': warnings,
-      'total': total,
-    };
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -171,13 +128,12 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
   // mais elles doivent rester dans la classe _DashboardAppBarState.
 
   Widget _buildStatusIndicator(SettingsProvider settings, PortfolioProvider portfolio) {
-    // ... (Code existant inchangé)
     final textStyle = AppTypography.caption.copyWith(
       color: AppColors.textPrimary,
       fontWeight: FontWeight.w500,
     );
 
-    final stats = _getSyncStats(portfolio);
+    final stats = DashboardAppBarHelper.getSyncStats(portfolio);
     final totalCount = stats['total']!;
     final errorsCount = stats['errors']!;
     final warningsCount = stats['warnings']!;
@@ -195,7 +151,6 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
         ],
       );
     } else if (settings.isOnlineMode) {
-      final hasProblems = errorsCount > 0 || warningsCount > 0;
       final statusColor = errorsCount > 0 ? AppColors.error : (warningsCount > 0 ? AppColors.warning : AppColors.success);
       
       content = Row(
@@ -317,7 +272,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
   }
 
   void _showStatusMenu(BuildContext context, SettingsProvider settings, PortfolioProvider portfolio) {
-    final stats = _getSyncStats(portfolio);
+    final stats = DashboardAppBarHelper.getSyncStats(portfolio);
     final errorsCount = stats['errors']!;
     final warningsCount = stats['warnings']!;
     final totalProblems = errorsCount + warningsCount;
@@ -361,60 +316,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
   }
 
   List<Map<String, dynamic>> _getProblematicAssets(PortfolioProvider portfolio) {
-    final activePortfolio = portfolio.activePortfolio;
-    if (activePortfolio == null) return [];
-
-    final activeTickers = <String>{};
-    for (final institution in activePortfolio.institutions) {
-      for (final account in institution.accounts) {
-        for (final asset in account.assets) {
-          activeTickers.add(asset.ticker);
-        }
-      }
-    }
-
-    final problematicAssets = <Map<String, dynamic>>[];
-    final metadata = portfolio.allMetadata;
-
-    for (final ticker in activeTickers) {
-      final meta = metadata[ticker];
-      if (meta != null && (meta.syncStatus == SyncStatus.error || meta.syncStatus == SyncStatus.pendingValidation)) {
-        // Find asset name if possible (from first occurrence)
-        String? name;
-        for (final institution in activePortfolio.institutions) {
-          for (final account in institution.accounts) {
-            for (final asset in account.assets) {
-              if (asset.ticker == ticker) {
-                name = asset.name;
-                break;
-              }
-            }
-            if (name != null) break;
-          }
-          if (name != null) break;
-        }
-        
-        problematicAssets.add({
-          'ticker': ticker,
-          'name': name ?? ticker,
-          'isin': meta.isin,
-          'lastPrice': meta.currentPrice,
-          'currency': meta.priceCurrency,
-          'status': meta.syncStatus,
-          'metadata': meta,
-        });
-      }
-    }
-    // Sort: Errors first, then Warnings
-    problematicAssets.sort((a, b) {
-      final statusA = a['status'] as SyncStatus;
-      final statusB = b['status'] as SyncStatus;
-      if (statusA == SyncStatus.error && statusB != SyncStatus.error) return -1;
-      if (statusA != SyncStatus.error && statusB == SyncStatus.error) return 1;
-      return 0;
-    });
-
-    return problematicAssets;
+    return DashboardAppBarHelper.getProblematicAssets(portfolio);
   }
 
   void _showErrorDetails(BuildContext context, PortfolioProvider portfolio) {
