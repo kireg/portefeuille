@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/widgets/fade_in_slide.dart';
 import '../widgets/appearance_card.dart';
 import '../widgets/general_settings_card.dart';
 import '../widgets/portfolio_card.dart';

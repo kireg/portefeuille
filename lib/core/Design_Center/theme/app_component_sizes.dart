@@ -95,4 +95,25 @@ class AppComponentSizes {
 
   /// Large avatar size (64px) - detailed profiles
   static const double avatarSizeLarge = 64.0;
+
+  // --- INSTITUTION LOGOS ---
+  /// Standard institution logo size (48px)
+  static const double institutionLogoSize = 48.0;
+  
+  /// Small institution logo size (32px)
+  static const double institutionLogoSmall = 32.0;
+  
+  // --- CARD DIMENSIONS ---
+  /// Preview card height (180px) - import wizard
+  static const double previewCardHeight = 180.0;
+  
+  /// Import card height (120px) - compact import cards
+  static const double importCardHeight = 120.0;
+  
+  // --- PROGRESS INDICATORS ---
+  /// Progress indicator width (40px)
+  static const double progressIndicatorWidth = 40.0;
+  
+  /// Progress indicator height (4px)
+  static const double progressIndicatorHeight = 4.0;
 }

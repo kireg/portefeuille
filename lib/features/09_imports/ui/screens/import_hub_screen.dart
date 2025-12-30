@@ -1,13 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/theme/app_opacities.dart';
-import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';
 import 'package:portefeuille/features/09_imports/ui/screens/file_import_wizard.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_transaction_screen.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
 
 class ImportHubScreen extends StatelessWidget {
   const ImportHubScreen({super.key});

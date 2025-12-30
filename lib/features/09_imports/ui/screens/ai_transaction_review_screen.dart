@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/widgets/components/app_screen.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_button.dart';
 
 import 'package:portefeuille/core/data/models/transaction_extraction_result.dart';
 import 'package:portefeuille/core/data/models/transaction.dart' as model;
@@ -17,7 +17,7 @@ import 'package:portefeuille/features/00_app/providers/transaction_provider.dart
 
 import 'package:portefeuille/features/09_imports/models/draft_transaction.dart';
 import 'package:portefeuille/features/09_imports/ui/widgets/draft_transaction_card.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 
 class AiTransactionReviewScreen extends StatefulWidget {
   final String accountId;

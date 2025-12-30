@@ -32,14 +32,14 @@ void main() async {
       }
       
       // Check if imports are already present
-      final hasOpacitiesImport = content.contains("import 'package:portefeuille/core/ui/theme/app_opacities.dart'");
-      final hasComponentSizesImport = content.contains("import 'package:portefeuille/core/ui/theme/app_component_sizes.dart'");
+      final hasOpacitiesImport = content.contains("import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart'");
+      final hasComponentSizesImport = content.contains("import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart'");
       
       bool needsModification = false;
       String newContent = content;
       
       // Find the last theme import to insert after it
-      final themeImportPattern = RegExp(r"import 'package:portefeuille/core/ui/theme/(app_\w+)\.dart';");
+      final themeImportPattern = RegExp(r"import 'package:portefeuille/core/Design_Center/theme/(app_\w+)\.dart';");
       final matches = themeImportPattern.allMatches(content).toList();
       
       if (matches.isEmpty) {
@@ -53,12 +53,12 @@ void main() async {
       String importsToAdd = '';
       
       if (usesOpacities && !hasOpacitiesImport) {
-        importsToAdd += "\nimport 'package:portefeuille/core/ui/theme/app_opacities.dart';";
+        importsToAdd += "\nimport 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';";
         needsModification = true;
       }
       
       if (usesComponentSizes && !hasComponentSizesImport) {
-        importsToAdd += "\nimport 'package:portefeuille/core/ui/theme/app_component_sizes.dart';";
+        importsToAdd += "\nimport 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';";
         needsModification = true;
       }
       

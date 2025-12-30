@@ -1,11 +1,9 @@
 import 'dart:ui'; // Nécessaire pour ImageFilter
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_dimens.dart';
-import '../../theme/app_elevations.dart';
-import '../../theme/app_spacing.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_elevations.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 
 class AppCard extends StatelessWidget {
   final Widget child;

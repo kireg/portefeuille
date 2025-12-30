@@ -229,6 +229,22 @@ class AppSpacing {
   /// Chip padding default (6px H)
   static const EdgeInsets chipPaddingDefault = EdgeInsets.symmetric(horizontal: 6.0);
 
+  // --- WIZARD/FORM SPECIFIC SPACING ---
+  /// Wizard step button padding (24px H, 12px V)
+  static const EdgeInsets wizardStepPadding = EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0);
+  
+  /// Form field padding (16px H, 10px V)
+  static const EdgeInsets formFieldPadding = EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0);
+  
+  /// Compact chip padding (6px H, 2px V)
+  static const EdgeInsets chipPaddingCompact = EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0);
+  
+  /// Modal header padding with large horizontal (40px H)
+  static const EdgeInsets modalHeaderPadding = EdgeInsets.symmetric(horizontal: 40.0);
+  
+  /// Bottom sheet custom padding (24px L/R, 12px top, 48px bottom)
+  static const EdgeInsets bottomSheetPaddingCustom = EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 48.0);
+
   /// Asset card header padding (16px)
   static const EdgeInsets assetCardHeaderPaddingDefault = EdgeInsets.all(16.0);
   

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/features/07_management/ui/providers/transaction_form_state.dart';
-import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
+import 'package:portefeuille/core/Design_Center/widgets/inputs/app_dropdown.dart';
 
 class AccountSelector extends StatelessWidget {
   const AccountSelector({super.key});

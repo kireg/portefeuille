@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
 
 class AppColors {
   // --- SURFACES ---
@@ -48,6 +48,16 @@ class AppColors {
   static Color whiteOverlay60 = white.withValues(alpha: AppOpacities.prominent);
 
   static Color blackOverlay05 = black.withValues(alpha: AppOpacities.subtle);
+
+  // --- INSTITUTION BRAND COLORS ---
+  /// Trade Republic pink brand color
+  static const Color institutionTradeRepublic = Color(0xFFD40055);
+  
+  /// Scalable Capital teal brand color
+  static const Color institutionScalable = Color(0xFF00BFA5);
+  
+  /// Generic black for financial institutions (Boursorama, etc.)
+  static const Color institutionBlack = Color(0xFF000000);
   static Color blackOverlay10 = black.withValues(alpha: AppOpacities.lightOverlay);
   static Color blackOverlay20 = black.withValues(alpha: AppOpacities.border);
   static Color blackOverlay30 = black.withValues(alpha: AppOpacities.decorative);

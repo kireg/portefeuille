@@ -3,16 +3,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:portefeuille/core/data/models/account.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/services/modal_service.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../../core/ui/widgets/account_type_chip.dart';
-import 'package:portefeuille/core/ui/widgets/asset_list_item.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/privacy_blur.dart';
+import '../../../../core/Design_Center/widgets/account_type_chip.dart';
+import 'package:portefeuille/core/Design_Center/widgets/asset_list_item.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/privacy_blur.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_calculation_provider.dart';
 

@@ -35,4 +35,19 @@ class AppDimens {
   /// Padding BOTTOM pour les écrans avec barre de navigation flottante
   /// = hauteur nav bar (80) + marge (4) + un peu d'air (8)
   static const double floatingNavBarPaddingBottomFixed = 92.0; // hauteur nav + padding
+
+  // ─────────────────────────────────────────────────────────────
+  // Border Widths (Largeurs de bordures)
+  // ─────────────────────────────────────────────────────────────
+  /// Thin border (0.5px) - subtle outlines
+  static const double borderWidthThin = 0.5;
+  
+  /// Standard border (1px) - default borders
+  static const double borderWidthStandard = 1.0;
+  
+  /// Bold border (2px) - emphasized borders, selected states
+  static const double borderWidthBold = 2.0;
+  
+  /// Thick border (3px) - very prominent borders
+  static const double borderWidthThick = 3.0;
 }

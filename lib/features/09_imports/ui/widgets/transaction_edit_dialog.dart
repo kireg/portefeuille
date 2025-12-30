@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
-import 'package:portefeuille/core/ui/widgets/inputs/app_text_field.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/widgets/inputs/app_dropdown.dart';
+import 'package:portefeuille/core/Design_Center/widgets/inputs/app_text_field.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 
 class TransactionEditDialog extends StatefulWidget {
   final ParsedTransaction transaction;

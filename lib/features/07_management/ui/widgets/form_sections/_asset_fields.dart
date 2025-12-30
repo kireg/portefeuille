@@ -6,12 +6,12 @@ import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/utils/isin_validator.dart';
 import 'package:portefeuille/features/07_management/ui/providers/transaction_form_state.dart';
 
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
-import 'package:portefeuille/core/ui/widgets/inputs/app_text_field.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/widgets/inputs/app_dropdown.dart';
+import 'package:portefeuille/core/Design_Center/widgets/inputs/app_text_field.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_card.dart';
 import '_crowdfunding_fields.dart';
 
 class AssetFields extends StatelessWidget {

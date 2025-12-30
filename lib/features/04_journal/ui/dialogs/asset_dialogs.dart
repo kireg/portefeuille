@@ -1,8 +1,8 @@
 // lib/features/04_summary/ui/dialogs/asset_dialogs.dart
 
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
 import 'package:portefeuille/core/data/models/aggregated_asset.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 

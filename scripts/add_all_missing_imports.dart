@@ -5,10 +5,10 @@ void main() async {
 
   // Map of class name to relative import path from lib/
   final Map<String, String> classToImport = {
-    'AppOpacities': "import 'package:portefeuille/core/ui/theme/app_opacities.dart';",
-    'AppComponentSizes': "import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';",
-    'AppSpacing': "import 'package:portefeuille/core/ui/theme/app_spacing.dart';",
-    'AppDimens': "import 'package:portefeuille/core/ui/theme/app_dimens.dart';",
+    'AppOpacities': "import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';",
+    'AppComponentSizes': "import 'package:portefeuille/core/Design_Center/theme/app_component_sizes.dart';",
+    'AppSpacing': "import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';",
+    'AppDimens': "import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';",
   };
 
   int fixedCount = 0;

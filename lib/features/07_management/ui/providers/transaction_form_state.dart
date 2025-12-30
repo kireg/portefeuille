@@ -12,7 +12,7 @@ import 'package:portefeuille/core/data/models/repayment_type.dart';
 import 'package:portefeuille/core/data/models/asset_metadata.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/core/data/services/geocoding_service.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/providers/transaction_provider.dart';

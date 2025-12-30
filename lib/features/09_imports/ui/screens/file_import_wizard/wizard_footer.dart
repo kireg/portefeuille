@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_button.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_spacing.dart';
 
 /// Footer du wizard avec boutons Précédent/Suivant.
 class WizardFooter extends StatelessWidget {

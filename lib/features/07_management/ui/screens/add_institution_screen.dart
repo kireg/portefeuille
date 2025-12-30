@@ -3,11 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/institution_metadata.dart';
-import 'package:portefeuille/core/ui/theme/app_colors.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_typography.dart';
-import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
-import 'package:portefeuille/core/ui/widgets/inputs/app_text_field.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_colors.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_dimens.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_typography.dart';
+import 'package:portefeuille/core/Design_Center/widgets/primitives/app_button.dart';
+import 'package:portefeuille/core/Design_Center/widgets/inputs/app_text_field.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 
 class AddInstitutionScreen extends StatefulWidget {

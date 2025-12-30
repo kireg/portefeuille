@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/Design_Center/theme/app_opacities.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_animations.dart';
 
