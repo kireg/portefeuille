@@ -1,8 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_elevations.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 
 class PremiumHelpButton extends StatelessWidget {
   final String title;
@@ -23,8 +27,8 @@ class PremiumHelpButton extends StatelessWidget {
     return IconButton(
       icon: Icon(
         Icons.info_outline_rounded,
-        color: (iconColor ?? AppColors.textSecondary).withValues(alpha: 0.6),
-        size: 20,
+        color: (iconColor ?? AppColors.textSecondary).withValues(alpha: AppOpacities.prominent),
+        size: AppComponentSizes.iconMediumSmall,
       ),
       splashRadius: 20,
       tooltip: 'Information',
@@ -63,11 +67,11 @@ class _PremiumHelpSheet extends StatelessWidget {
       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface.withValues(alpha: 0.85),
+          color: AppColors.surface.withValues(alpha: AppOpacities.almostOpaque),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           border: Border(
             top: BorderSide(
-              color: AppColors.textPrimary.withValues(alpha: 0.1),
+              color: AppColors.textPrimary.withValues(alpha: AppOpacities.lightOverlay),
               width: 1,
             ),
           ),
@@ -89,12 +93,12 @@ class _PremiumHelpSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+                  color: AppColors.textSecondary.withValues(alpha: AppOpacities.decorative),
+                  borderRadius: BorderRadius.circular(AppDimens.radiusXs),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            AppSpacing.gapL,
             
             // Title
             Text(
@@ -103,7 +107,7 @@ class _PremiumHelpSheet extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 16),
+            AppSpacing.gapM,
             
             // Visual (Optional)
             if (visual != null) ...[
@@ -111,15 +115,15 @@ class _PremiumHelpSheet extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.background.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.background.withValues(alpha: AppOpacities.semiVisible),
+                  borderRadius: BorderRadius.circular(AppDimens.radius12),
                   border: Border.all(
-                    color: AppColors.textSecondary.withValues(alpha: 0.1),
+                    color: AppColors.textSecondary.withValues(alpha: AppOpacities.lightOverlay),
                   ),
                 ),
                 child: visual,
               ),
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
             ],
             
             // Content
@@ -131,7 +135,7 @@ class _PremiumHelpSheet extends StatelessWidget {
               ),
             ),
             
-            const SizedBox(height: 24),
+            AppSpacing.gapL,
             
             // Close Button
             SizedBox(
@@ -141,9 +145,9 @@ class _PremiumHelpSheet extends StatelessWidget {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppDimens.radius12),
                   ),
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                  backgroundColor: AppColors.primary.withValues(alpha: AppOpacities.lightOverlay),
                 ),
                 child: Text(
                   'Compris',

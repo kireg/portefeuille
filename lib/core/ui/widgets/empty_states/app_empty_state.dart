@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 
 class AppEmptyState extends StatelessWidget {
@@ -36,7 +37,7 @@ class AppEmptyState extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                size: 48,
+                size: AppComponentSizes.iconXLarge,
                 color: AppColors.textSecondary,
               ),
             ),

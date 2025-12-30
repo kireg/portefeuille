@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 
@@ -64,8 +67,8 @@ class AboutSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textSecondary.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
+                color: AppColors.textSecondary.withValues(alpha: AppOpacities.decorative),
+                borderRadius: BorderRadius.circular(AppDimens.radiusXs),
               ),
             ),
           ),
@@ -115,8 +118,8 @@ class AboutSheet extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 4),
           child: Row(
             children: [
-              const Icon(Icons.check_circle_outline, size: 16, color: AppColors.success),
-              const SizedBox(width: 8),
+              const Icon(Icons.check_circle_outline, size: AppComponentSizes.iconXSmall, color: AppColors.success),
+              AppSpacing.gapHorizontalSmall,
               Text(item, style: AppTypography.body),
             ],
           ),

@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'app_colors.dart';
 import 'app_typography.dart';
 import 'app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 class AppTheme {
   static ThemeData getTheme(Color primaryColor) {
@@ -25,7 +27,7 @@ class AppTheme {
         primary: primaryColor,
         secondary: primaryColor, // Ou une variante
         // On utilise la couleur primaire pour teinter légèrement le fond
-        surfaceTint: primaryColor.withValues(alpha: 0.05),
+        surfaceTint: primaryColor.withValues(alpha: AppOpacities.subtle),
       ),
 
       textTheme: TextTheme(

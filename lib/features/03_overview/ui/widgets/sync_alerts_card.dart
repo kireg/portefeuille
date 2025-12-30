@@ -6,7 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
@@ -75,7 +78,7 @@ class SyncAlertsCard extends StatelessWidget {
                   AppIcon(
                     icon: Icons.warning_amber_rounded,
                     color: AppColors.warning,
-                    backgroundColor: AppColors.warning.withValues(alpha: 0.1),
+                    backgroundColor: AppColors.warning.withValues(alpha: AppOpacities.lightOverlay),
                   ),
                   const SizedBox(width: AppDimens.paddingM),
                   Text('Alertes de synchronisation', style: AppTypography.h3),
@@ -94,7 +97,7 @@ class SyncAlertsCard extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: AppDimens.paddingM),
                   padding: const EdgeInsets.all(AppDimens.paddingM),
                   decoration: BoxDecoration(
-                    color: AppColors.warning.withValues(alpha: 0.1),
+                    color: AppColors.warning.withValues(alpha: AppOpacities.lightOverlay),
                     borderRadius: BorderRadius.circular(AppDimens.radiusS),
                     border: Border.all(color: AppColors.warning),
                   ),
@@ -118,7 +121,7 @@ class SyncAlertsCard extends StatelessWidget {
                         "Le nouveau prix est beaucoup plus élevé (+$percent%).",
                         style: AppTypography.body,
                       ),
-                      const SizedBox(height: 4),
+                      AppSpacing.gapXs,
                       Text(
                         "Ancien: $oldPrice ${meta.priceCurrency}  →  Nouveau: $newPrice ${meta.pendingPriceCurrency}",
                         style: AppTypography.caption,
@@ -309,9 +312,9 @@ class _ExpandableAlertItemState extends State<_ExpandableAlertItem> {
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.paddingM),
       decoration: BoxDecoration(
-        color: widget.color.withValues(alpha: 0.05),
+        color: widget.color.withValues(alpha: AppOpacities.subtle),
         borderRadius: BorderRadius.circular(AppDimens.radiusS),
-        border: Border.all(color: widget.color.withValues(alpha: 0.2)),
+        border: Border.all(color: widget.color.withValues(alpha: AppOpacities.border)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -332,7 +335,7 @@ class _ExpandableAlertItemState extends State<_ExpandableAlertItem> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(widget.icon, color: widget.color, size: 20),
+                    Icon(widget.icon, color: widget.color, size: AppComponentSizes.iconMediumSmall),
                     const SizedBox(width: AppDimens.paddingM),
                     Expanded(
                       child: Column(
@@ -342,7 +345,7 @@ class _ExpandableAlertItemState extends State<_ExpandableAlertItem> {
                             widget.title,
                             style: AppTypography.bodyBold.copyWith(color: widget.color),
                           ),
-                          const SizedBox(height: 4),
+                          AppSpacing.gapXs,
                           Text(
                             widget.subtitle,
                             style: AppTypography.caption,
@@ -352,7 +355,7 @@ class _ExpandableAlertItemState extends State<_ExpandableAlertItem> {
                     ),
                     if (widget.onSearch != null)
                       IconButton(
-                        icon: const Icon(Icons.search, size: 20),
+                        icon: const Icon(Icons.search, size: AppComponentSizes.iconMediumSmall),
                         color: widget.color,
                         onPressed: widget.onSearch,
                         padding: EdgeInsets.zero,
@@ -360,9 +363,9 @@ class _ExpandableAlertItemState extends State<_ExpandableAlertItem> {
                         tooltip: 'Rechercher',
                       ),
                     if (widget.onResolve != null) ...[
-                      const SizedBox(width: 4),
+                      AppSpacing.gapH4,
                       IconButton(
-                        icon: const Icon(Icons.edit, size: 20),
+                        icon: const Icon(Icons.edit, size: AppComponentSizes.iconMediumSmall),
                         color: widget.color,
                         onPressed: widget.onResolve,
                         padding: EdgeInsets.zero,
@@ -371,11 +374,11 @@ class _ExpandableAlertItemState extends State<_ExpandableAlertItem> {
                       ),
                     ],
                     if (hasDetails) ...[
-                      const SizedBox(width: 4),
+                      AppSpacing.gapH4,
                       Icon(
                         _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                         color: widget.color,
-                        size: 20,
+                        size: AppComponentSizes.iconMediumSmall,
                       ),
                     ],
                   ],
@@ -388,7 +391,7 @@ class _ExpandableAlertItemState extends State<_ExpandableAlertItem> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Divider(color: widget.color.withValues(alpha: 0.2)),
+                          Divider(color: widget.color.withValues(alpha: AppOpacities.border)),
                           if (widget.metadata!.lastSyncAttempt != null)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),

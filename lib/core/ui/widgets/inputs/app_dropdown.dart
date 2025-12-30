@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_dimens.dart';
 import '../../theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 class AppDropdown<T> extends StatelessWidget {
   final String label;
@@ -55,7 +57,7 @@ class AppDropdown<T> extends StatelessWidget {
               vertical: AppDimens.paddingM,
             ),
             prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20)
+                ? Icon(prefixIcon, color: AppColors.textSecondary, size: AppComponentSizes.iconMediumSmall)
                 : null,
             border: _buildBorder(AppColors.border),
             enabledBorder: _buildBorder(AppColors.border),

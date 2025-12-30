@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../00_app/providers/portfolio_provider.dart';
 import '../../02_dashboard/ui/dashboard_screen.dart';
 import 'widgets/initial_setup_wizard.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class LaunchScreen extends StatefulWidget {
   const LaunchScreen({super.key});
@@ -32,7 +33,7 @@ class _LaunchScreenState extends State<LaunchScreen> {
               'Bienvenue dans Portefeuille',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
-            const SizedBox(height: 40),
+            AppSpacing.gap40,
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding:
@@ -83,7 +84,7 @@ class _LaunchScreenState extends State<LaunchScreen> {
                     )
                   : const Text('Découvrir la version démo'),
             ),
-            const SizedBox(height: 20),
+            AppSpacing.gap20,
             OutlinedButton(
               style: OutlinedButton.styleFrom(
                 padding:

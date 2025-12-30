@@ -28,6 +28,18 @@ dart-code-metrics:
     - always-put-control-body-on-new-line: true
     - always-put-required-named-parameters-first: true
 
+    # --- DESIGN CENTER COMPLIANCE ---
+    # Note: DCM ne supporte pas les règles custom regex
+    # Utiliser le script: dart run scripts/check_design_center_compliance.dart
+    # Violations à éviter:
+    # - Duration() avec valeurs hardcodées → AppAnimations.*
+    # - EdgeInsets.*() avec valeurs hardcodées → AppSpacing.* ou AppDimens.*
+    # - SizedBox(height/width: numériques) → AppSpacing.gap* ou AppDimens.*
+    # - BoxShadow() → AppElevations.*
+    # - withOpacity/withValues(alpha:) → AppOpacities.*
+    # - Icon(size: numérique) → AppComponentSizes.icon*
+    # - BorderRadius.circular(numérique) → AppDimens.radius*
+
   metrics:
     cyclomatic-complexity: 20
     lines-for-function: 100

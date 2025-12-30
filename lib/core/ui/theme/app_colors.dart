@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
 
 class AppColors {
   // --- SURFACES ---
@@ -38,20 +39,20 @@ class AppColors {
   static const Color transparent = Color(0x00000000);
 
   // --- OVERLAYS & SEMI-TRANSPARENTS ---
-  static Color whiteOverlay05 = white.withValues(alpha: 0.05);
-  static Color whiteOverlay10 = white.withValues(alpha: 0.1);
-  static Color whiteOverlay15 = white.withValues(alpha: 0.15);
-  static Color whiteOverlay20 = white.withValues(alpha: 0.2);
-  static Color whiteOverlay30 = white.withValues(alpha: 0.3);
-  static Color whiteOverlay50 = white.withValues(alpha: 0.5);
-  static Color whiteOverlay60 = white.withValues(alpha: 0.6);
+  static Color whiteOverlay05 = white.withValues(alpha: AppOpacities.subtle);
+  static Color whiteOverlay10 = white.withValues(alpha: AppOpacities.lightOverlay);
+  static Color whiteOverlay15 = white.withValues(alpha: AppOpacities.surfaceTint);
+  static Color whiteOverlay20 = white.withValues(alpha: AppOpacities.border);
+  static Color whiteOverlay30 = white.withValues(alpha: AppOpacities.decorative);
+  static Color whiteOverlay50 = white.withValues(alpha: AppOpacities.semiVisible);
+  static Color whiteOverlay60 = white.withValues(alpha: AppOpacities.prominent);
 
-  static Color blackOverlay05 = black.withValues(alpha: 0.05);
-  static Color blackOverlay10 = black.withValues(alpha: 0.1);
-  static Color blackOverlay20 = black.withValues(alpha: 0.2);
-  static Color blackOverlay30 = black.withValues(alpha: 0.3);
-  static Color blackOverlay50 = black.withValues(alpha: 0.5);
-  static Color blackOverlay60 = black.withValues(alpha: 0.6);
+  static Color blackOverlay05 = black.withValues(alpha: AppOpacities.subtle);
+  static Color blackOverlay10 = black.withValues(alpha: AppOpacities.lightOverlay);
+  static Color blackOverlay20 = black.withValues(alpha: AppOpacities.border);
+  static Color blackOverlay30 = black.withValues(alpha: AppOpacities.decorative);
+  static Color blackOverlay50 = black.withValues(alpha: AppOpacities.semiVisible);
+  static Color blackOverlay60 = black.withValues(alpha: AppOpacities.prominent);
 
   // --- ORANGE VARIANTS (pour les avertissements/infos) ---
   static const Color orange = Color(0xFFFF9800);

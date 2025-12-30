@@ -6,8 +6,10 @@ import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/core/data/models/portfolio_value_history_point.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 
 enum ChartTimeRange { day, month, year, max }
@@ -118,7 +120,7 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppDimens.radiusS),
       ),
       padding: const EdgeInsets.all(2),
       child: Row(
@@ -137,12 +139,12 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
     final isSelected = _selectedRange == range;
     return InkWell(
       onTap: () => setState(() => _selectedRange = range),
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(AppDimens.radius6),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppDimens.radius6),
         ),
         child: Text(
           label,
@@ -247,7 +249,7 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
           isStrokeCapRound: true,
           dotData: const FlDotData(show: false),
           shadow: Shadow(
-            color: AppColors.primary.withValues(alpha: 0.6),
+            color: AppColors.primary.withValues(alpha: AppOpacities.prominent),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -255,8 +257,8 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
             show: true,
             gradient: LinearGradient(
               colors: [
-                AppColors.primary.withValues(alpha: 0.3),
-                AppColors.primary.withValues(alpha: 0.0),
+                AppColors.primary.withValues(alpha: AppOpacities.decorative),
+                AppColors.primary.withValues(alpha: AppOpacities.transparent),
               ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,

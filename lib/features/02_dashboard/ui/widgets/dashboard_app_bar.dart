@@ -7,6 +7,8 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 
 // 2. IMPORTS DATA & PROVIDERS
@@ -71,7 +73,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
         child: AppCard(
           isGlass: true,
           withShadow: true,
-          backgroundColor: AppColors.surface.withValues(alpha: 0.85),
+          backgroundColor: AppColors.surface.withValues(alpha: AppOpacities.almostOpaque),
           padding: AppSpacing.appBarPaddingDefault,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -144,7 +146,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(width: 10, height: 10, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)),
-          const SizedBox(width: 6),
+          AppSpacing.gapH6,
           Text("Synchro...", style: textStyle),
         ],
       );
@@ -154,18 +156,18 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
       content = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.cloud_queue_outlined, size: 16, color: textStyle.color),
+          Icon(Icons.cloud_queue_outlined, size: AppComponentSizes.iconXSmall, color: textStyle.color),
           if (totalCount == 0) ...[
-            const SizedBox(width: 6),
+            AppSpacing.gapH6,
             Text("En ligne", style: textStyle),
           ],
           if (totalCount > 0) ...[
-            const SizedBox(width: 6),
+            AppSpacing.gapH6,
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: statusColor,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppDimens.radius10),
               ),
               child: Text(
                 '$syncedCount/$totalCount',
@@ -179,8 +181,8 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
       content = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.cloud_off_outlined, size: 16, color: textStyle.color?.withValues(alpha: 0.6)),
-          const SizedBox(width: 6),
+          Icon(Icons.cloud_off_outlined, size: AppComponentSizes.iconXSmall, color: textStyle.color?.withValues(alpha: AppOpacities.prominent)),
+          AppSpacing.gapH6,
           Text("Hors ligne", style: textStyle),
         ],
       );
@@ -211,8 +213,8 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
             child: Row(
               children: [
                 Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                    size: 18, color: isSelected ? AppColors.primary : AppColors.textSecondary),
-                const SizedBox(width: 12),
+                    size: AppComponentSizes.iconSmall, color: isSelected ? AppColors.primary : AppColors.textSecondary),
+                AppSpacing.gapH12,
                 Expanded(
                   child: Text(
                     portfolio.name,
@@ -237,7 +239,7 @@ class _DashboardAppBarState extends State<DashboardAppBar> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 4),
+            AppSpacing.gapH4,
             const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
           ],
         ),

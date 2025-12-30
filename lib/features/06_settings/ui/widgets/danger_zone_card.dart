@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/01_launch/ui/launch_screen.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 class DangerZoneCard extends StatelessWidget {
   const DangerZoneCard({super.key});
@@ -13,10 +17,10 @@ class DangerZoneCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       elevation: 0,
-      color: theme.colorScheme.errorContainer.withValues(alpha: 0.1),
+      color: theme.colorScheme.errorContainer.withValues(alpha: AppOpacities.lightOverlay),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(AppDimens.radiusM),
+        side: BorderSide(color: theme.colorScheme.error.withValues(alpha: AppOpacities.decorative)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -27,24 +31,24 @@ class DangerZoneCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center, // Centré
               children: [
                 Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
-                const SizedBox(width: 12),
+                AppSpacing.gapH12,
                 Text('Zone de danger',
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: theme.colorScheme.error,
                     )),
               ],
             ),
-            const SizedBox(height: 16),
+            AppSpacing.gapM,
             Text(
               "Cette action effacera toutes les données de l'application (portefeuilles, transactions, paramètres) et la remettra à zéro comme lors de la première installation.",
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.error.withValues(alpha: 0.8),
+                color: theme.colorScheme.error.withValues(alpha: AppOpacities.veryHigh),
               ),
             ),
-            const SizedBox(height: 24),
+            AppSpacing.gapL,
             OutlinedButton.icon(
-              icon: const Icon(Icons.delete_forever, size: 18),
+              icon: const Icon(Icons.delete_forever, size: AppComponentSizes.iconSmall),
               label: const Text('Réinitialiser l\'application'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: theme.colorScheme.error,
@@ -64,7 +68,7 @@ class DangerZoneCard extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         icon: Icon(Icons.warning_amber_rounded,
-            color: Theme.of(context).colorScheme.error, size: 48),
+            color: Theme.of(context).colorScheme.error, size: AppComponentSizes.iconXLarge),
         title: const Text('Réinitialiser ?'),
         content: const Text(
           'Toutes vos données seront définitivement effacées. Action irréversible.',

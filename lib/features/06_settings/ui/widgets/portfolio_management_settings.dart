@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/data/models/portfolio.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/initial_setup_wizard.dart';
 
@@ -175,7 +176,7 @@ class PortfolioManagementSettings extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text('Comment souhaitez-vous créer votre nouveau portefeuille ?'),
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
               TextFormField(
                 controller: nameController,
                 decoration: const InputDecoration(

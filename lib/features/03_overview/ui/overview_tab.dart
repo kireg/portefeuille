@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
@@ -186,7 +188,7 @@ class OverviewTab extends StatelessWidget {
                                 delay: alertsDelay > 0.8 ? 0.8 : alertsDelay,
                                 child: const SyncAlertsCard(),
                               ),
-                              const SizedBox(height: 100), // Espace pour la nav bar flottante du BAS
+                              AppSpacing.gap100, // Espace pour la nav bar flottante du BAS
                             ],
                           );
                         }
@@ -224,12 +226,12 @@ class OverviewTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              AppIcon(icon: icon, size: 18, color: AppColors.primary, backgroundColor: Colors.transparent),
-              const SizedBox(width: 8),
+              AppIcon(icon: icon, size: AppComponentSizes.iconSmall, color: AppColors.primary, backgroundColor: Colors.transparent),
+              AppSpacing.gapHorizontalSmall,
               Text(
                 title.toUpperCase(),
                 style: AppTypography.label.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: AppOpacities.strong),
                 ),
               ),
             ],
@@ -237,7 +239,7 @@ class OverviewTab extends StatelessWidget {
           if (onAdd != null)
             AppIconButton(
               icon: Icons.add,
-              size: 16,
+              size: AppComponentSizes.iconXSmall,
               color: AppColors.textPrimary,
               backgroundColor: AppColors.surfaceLight,
               borderColor: AppColors.border,

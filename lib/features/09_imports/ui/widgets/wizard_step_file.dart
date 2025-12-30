@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/features/09_imports/services/source_detector.dart';
@@ -33,25 +36,25 @@ class WizardStepFile extends StatelessWidget {
           style: AppTypography.h2,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        AppSpacing.gapS,
         Text(
           'Formats supportés : PDF, CSV, Excel (XLSX)',
           style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
+        AppSpacing.gapL,
         
         if (selectedFile == null)
           Expanded(child: Center(child: _buildUploadArea()))
         else ...[
           _buildFileCard(),
-          const SizedBox(height: 16),
+          AppSpacing.gapM,
           if (isDetecting)
             const Center(
               child: Column(
                 children: [
                   CircularProgressIndicator(),
-                  SizedBox(height: 8),
+                  AppSpacing.gapS,
                   Text('Analyse du fichier...'),
                 ],
               ),
@@ -76,9 +79,9 @@ class WizardStepFile extends StatelessWidget {
               Icon(
                 result.isDetected ? Icons.check_circle : Icons.info_outline,
                 color: result.isDetected ? AppColors.success : AppColors.warning,
-                size: 20,
+                size: AppComponentSizes.iconMediumSmall,
               ),
-              const SizedBox(width: 8),
+              AppSpacing.gapHorizontalSmall,
               Expanded(
                 child: Text(
                   result.message ?? 'Fichier analysé',
@@ -89,15 +92,15 @@ class WizardStepFile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          AppSpacing.gap12,
           Text('Aperçu du contenu :', style: AppTypography.caption),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           Expanded(
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(AppDimens.paddingS),
               decoration: BoxDecoration(
-                color: AppColors.surfaceLight.withValues(alpha: 0.5),
+                color: AppColors.surfaceLight.withValues(alpha: AppOpacities.semiVisible),
                 borderRadius: BorderRadius.circular(AppDimens.radiusM),
               ),
               child: SingleChildScrollView(
@@ -126,12 +129,12 @@ class WizardStepFile extends StatelessWidget {
         width: double.infinity,
         height: 300,
         decoration: BoxDecoration(
-          color: AppColors.surfaceLight.withValues(alpha: 0.3),
+          color: AppColors.surfaceLight.withValues(alpha: AppOpacities.decorative),
           borderRadius: BorderRadius.circular(AppDimens.radiusL),
         ),
         foregroundDecoration: ShapeDecoration(
           shape: DashedBorder(
-            color: AppColors.primary.withValues(alpha: 0.3),
+            color: AppColors.primary.withValues(alpha: AppOpacities.decorative),
             width: 2,
             dashLength: 8,
             gapLength: 4,
@@ -144,21 +147,21 @@ class WizardStepFile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: AppColors.primary.withValues(alpha: AppOpacities.lightOverlay),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.cloud_upload_outlined,
-                size: 48,
+                size: AppComponentSizes.iconXLarge,
                 color: AppColors.primary,
               ),
             ),
-            const SizedBox(height: 24),
+            AppSpacing.gapL,
             Text(
               'Cliquez pour parcourir',
               style: AppTypography.h3,
             ),
-            const SizedBox(height: 8),
+            AppSpacing.gapS,
             Text(
               'ou glissez votre fichier ici',
               style: AppTypography.body.copyWith(color: AppColors.textSecondary),
@@ -200,8 +203,8 @@ class WizardStepFile extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 64, color: color),
-          const SizedBox(height: 16),
+          Icon(icon, size: AppComponentSizes.iconXxLarge, color: color),
+          AppSpacing.gapM,
           Text(
             file.name,
             style: AppTypography.h3,
@@ -209,12 +212,12 @@ class WizardStepFile extends StatelessWidget {
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           Text(
             _formatFileSize(file.size),
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 24),
+          AppSpacing.gapL,
           AppButton(
             label: 'Changer de fichier',
             type: AppButtonType.secondary,

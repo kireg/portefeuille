@@ -13,10 +13,13 @@ import 'package:portefeuille/core/data/models/portfolio.dart';
 import 'package:portefeuille/core/data/models/institution.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/data/models/asset.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/data/models/account_type.dart';
 import 'package:portefeuille/core/data/models/savings_plan.dart';
 import 'package:portefeuille/core/data/repositories/portfolio_repository.dart';
 import 'package:portefeuille/core/ui/theme/app_theme.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/utils/constants.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 
@@ -111,31 +114,31 @@ void main() async {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 24),
+                  const Icon(Icons.error_outline, size: AppComponentSizes.iconXxLarge, color: Colors.red),
+                  AppSpacing.gapL,
                   const Text(
                     "Erreur de démarrage",
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
                   ),
-                  const SizedBox(height: 16),
+                  AppSpacing.gapM,
                   const Text(
                     "La base de données est verrouillée par un autre processus.",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: Colors.black54),
                   ),
                   if (lockFilePath != null) ...[
-                    const SizedBox(height: 24),
+                    AppSpacing.gapL,
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppDimens.radiusS),
                         border: Border.all(color: Colors.grey[300]!),
                       ),
                       child: Column(
                         children: [
                           const Text("Fichier bloquant :", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                          const SizedBox(height: 4),
+                          AppSpacing.gapXs,
                           Text(
                             lockFilePath,
                             textAlign: TextAlign.center,
@@ -144,7 +147,7 @@ void main() async {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    AppSpacing.gapL,
                     ElevatedButton.icon(
                       onPressed: () async {
                         try {
@@ -166,13 +169,13 @@ void main() async {
                         foregroundColor: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    AppSpacing.gap12,
                     const Text(
                       "Après avoir cliqué, redémarrez l'application.",
                       style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
                     ),
                   ],
-                  const SizedBox(height: 32),
+                  AppSpacing.gapXl,
                   Text(
                     "Détail technique : $e",
                     textAlign: TextAlign.center,

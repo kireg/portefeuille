@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_animations.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
 
 class AppAnimatedBackground extends StatefulWidget {
   final Widget child;
@@ -98,7 +99,7 @@ class _AppAnimatedBackgroundState extends State<AppAnimatedBackground>
         // On ajoute un voile très léger pour unifier le tout
         Container(
           decoration: BoxDecoration(
-            color: AppColors.background.withValues(alpha: 0.7), // Réduit l'intensité des couleurs
+            color: AppColors.background.withValues(alpha: AppOpacities.strong), // Réduit l'intensité des couleurs
           ),
         ),
 
@@ -116,8 +117,8 @@ class _AppAnimatedBackgroundState extends State<AppAnimatedBackground>
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            color.withValues(alpha: 0.5),
-            color.withValues(alpha: 0.0),
+            color.withValues(alpha: AppOpacities.semiVisible),
+            color.withValues(alpha: AppOpacities.transparent),
           ],
           stops: const [0.0, 0.7], // Fade out before the edge
         ),

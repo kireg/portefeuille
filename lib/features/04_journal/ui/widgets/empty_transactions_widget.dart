@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 
@@ -21,7 +24,7 @@ class EmptyTransactionsWidget extends StatelessWidget {
         title: Row(
           children: [
             const Icon(Icons.help_outline, color: AppColors.primary),
-            const SizedBox(width: 8),
+            AppSpacing.gapHorizontalSmall,
             Text("Aide à l'import", style: AppTypography.h3),
           ],
         ),
@@ -35,19 +38,19 @@ class EmptyTransactionsWidget extends StatelessWidget {
                 "Importez vos relevés de compte ou d'opérations.",
                 ["Trade Republic", "Boursorama", "Fortuneo", "Degiro", "Interactive Brokers"],
               ),
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
               _buildHelpSection(
                 "CSV Bancaires",
                 "Importez vos exports CSV.",
                 ["Revolut"],
               ),
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
               _buildHelpSection(
                 "Crowdfunding",
                 "Importez vos suivis de projets immobiliers.",
                 ["La Première Brique (Excel)", "ClubFunding", "Raizers"],
               ),
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
               _buildHelpSection(
                 "IA (Expérimental)",
                 "Copiez-collez n'importe quel texte ou CSV, l'IA tentera de le structurer.",
@@ -71,9 +74,9 @@ class EmptyTransactionsWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: AppTypography.bodyBold),
-        const SizedBox(height: 4),
+        AppSpacing.gapXs,
         Text(description, style: AppTypography.body.copyWith(color: AppColors.textSecondary)),
-        const SizedBox(height: 8),
+        AppSpacing.gapS,
         Wrap(
           spacing: 6,
           runSpacing: 6,
@@ -81,7 +84,7 @@ class EmptyTransactionsWidget extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppDimens.radiusXs2),
             ),
             child: Text(e, style: AppTypography.caption),
           )).toList(),
@@ -100,7 +103,7 @@ class EmptyTransactionsWidget extends StatelessWidget {
           children: [
             const AppIcon(
               icon: Icons.receipt_long_outlined,
-              size: 64,
+              size: AppComponentSizes.iconXxLarge,
               backgroundColor: AppColors.surfaceLight,
               color: AppColors.textSecondary,
             ),
@@ -134,7 +137,7 @@ class EmptyTransactionsWidget extends StatelessWidget {
             
             TextButton.icon(
               onPressed: () => _showHelpDialog(context),
-              icon: const Icon(Icons.help_outline, size: 18),
+              icon: const Icon(Icons.help_outline, size: AppComponentSizes.iconSmall),
               label: const Text("Quels fichiers sont supportés ?"),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.textSecondary,
@@ -174,22 +177,22 @@ class _ActionCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              color.withValues(alpha: 0.1),
-              color.withValues(alpha: 0.05),
+              color.withValues(alpha: AppOpacities.lightOverlay),
+              color.withValues(alpha: AppOpacities.subtle),
             ],
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 32, color: color),
-            const SizedBox(height: 12),
+            Icon(icon, size: AppComponentSizes.iconLarge, color: color),
+            AppSpacing.gap12,
             Text(
               title,
               style: AppTypography.h3.copyWith(fontSize: 16),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 4),
+            AppSpacing.gapXs,
             Text(
               subtitle,
               style: AppTypography.caption.copyWith(color: AppColors.textSecondary),

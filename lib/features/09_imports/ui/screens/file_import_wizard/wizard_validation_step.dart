@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -61,9 +65,9 @@ class WizardValidationStep extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const CircularProgressIndicator(),
-          const SizedBox(height: 16),
+          AppSpacing.gapM,
           const Text("Analyse du fichier en cours..."),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           SizedBox(
             width: 200,
             child: LinearProgressIndicator(
@@ -72,7 +76,7 @@ class WizardValidationStep extends StatelessWidget {
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
             ),
           ),
-          const SizedBox(height: 4),
+          AppSpacing.gapXs,
           Text("${(state.parsingProgress * 100).toInt()}%"),
         ],
       ),
@@ -84,15 +88,15 @@ class WizardValidationStep extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 48),
-          const SizedBox(height: 16),
+          const Icon(Icons.error_outline, color: AppColors.error, size: AppComponentSizes.iconXLarge),
+          AppSpacing.gapM,
           Text(
             "Erreur lors de l'analyse",
             style: AppTypography.h3.copyWith(color: AppColors.error),
           ),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           Text(state.parsingError!, textAlign: TextAlign.center),
-          const SizedBox(height: 24),
+          AppSpacing.gapL,
           AppButton(
             label: "Réessayer",
             onPressed: onRetryParse,
@@ -111,16 +115,16 @@ class WizardValidationStep extends StatelessWidget {
           const Icon(
             Icons.warning_amber_rounded,
             color: AppColors.warning,
-            size: 48,
+            size: AppComponentSizes.iconXLarge,
           ),
-          const SizedBox(height: 16),
+          AppSpacing.gapM,
           Text(
             StringsImport.warningTitle,
             style: AppTypography.h3.copyWith(color: AppColors.warning),
           ),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           Text(state.parserWarning!, textAlign: TextAlign.center),
-          const SizedBox(height: 24),
+          AppSpacing.gapL,
           AppButton(
             label: StringsImport.continueDespiteWarning,
             onPressed: onSaveWithWarning,
@@ -142,13 +146,13 @@ class WizardValidationStep extends StatelessWidget {
       children: [
         if (state.parserWarning != null) _buildWarningBanner(),
         Text(StringsImport.validationTitle, style: AppTypography.h2),
-        const SizedBox(height: 8),
+        AppSpacing.gapS,
         Text(
           "${state.candidates!.length} transactions retenues "
           "($modifiedCount modifiées)",
           style: AppTypography.body.copyWith(color: AppColors.textSecondary),
         ),
-        const SizedBox(height: 16),
+        AppSpacing.gapM,
         if (_hasValidationWarnings()) _buildValidationWarnings(),
         AppDropdown<String>(
           label: StringsImport.destinationAccount,
@@ -156,7 +160,7 @@ class WizardValidationStep extends StatelessWidget {
           items: accountItems,
           onChanged: onAccountChanged,
         ),
-        const SizedBox(height: 16),
+        AppSpacing.gapM,
         Expanded(child: _buildTransactionsList()),
       ],
     );
@@ -172,14 +176,14 @@ class WizardValidationStep extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.warning.withValues(alpha: AppOpacities.lightOverlay),
+        borderRadius: BorderRadius.circular(AppDimens.radiusS),
         border: Border.all(color: AppColors.warning),
       ),
       child: Row(
         children: [
           const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
-          const SizedBox(width: 12),
+          AppSpacing.gapH12,
           Expanded(
             child: Text(
               state.parserWarning!,
@@ -196,8 +200,8 @@ class WizardValidationStep extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.warning.withValues(alpha: AppOpacities.lightOverlay),
+        borderRadius: BorderRadius.circular(AppDimens.radiusS),
         border: Border.all(color: AppColors.warning),
       ),
       child: Column(
@@ -206,14 +210,14 @@ class WizardValidationStep extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
-              const SizedBox(width: 8),
+              AppSpacing.gapHorizontalSmall,
               Text(
                 StringsImport.attentionRequired,
                 style: AppTypography.h3.copyWith(color: AppColors.warning),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           if (state.duplicateTransactions.isNotEmpty)
             Text(
               "• ${state.duplicateTransactions.length} doublons potentiels "
@@ -226,7 +230,7 @@ class WizardValidationStep extends StatelessWidget {
               "semblent invalides.",
               style: AppTypography.body.copyWith(color: AppColors.textPrimary),
             ),
-          const SizedBox(height: 12),
+          AppSpacing.gap12,
           Row(
             children: [
               Checkbox(
@@ -260,16 +264,16 @@ class WizardValidationStep extends StatelessWidget {
             "${StringsImport.newLabel} (${newOnes.length})",
             style: AppTypography.h3,
           ),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           ...newOnes.map((c) => _buildCard(candidates.indexOf(c), c)),
-          const SizedBox(height: 16),
+          AppSpacing.gapM,
         ],
         if (modified.isNotEmpty) ...[
           Text(
             "${StringsImport.modifiedLabel} (${modified.length})",
             style: AppTypography.h3,
           ),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           ...modified.map((c) => _buildCard(candidates.indexOf(c), c)),
         ],
       ],

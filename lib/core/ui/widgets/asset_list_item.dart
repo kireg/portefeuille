@@ -4,7 +4,9 @@ import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/models/repayment_type.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart'; // IMPORTANT
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -39,7 +41,7 @@ class AssetListItem extends StatelessWidget {
       padding: AppSpacing.assetListItemPadding,
       decoration: BoxDecoration(
         color: AppColors.surface, // Carte sombre
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppDimens.radiusM),
         border: Border.all(color: Colors.white.withValues(alpha: 0.03)), // Bordure subtile
       ),
       child: Row(
@@ -63,7 +65,7 @@ class AssetListItem extends StatelessWidget {
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                AppSpacing.gapXs,
                 if (asset.type == AssetType.RealEstateCrowdfunding)
                   Text(
                     '${asset.ticker} • ${asset.expectedYield?.toStringAsFixed(1) ?? '?'}%${asset.repaymentType != null ? ' • ${asset.repaymentType!.displayName}' : ''}',
@@ -100,12 +102,12 @@ class AssetListItem extends StatelessWidget {
                     letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 4),
+                AppSpacing.gapXs,
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: (isPositive ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
+                    color: (isPositive ? AppColors.success : AppColors.error).withValues(alpha: AppOpacities.lightOverlay),
+                    borderRadius: BorderRadius.circular(AppDimens.radiusXs2),
                   ),
                   child: Text(
                     '${isPositive ? '+' : ''}${(pnlPercentage * 100).toStringAsFixed(2)}%',
@@ -133,7 +135,7 @@ class AssetListItem extends StatelessWidget {
       height: 44,
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimens.radius12),
       ),
       alignment: Alignment.center,
       child: Text(

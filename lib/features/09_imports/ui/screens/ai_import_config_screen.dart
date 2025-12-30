@@ -7,12 +7,15 @@ import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
 import 'package:portefeuille/core/ui/widgets/fade_in_slide.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/09_imports/ui/screens/import_transaction_screen.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 /// Écran de configuration pour l'import via IA.
 /// Affiché en Modal Bottom Sheet depuis le FileImportWizard.
@@ -80,12 +83,12 @@ class _AiImportConfigScreenState extends State<AiImportConfigScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
+                                color: AppColors.primary.withValues(alpha: AppOpacities.lightOverlay),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.auto_awesome, color: AppColors.primary, size: 24),
+                              child: const Icon(Icons.auto_awesome, color: AppColors.primary, size: AppComponentSizes.iconMedium),
                             ),
-                            const SizedBox(width: 16),
+                            AppSpacing.gapHorizontalMedium,
                             Expanded(
                               child: Text("Import Intelligent", style: AppTypography.h3),
                             ),
@@ -138,13 +141,13 @@ class _AiImportConfigScreenState extends State<AiImportConfigScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(AppDimens.paddingM),
                     decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.1),
-                      border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+                      color: AppColors.warning.withValues(alpha: AppOpacities.lightOverlay),
+                      border: Border.all(color: AppColors.warning.withValues(alpha: AppOpacities.decorative)),
                       borderRadius: BorderRadius.circular(AppDimens.radiusM),
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.security, color: AppColors.warning, size: 32),
+                        const Icon(Icons.security, color: AppColors.warning, size: AppComponentSizes.iconLarge),
                         const SizedBox(height: AppDimens.paddingM),
                         Text(
                           "Confidentialité & Sécurité",
@@ -215,11 +218,11 @@ class _AiImportConfigScreenState extends State<AiImportConfigScreen> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.textSecondary.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
+              color: AppColors.textSecondary.withValues(alpha: AppOpacities.decorative),
+              borderRadius: BorderRadius.circular(AppDimens.radiusXs),
             ),
           ),
-          const SizedBox(height: 16),
+          AppSpacing.gapM,
           Row(
             children: [
               IconButton(
@@ -233,7 +236,7 @@ class _AiImportConfigScreenState extends State<AiImportConfigScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(width: 48),
+              AppSpacing.gapHXxl,
             ],
           ),
         ],

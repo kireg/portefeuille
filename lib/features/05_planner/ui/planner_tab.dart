@@ -70,7 +70,7 @@ class _PlannerTabState extends State<PlannerTab> {
                       ),
                     ),
 
-                    const SizedBox(height: 90.0), // Espace pour la nav bar flottante
+                    AppSpacing.gap90, // Espace pour la nav bar flottante
                   ]),
                 ),
               ),

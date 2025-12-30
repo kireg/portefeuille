@@ -7,6 +7,7 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/wizard_dialogs/add_asset_dialog.dart';
 
@@ -152,7 +153,7 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                             },
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        AppSpacing.gapHorizontalMedium,
                         Expanded(
                           flex: 2,
                           child: DropdownButtonFormField<AccountType>(
@@ -262,12 +263,12 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.edit, size: 20),
+                              icon: const Icon(Icons.edit, size: AppComponentSizes.iconMediumSmall),
                               onPressed: () => _editAsset(asset),
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete,
-                                  size: 20, color: AppColors.error),
+                                  size: AppComponentSizes.iconMediumSmall, color: AppColors.error),
                               onPressed: () =>
                                   setState(() => _assets.remove(asset)),
                             ),

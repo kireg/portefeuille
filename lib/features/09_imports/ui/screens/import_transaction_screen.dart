@@ -9,6 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/data/services/ai_service.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
@@ -182,7 +183,7 @@ class _ImportTransactionScreenState extends State<ImportTransactionScreen> {
         ],
       ),
       body: _isLoading
-          ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const CircularProgressIndicator(), const SizedBox(height: 16), Text(_statusMessage)]))
+          ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const CircularProgressIndicator(), AppSpacing.gapM, Text(_statusMessage)]))
           : _imageData == null
           ? Center(child: ElevatedButton(onPressed: _pickFile, child: const Text("Sélectionner un fichier")))
           : Padding(

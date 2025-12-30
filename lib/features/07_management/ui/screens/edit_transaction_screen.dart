@@ -8,6 +8,7 @@ import 'package:portefeuille/features/00_app/providers/transaction_provider.dart
 import 'package:portefeuille/features/07_management/ui/providers/transaction_form_state.dart';
 import 'package:portefeuille/features/07_management/ui/widgets/transaction_form_ui.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 
 class EditTransactionScreen extends StatelessWidget {
@@ -81,7 +82,7 @@ class EditTransactionScreen extends StatelessWidget {
               ),
               body: const SingleChildScrollView(
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: AppSpacing.paddingAll16,
                   child: TransactionFormUI(),
                 ),
               ),

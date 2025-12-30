@@ -5,6 +5,9 @@ import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class CrowdfundingTimelineWidget extends StatefulWidget {
   final List<Asset> assets;
@@ -302,16 +305,16 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
         padding: const EdgeInsets.all(AppDimens.paddingM),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimens.radius12),
           border: Border.all(
             color: _isExpanded
-                ? AppColors.primary.withValues(alpha: 0.5)
-                : Colors.white.withValues(alpha: 0.05),
+                ? AppColors.primary.withValues(alpha: AppOpacities.semiVisible)
+                : Colors.white.withValues(alpha: AppOpacities.subtle),
           ),
           boxShadow: _isExpanded
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: AppColors.primary.withValues(alpha: AppOpacities.lightOverlay),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   )
@@ -337,13 +340,13 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
                       ? Icons.keyboard_arrow_up
                       : Icons.keyboard_arrow_down,
                   color: AppColors.textSecondary,
-                  size: 20,
+                  size: AppComponentSizes.iconMediumSmall,
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            AppSpacing.gapS,
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppDimens.radiusXs2),
               child: LinearProgressIndicator(
                 value: progress,
                 backgroundColor: AppColors.background,
@@ -353,7 +356,7 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
                 minHeight: 6,
               ),
             ),
-            const SizedBox(height: 4),
+            AppSpacing.gapXs,
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -377,12 +380,12 @@ class _CrowdfundingProjectCardState extends State<_CrowdfundingProjectCard> {
               const Divider(height: 1, color: AppColors.surfaceLight),
               const SizedBox(height: AppDimens.paddingM),
               _buildDetailRow("Investi", invested, currency),
-              const SizedBox(height: 4),
+              AppSpacing.gapXs,
               _buildDetailRow("Intérêts perçus", interests, currency,
                   valueColor: AppColors.success),
-              const SizedBox(height: 4),
+              AppSpacing.gapXs,
               _buildDetailRow("Capital remboursé", repaidCapital, currency),
-              const SizedBox(height: 4),
+              AppSpacing.gapXs,
               _buildDetailRow("Restant dû", remainingCapital, currency,
                   isBold: true),
             ],

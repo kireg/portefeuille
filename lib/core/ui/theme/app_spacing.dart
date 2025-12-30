@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 /// Centralize component spacing for consistent padding and gaps
 /// Usage: Padding(padding: AppSpacing.cardPadding)
 class AppSpacing {
@@ -85,6 +86,9 @@ class AppSpacing {
   /// Icon padding standard (8px)
   static const EdgeInsets iconPaddingStandard = EdgeInsets.all(8.0);
 
+  /// Standard padding all around (16px)
+  static const EdgeInsets paddingAll16 = EdgeInsets.all(16.0);
+
   // --- ICON BUTTON SPACING ---
   /// Icon button padding (8px)
   static const EdgeInsets iconButtonPadding = EdgeInsets.all(8.0);
@@ -98,6 +102,10 @@ class AppSpacing {
   static const SizedBox gapSmall = SizedBox(height: 8.0);
   static const SizedBox gapS = gapSmall;
 
+  /// Medium-small gap (12px)
+  static const SizedBox gapMediumSmall = SizedBox(height: 12.0);
+  static const SizedBox gap12 = gapMediumSmall;
+
   /// Medium gap (16px)
   static const SizedBox gapMedium = SizedBox(height: 16.0);
   static const SizedBox gapM = gapMedium;
@@ -110,12 +118,20 @@ class AppSpacing {
   static const SizedBox gapXLarge = SizedBox(height: 32.0);
   static const SizedBox gapXl = gapXLarge;
 
+  /// XXL gap (48px) - for major section spacing
+  static const SizedBox gapXXLarge = SizedBox(height: 48.0);
+  static const SizedBox gapXxl = gapXXLarge;
+
   // --- HORIZONTAL GAPS/SPACING ---
   /// Extra small horizontal gap (4px)
   static const SizedBox gapHorizontalXSmall = SizedBox(width: 4.0);
 
   /// Small horizontal gap (8px)
   static const SizedBox gapHorizontalSmall = SizedBox(width: 8.0);
+
+  /// Medium-small horizontal gap (12px)
+  static const SizedBox gapHorizontalMediumSmall = SizedBox(width: 12.0);
+  static const SizedBox gapH12 = gapHorizontalMediumSmall;
 
   /// Medium horizontal gap (16px)
   static const SizedBox gapHorizontalMedium = SizedBox(width: 16.0);
@@ -125,6 +141,10 @@ class AppSpacing {
 
   /// Extra large horizontal gap (32px)
   static const SizedBox gapHorizontalXLarge = SizedBox(width: 32.0);
+
+  /// XXL horizontal gap (48px) - for major section spacing
+  static const SizedBox gapHorizontalXXLarge = SizedBox(width: 48.0);
+  static const SizedBox gapHXxl = gapHorizontalXXLarge;
 
   // --- DIVIDER SPACING ---
 
@@ -211,4 +231,35 @@ class AppSpacing {
 
   /// Asset card header padding (16px)
   static const EdgeInsets assetCardHeaderPaddingDefault = EdgeInsets.all(16.0);
+  
+  // --- SPECIAL SIZED BOXES (for specific needs) ---
+  /// Tiny gap (2px height) - minimal spacing
+  static const SizedBox gapTiny = SizedBox(height: 2.0);
+  
+  /// Micro horizontal gap (2px width)
+  static const SizedBox gapHTiny = SizedBox(width: 2.0);
+  
+  /// Gap 4 horizontal
+  static const SizedBox gapH4 = SizedBox(width: 4.0);
+  
+  /// Gap 6 horizontal
+  static const SizedBox gapH6 = SizedBox(width: 6.0);
+  
+  /// Gap 10 horizontal
+  static const SizedBox gapH10 = SizedBox(width: 10.0);
+  
+  /// Gap 20 vertical (between M and L)
+  static const SizedBox gap20 = SizedBox(height: 20.0);
+  
+  /// Gap 40 vertical (large section spacing)
+  static const SizedBox gap40 = SizedBox(height: 40.0);
+  
+  /// Gap 90 vertical (navigation bar clearance)
+  static const SizedBox gap90 = SizedBox(height: 90.0);
+  
+  /// Gap 100 vertical (full section spacing)
+  static const SizedBox gap100 = SizedBox(height: 100.0);
+  
+  /// Special sized box for circular progress (10x10)
+  static const SizedBox progressSmall = SizedBox(width: 10.0, height: 10.0);
 }

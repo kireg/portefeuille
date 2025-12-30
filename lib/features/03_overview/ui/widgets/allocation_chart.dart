@@ -6,6 +6,7 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
 
 class AllocationChart extends StatefulWidget {
   final Portfolio portfolio;
@@ -104,7 +105,7 @@ class _AllocationChartState extends State<AllocationChart> {
 
       return PieChartSectionData(
         color: AppColors.charts[i % AppColors.charts.length].withValues(alpha: opacity),
-        value: percentage,
+        value: institution.totalValue, // Utiliser la valeur brute pour les proportions correctes
         title: '',
         radius: radius,
         badgeWidget: isTouched ? _buildBadge(
@@ -122,11 +123,11 @@ class _AllocationChartState extends State<AllocationChart> {
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppDimens.radiusXs2),
         border: Border.all(color: color),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.black.withValues(alpha: AppOpacities.semiVisible),
             blurRadius: 4,
             offset: const Offset(0, 2),
           )
@@ -180,10 +181,10 @@ class _AllocationChartState extends State<AllocationChart> {
                 decoration: BoxDecoration(
                   color: color,
                   shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 4)],
+                  boxShadow: [BoxShadow(color: color.withValues(alpha: AppOpacities.shadow), blurRadius: 4)],
                 ),
               ),
-              const SizedBox(width: 12),
+              AppSpacing.gapH12,
               Expanded(
                 child: Text(
                   institution.name,

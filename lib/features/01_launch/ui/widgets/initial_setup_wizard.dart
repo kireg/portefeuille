@@ -6,6 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/features/01_launch/ui/providers/setup_wizard_provider.dart';
 import 'package:portefeuille/features/01_launch/ui/widgets/wizard_dialogs/add_account_dialog.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
@@ -228,7 +231,7 @@ class _Step1Config extends StatelessWidget {
             'Commençons par les bases',
             style: AppTypography.h2,
           ),
-          const SizedBox(height: 24),
+          AppSpacing.gapL,
           TextFormField(
             initialValue: provider.portfolioName,
             decoration: const InputDecoration(
@@ -238,7 +241,7 @@ class _Step1Config extends StatelessWidget {
             ),
             onChanged: provider.setPortfolioName,
           ),
-          const SizedBox(height: 32),
+          AppSpacing.gapXl,
           SwitchListTile(
             title: const Text('Activer le mode en ligne'),
             subtitle: const Text(
@@ -273,7 +276,7 @@ class _Step2Accounts extends StatelessWidget {
                 'Vos comptes d\'investissement',
                 style: AppTypography.h2,
               ),
-              const SizedBox(height: 8),
+              AppSpacing.gapS,
               const Text(
                 'Ajoutez vos comptes (PEA, CTO, Crypto...) et leurs actifs.',
                 style: TextStyle(color: AppColors.textSecondary),
@@ -356,8 +359,8 @@ class _Step2Accounts extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.account_balance_wallet_outlined, size: 64, color: AppColors.textTertiary),
-          const SizedBox(height: 16),
+          Icon(Icons.account_balance_wallet_outlined, size: AppComponentSizes.iconXxLarge, color: AppColors.textTertiary),
+          AppSpacing.gapM,
           Text(
             'Aucun compte ajouté',
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
@@ -423,9 +426,9 @@ class _Step3Summary extends StatelessWidget {
             'Récapitulatif',
             style: AppTypography.h2,
           ),
-          const SizedBox(height: 24),
+          AppSpacing.gapL,
           _buildSummaryCard(context, 'Portefeuille', provider.portfolioName, Icons.folder),
-          const SizedBox(height: 16),
+          AppSpacing.gapM,
           _buildSummaryCard(
             context,
             'Valeur Totale Estimée',
@@ -433,9 +436,9 @@ class _Step3Summary extends StatelessWidget {
             Icons.savings,
             isHighlight: true,
           ),
-          const SizedBox(height: 24),
+          AppSpacing.gapL,
           const Text('Détails', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           _buildDetailRow('Comptes', '${provider.accounts.length}'),
           _buildDetailRow('Actifs totaux', '$totalAssets'),
           _buildDetailRow('Mode en ligne', provider.enableOnlineMode ? 'Activé' : 'Désactivé'),
@@ -446,18 +449,18 @@ class _Step3Summary extends StatelessWidget {
 
   Widget _buildSummaryCard(BuildContext context, String title, String value, IconData icon, {bool isHighlight = false}) {
     return Card(
-      color: isHighlight ? Theme.of(context).primaryColor.withValues(alpha: 0.1) : null,
+      color: isHighlight ? Theme.of(context).primaryColor.withValues(alpha: AppOpacities.lightOverlay) : null,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(AppDimens.radius12),
+        side: BorderSide(color: Colors.grey.withValues(alpha: AppOpacities.border)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            Icon(icon, size: 32, color: isHighlight ? Theme.of(context).primaryColor : Colors.grey),
-            const SizedBox(width: 16),
+            Icon(icon, size: AppComponentSizes.iconLarge, color: isHighlight ? Theme.of(context).primaryColor : Colors.grey),
+            AppSpacing.gapHorizontalMedium,
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_dimens.dart';
 import '../../theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 class AppTextField extends StatelessWidget {
   final TextEditingController? controller;
@@ -80,7 +82,7 @@ class AppTextField extends StatelessWidget {
 
             // Préfixe Icône
             prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20)
+                ? Icon(prefixIcon, color: AppColors.textSecondary, size: AppComponentSizes.iconMediumSmall)
                 : null,
 
             // Suffixe (Texte ou Widget)

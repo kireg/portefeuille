@@ -8,6 +8,8 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/privacy_blur.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
@@ -49,7 +51,7 @@ class PortfolioHeader extends StatelessWidget {
                 ),
               ),
               if (calculationProvider.hasConversionError) ...[
-                const SizedBox(width: 8),
+                AppSpacing.gapHorizontalSmall,
                 GestureDetector(
                   onTap: () => _showConversionErrorDialog(
                     context,
@@ -58,7 +60,7 @@ class PortfolioHeader extends StatelessWidget {
                   child: const Icon(
                     Icons.warning_amber_rounded,
                     color: AppColors.warning,
-                    size: 18,
+                    size: AppComponentSizes.iconSmall,
                   ),
                 ),
               ],
@@ -166,10 +168,10 @@ class PortfolioHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppDimens.paddingM),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: AppOpacities.lightOverlay),
         borderRadius: BorderRadius.circular(AppDimens.radiusM),
         border: Border.all(
-          color: color.withValues(alpha: 0.2),
+          color: color.withValues(alpha: AppOpacities.border),
         ),
       ),
       child: Column(
@@ -180,8 +182,8 @@ class PortfolioHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 8),
+              Icon(icon, size: AppComponentSizes.iconXSmall, color: color),
+              AppSpacing.gapHorizontalSmall,
               Flexible(
                 child: Text(
                   label,
@@ -195,7 +197,7 @@ class PortfolioHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           PrivacyBlur(
             child: Text(
               displayValue,
@@ -234,7 +236,7 @@ class PortfolioHeader extends StatelessWidget {
         title: Row(
           children: [
             const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
-            const SizedBox(width: 8),
+            AppSpacing.gapHorizontalSmall,
             Text('Erreur de conversion', style: AppTypography.h3),
           ],
         ),
@@ -246,7 +248,7 @@ class PortfolioHeader extends StatelessWidget {
               'Impossible de récupérer les taux de change pour les devises suivantes :',
               style: AppTypography.body,
             ),
-            const SizedBox(height: 16),
+            AppSpacing.gapM,
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -258,7 +260,7 @@ class PortfolioHeader extends StatelessWidget {
                 );
               }).toList(),
             ),
-            const SizedBox(height: 16),
+            AppSpacing.gapM,
             Text(
               'Un taux de 1.0 a été utilisé par défaut. Vérifiez votre connexion internet.',
               style: AppTypography.caption.copyWith(color: AppColors.textSecondary),

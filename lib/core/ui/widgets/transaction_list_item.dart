@@ -6,6 +6,8 @@ import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_tile.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
@@ -36,7 +38,7 @@ class TransactionListItem extends StatelessWidget {
       leading: AppIcon(
         icon: typeInfo.icon,
         color: typeInfo.color,
-        backgroundColor: typeInfo.color.withValues(alpha: 0.1),
+        backgroundColor: typeInfo.color.withValues(alpha: AppOpacities.lightOverlay),
       ),
 
       // 2. Titre et sous-titre
@@ -72,7 +74,7 @@ class TransactionListItem extends StatelessWidget {
               iconTheme: const IconThemeData(color: AppColors.textSecondary),
             ),
             child: PopupMenuButton(
-              icon: const Icon(Icons.more_vert, size: 18),
+              icon: const Icon(Icons.more_vert, size: AppComponentSizes.iconSmall),
               onSelected: (value) {
                 if (value == 'edit') onEdit();
                 if (value == 'delete') onDelete();
@@ -82,8 +84,8 @@ class TransactionListItem extends StatelessWidget {
                   value: 'edit',
                   child: Row(
                     children: [
-                      const Icon(Icons.edit_outlined, size: 18),
-                      const SizedBox(width: 12),
+                      const Icon(Icons.edit_outlined, size: AppComponentSizes.iconSmall),
+                      AppSpacing.gapH12,
                       Text('Modifier', style: AppTypography.body),
                     ],
                   ),
@@ -92,8 +94,8 @@ class TransactionListItem extends StatelessWidget {
                   value: 'delete',
                   child: Row(
                     children: [
-                      const Icon(Icons.delete_outline, size: 18, color: AppColors.error),
-                      const SizedBox(width: 12),
+                      const Icon(Icons.delete_outline, size: AppComponentSizes.iconSmall, color: AppColors.error),
+                      AppSpacing.gapH12,
                       Text('Supprimer', style: AppTypography.body.copyWith(color: AppColors.error)),
                     ],
                   ),

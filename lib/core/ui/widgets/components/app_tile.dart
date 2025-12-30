@@ -3,6 +3,8 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_dimens.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 class AppTile extends StatelessWidget {
   final String title;
@@ -54,7 +56,7 @@ class AppTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (subtitle != null) ...[
-                      const SizedBox(height: 2),
+                      AppSpacing.gapTiny,
                       Text(
                         subtitle!,
                         style: AppTypography.caption,

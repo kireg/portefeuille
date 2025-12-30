@@ -17,6 +17,7 @@ import 'package:portefeuille/features/00_app/providers/transaction_provider.dart
 
 import 'package:portefeuille/features/09_imports/models/draft_transaction.dart';
 import 'package:portefeuille/features/09_imports/ui/widgets/draft_transaction_card.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class AiTransactionReviewScreen extends StatefulWidget {
   final String accountId;
@@ -136,7 +137,7 @@ class _AiTransactionReviewScreenState extends State<AiTransactionReviewScreen> {
               child: ListView.separated(
                 padding: const EdgeInsets.all(AppDimens.paddingM),
                 itemCount: _drafts.length,
-                separatorBuilder: (ctx, i) => const SizedBox(height: 16),
+                separatorBuilder: (ctx, i) => AppSpacing.gapM,
                 itemBuilder: (ctx, index) {
                   return DraftTransactionCard(
                     draft: _drafts[index],

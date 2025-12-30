@@ -2,8 +2,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/features/09_imports/ui/screens/file_import_wizard.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_transaction_screen.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 class ImportHubScreen extends StatelessWidget {
   const ImportHubScreen({super.key});
@@ -27,25 +31,25 @@ class ImportHubScreen extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+                  color: AppColors.textSecondary.withValues(alpha: AppOpacities.decorative),
+                  borderRadius: BorderRadius.circular(AppDimens.radiusXs),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            AppSpacing.gapL,
             
             Text(
               'Ajouter une transaction',
               style: AppTypography.h2,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            AppSpacing.gapS,
             Text(
               'Comment souhaitez-vous ajouter vos données ?',
               style: AppTypography.body,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
+            AppSpacing.gapXl,
             
             Row(
               children: [
@@ -66,7 +70,7 @@ class ImportHubScreen extends StatelessWidget {
                     },
                   ),
                 ),
-                const SizedBox(width: 16),
+                AppSpacing.gapHorizontalMedium,
                 Expanded(
                   child: _buildOptionCard(
                     context,
@@ -105,28 +109,28 @@ class ImportHubScreen extends StatelessWidget {
       height: 180,
       decoration: BoxDecoration(
         gradient: AppColors.surfaceGradient,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppDimens.radiusL),
         border: Border.all(
-          color: color.withValues(alpha: 0.5),
+          color: color.withValues(alpha: AppOpacities.semiVisible),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.1),
+            color: color.withValues(alpha: AppOpacities.lightOverlay),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppDimens.radiusL),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppDimens.radiusL),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -135,11 +139,11 @@ class ImportHubScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.1),
+                        color: color.withValues(alpha: AppOpacities.lightOverlay),
                         shape: BoxShape.circle,
-                        border: Border.all(color: color.withValues(alpha: 0.2)),
+                        border: Border.all(color: color.withValues(alpha: AppOpacities.border)),
                       ),
-                      child: Icon(icon, size: 32, color: color),
+                      child: Icon(icon, size: AppComponentSizes.iconLarge, color: color),
                     ),
                     const Spacer(),
                     Text(
@@ -147,7 +151,7 @@ class ImportHubScreen extends StatelessWidget {
                       style: AppTypography.h3.copyWith(fontSize: 16),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 4),
+                    AppSpacing.gapXs,
                     Text(
                       description,
                       style: AppTypography.body.copyWith(

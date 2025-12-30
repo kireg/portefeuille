@@ -6,6 +6,7 @@ import 'package:portefeuille/core/data/models/asset_type.dart';
 import 'package:portefeuille/core/data/services/api_service.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/features/01_launch/data/wizard_models.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
@@ -210,7 +211,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    AppSpacing.gapHorizontalMedium,
                     Expanded(
                       flex: 2,
                       child: DropdownButtonFormField<AssetType>(
@@ -231,7 +232,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.gapM,
                 
                 // Nom
                 TextFormField(
@@ -243,11 +244,11 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                   textCapitalization: TextCapitalization.sentences,
                   validator: (v) => v?.isEmpty == true ? 'Requis' : null,
                 ),
-                const SizedBox(height: 24),
+                AppSpacing.gapL,
                 
                 // Quantité & Prix
                 Text('Position', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
+                AppSpacing.gapS,
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -266,7 +267,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                             (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Inv.' : null,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    AppSpacing.gapHorizontalMedium,
                     Expanded(
                       child: TextFormField(
                         controller: _avgPriceController,
@@ -282,7 +283,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.gapM,
                 
                 // Prix Actuel & Rendement
                 Row(
@@ -301,7 +302,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                             (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Inv.' : null,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    AppSpacing.gapHorizontalMedium,
                     Expanded(
                       child: TextFormField(
                         controller: _yieldController,
@@ -316,7 +317,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                   ],
                 ),
                 
-                const SizedBox(height: 16),
+                AppSpacing.gapM,
 
                 // Date de premier achat
                 InkWell(
@@ -344,7 +345,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                   ),
                 ),
                 
-                const SizedBox(height: 32),
+                AppSpacing.gapXl,
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -352,7 +353,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Annuler'),
                     ),
-                    const SizedBox(width: 16),
+                    AppSpacing.gapHorizontalMedium,
                     ElevatedButton(
                       onPressed: _submit,
                       style: ElevatedButton.styleFrom(

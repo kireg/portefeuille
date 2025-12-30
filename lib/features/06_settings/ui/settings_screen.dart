@@ -3,6 +3,7 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_screen.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 
@@ -46,7 +47,7 @@ class SettingsScreen extends StatelessWidget {
                         icon: Icons.close,
                         onTap: () => Navigator.of(context).pop(),
                         backgroundColor: Colors.transparent,
-                        size: 24,
+                        size: AppComponentSizes.iconMedium,
                       ),
                     ),
                   ],

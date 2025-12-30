@@ -2,20 +2,32 @@
 /// Usage: Icon(Icons.check, size: AppComponentSizes.iconMedium)
 class AppComponentSizes {
   // --- ICON SIZES ---
+  /// Extra small icons (14px) - tiny indicators
+  static const double iconXxSmall = 14.0;
+  
   /// Extra small icons (16px) - badges, decorative elements
   static const double iconXSmall = 16.0;
 
   /// Small icons (18px) - button icons, secondary actions
   static const double iconSmall = 18.0;
+  
+  /// Medium-small icons (20px) - compact UI elements
+  static const double iconMediumSmall = 20.0;
 
   /// Medium icons (24px) - standard icons (Material default)
   static const double iconMedium = 24.0;
+  
+  /// Medium-large icons (28px) - slightly emphasized
+  static const double iconMediumLarge = 28.0;
 
   /// Large icons (32px) - prominent icons, emphasized actions
   static const double iconLarge = 32.0;
 
   /// Extra large icons (48px) - hero icons, featured elements
   static const double iconXLarge = 48.0;
+  
+  /// XXL icons (64px) - very large hero icons, splash screens
+  static const double iconXxLarge = 64.0;
 
   /// Icon border radius (12px) - for squircle icon backgrounds
   static const double iconBorderRadius = 12.0;

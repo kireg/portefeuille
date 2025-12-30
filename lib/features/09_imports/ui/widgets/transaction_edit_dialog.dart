@@ -5,6 +5,7 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/widgets/inputs/app_dropdown.dart';
 import 'package:portefeuille/core/ui/widgets/inputs/app_text_field.dart';
 import 'package:portefeuille/features/09_imports/services/pdf/statement_parser.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class TransactionEditDialog extends StatefulWidget {
   final ParsedTransaction transaction;
@@ -88,7 +89,7 @@ class _TransactionEditDialogState extends State<TransactionEditDialog> {
               label: "Date (YYYY-MM-DD)",
               controller: _dateController,
             ),
-            const SizedBox(height: 12),
+            AppSpacing.gap12,
             AppDropdown<TransactionType>(
               label: "Type",
               value: _type,
@@ -98,17 +99,17 @@ class _TransactionEditDialogState extends State<TransactionEditDialog> {
               )).toList(),
               onChanged: (val) => setState(() => _type = val!),
             ),
-            const SizedBox(height: 12),
+            AppSpacing.gap12,
             AppTextField(
               label: "Nom de l'actif",
               controller: _assetNameController,
             ),
-            const SizedBox(height: 12),
+            AppSpacing.gap12,
             AppTextField(
               label: "ISIN",
               controller: _isinController,
             ),
-            const SizedBox(height: 12),
+            AppSpacing.gap12,
             Row(
               children: [
                 Expanded(
@@ -118,7 +119,7 @@ class _TransactionEditDialogState extends State<TransactionEditDialog> {
                     keyboardType: TextInputType.number,
                   ),
                 ),
-                const SizedBox(width: 12),
+                AppSpacing.gapH12,
                 Expanded(
                   child: AppTextField(
                     label: "Montant Total",
@@ -128,7 +129,7 @@ class _TransactionEditDialogState extends State<TransactionEditDialog> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            AppSpacing.gap12,
             AppDropdown<AssetType>(
               label: "Type d'actif",
               value: _assetType,

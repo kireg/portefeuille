@@ -5,6 +5,10 @@ import '../../theme/app_typography.dart';
 import '../../theme/app_animations.dart';
 import '../../theme/app_component_sizes.dart';
 import '../../theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 enum AppButtonType { primary, secondary, ghost }
 
@@ -128,7 +132,7 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
           borderRadius: BorderRadius.circular(AppDimens.radiusS),
           boxShadow: [
             BoxShadow(
-              color: primaryColor.withValues(alpha: 0.4), // Ombre colorée
+              color: primaryColor.withValues(alpha: AppOpacities.shadow), // Ombre colorée
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),

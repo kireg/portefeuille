@@ -8,10 +8,12 @@ import 'package:shimmer/shimmer.dart';
 
 // Design System
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_animations.dart';
 // ignore: unused_import
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
 
 // Logic
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
@@ -237,7 +239,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         gradient: RadialGradient(
           colors: [
             color.withValues(alpha: opacity),
-            color.withValues(alpha: 0.0),
+            color.withValues(alpha: AppOpacities.transparent),
           ],
           stops: const [0.0, 1.0],
         ),
@@ -247,7 +249,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   Widget _buildGlassCard(Color primaryColor) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(AppDimens.radius30),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
         child: Container(
@@ -260,8 +262,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 30),
           // -------------------------
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(30),
+            color: AppColors.surface.withValues(alpha: AppOpacities.lightOverlay),
+            borderRadius: BorderRadius.circular(AppDimens.radius30),
             border: Border.all(
               color: AppColors.whiteOverlay10,
               width: 1.5,
@@ -287,7 +289,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildLogo(primaryColor),
-              const SizedBox(height: 40),
+              AppSpacing.gap40,
 
               // J'ajoute un FittedBox ici par sécurité pour les petits écrans
               // afin que le texte réduise sa taille plutôt que de passer à la ligne
@@ -308,7 +310,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              AppSpacing.gapM,
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -322,7 +324,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       valueColor: AlwaysStoppedAnimation<Color>(AppColors.whiteOverlay50),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  AppSpacing.gapH12,
                   Flexible( // Permet au texte de ne pas casser la layout si très long
                     child: Text(
                       'Initialisation sécurisée',
@@ -353,12 +355,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           end: Alignment.bottomRight,
           colors: [
             color,
-            color.withValues(alpha: 0.7),
+            color.withValues(alpha: AppOpacities.strong),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.4),
+            color: color.withValues(alpha: AppOpacities.shadow),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),

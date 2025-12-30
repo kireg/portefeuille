@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
@@ -87,7 +88,7 @@ class GeneralSettingsCard extends StatelessWidget {
                       child: const Icon(Icons.drag_handle, color: AppColors.textSecondary),
                     ),
                     trailing: index == 0 
-                        ? const Icon(Icons.star, size: 16, color: AppColors.primary) 
+                        ? const Icon(Icons.star, size: AppComponentSizes.iconXSmall, color: AppColors.primary) 
                         : null,
                   ),
               ],

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:portefeuille/core/data/models/account.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/services/modal_service.dart';
@@ -101,7 +102,7 @@ class AccountTile extends StatelessWidget {
             maxLines: 1,
             softWrap: false,
           ),
-          const SizedBox(height: 4),
+          AppSpacing.gapXs,
           AccountTypeChip(
             accountType: account.type,
             isNoviceModeEnabled: settingsProvider.userLevel == UserLevel.novice,
@@ -147,7 +148,7 @@ class AccountTile extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(Icons.edit_outlined),
-                    SizedBox(width: 8),
+                    AppSpacing.gapHorizontalSmall,
                     Text('Modifier'),
                   ],
                 ),
@@ -157,7 +158,7 @@ class AccountTile extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(Icons.delete_outline, color: AppColors.error),
-                    SizedBox(width: 8),
+                    AppSpacing.gapHorizontalSmall,
                     Text('Supprimer', style: TextStyle(color: AppColors.error)),
                   ],
                 ),
@@ -216,7 +217,7 @@ class AccountTile extends StatelessWidget {
           color: color,
           size: 12,
         ),
-        const SizedBox(width: 2),
+        AppSpacing.gapHTiny,
         Text(
           '${CurrencyFormatter.format(pnl, baseCurrency)} (${NumberFormat.percentPattern().format(pnlPercentage)})',
           style: theme.textTheme.bodySmall?.copyWith(

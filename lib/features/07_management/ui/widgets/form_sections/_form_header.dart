@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/features/07_management/ui/providers/transaction_form_state.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 
 class FormHeader extends StatelessWidget {
@@ -39,7 +40,7 @@ class FormHeader extends StatelessWidget {
                 icon: Icons.close,
                 onTap: () => Navigator.of(context).pop(),
                 backgroundColor: Colors.transparent,
-                size: 24,
+                size: AppComponentSizes.iconMedium,
               ),
             ),
           ),

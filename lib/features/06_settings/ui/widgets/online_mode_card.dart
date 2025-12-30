@@ -4,9 +4,11 @@ import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class OnlineModeCard extends StatefulWidget {
   const OnlineModeCard({super.key});
@@ -80,19 +82,19 @@ class _OnlineModeCardState extends State<OnlineModeCard> {
 
           // --- SECTION GEMINI (IA) ---
           Text('Intelligence Artificielle (Gemini)', style: AppTypography.bodyBold),
-          const SizedBox(height: 8),
+          AppSpacing.gapS,
           Text(
               'Permet l\'analyse de PDF pour les transactions.',
               style: AppTypography.caption.copyWith(color: AppColors.textTertiary)
           ),
-          const SizedBox(height: 12),
+          AppSpacing.gap12,
           if (settings.hasGeminiApiKey)
             Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle, color: AppColors.success, size: 14),
-                  const SizedBox(width: 4),
+                  const Icon(Icons.check_circle, color: AppColors.success, size: AppComponentSizes.iconXxSmall),
+                  AppSpacing.gapH4,
                   Text('Clé active', style: AppTypography.caption.copyWith(color: AppColors.success)),
                 ],
               ),
@@ -114,7 +116,7 @@ class _OnlineModeCardState extends State<OnlineModeCard> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              AppSpacing.gapHorizontalSmall,
               AppButton(
                 label: 'OK',
                 onPressed: () => _saveGeminiKey(settings),
@@ -140,19 +142,19 @@ class _OnlineModeCardState extends State<OnlineModeCard> {
           ),
 
           if (settings.isOnlineMode) ...[
-            const SizedBox(height: 8),
+            AppSpacing.gapS,
             Text(
                 'Améliore la fiabilité des prix.',
                 style: AppTypography.caption.copyWith(color: AppColors.textTertiary)
             ),
-            const SizedBox(height: 12),
+            AppSpacing.gap12,
             if (settings.hasFmpApiKey)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle, color: AppColors.success, size: 14),
-                    const SizedBox(width: 4),
+                    const Icon(Icons.check_circle, color: AppColors.success, size: AppComponentSizes.iconXxSmall),
+                    AppSpacing.gapH4,
                     Text('Clé active', style: AppTypography.caption.copyWith(color: AppColors.success)),
                   ],
                 ),
@@ -174,7 +176,7 @@ class _OnlineModeCardState extends State<OnlineModeCard> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                AppSpacing.gapHorizontalSmall,
                 AppButton(
                   label: 'OK',
                   onPressed: () => _saveFmpKey(settings),

@@ -8,6 +8,8 @@ import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/ui/widgets/components/app_tile.dart';
@@ -109,7 +111,7 @@ class InstitutionTile extends StatelessWidget {
 
               return AppIcon(
                 icon: Icons.account_balance,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                backgroundColor: AppColors.primary.withValues(alpha: AppOpacities.lightOverlay),
                 color: AppColors.primary,
               );
             }
@@ -138,7 +140,7 @@ class InstitutionTile extends StatelessWidget {
                       style: AppTypography.bodyBold,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  AppSpacing.gapTiny,
                   // Ligne P/L (Montant + %)
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -146,7 +148,7 @@ class InstitutionTile extends StatelessWidget {
                       Icon(
                         isPositive ? Icons.arrow_drop_up : Icons.arrow_drop_down,
                         color: plColor,
-                        size: 16,
+                        size: AppComponentSizes.iconXSmall,
                       ),
                       // CORRECTION ICI : Suppression de compact: true
                       PrivacyBlur(
@@ -158,11 +160,11 @@ class InstitutionTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      AppSpacing.gapH4,
                       Text(
                         '(${NumberFormat.decimalPercentPattern(decimalDigits: 1).format(institutionPLPercent)})',
                         style: AppTypography.caption.copyWith(
-                            color: plColor.withValues(alpha: 0.8)
+                            color: plColor.withValues(alpha: AppOpacities.veryHigh)
                         ),
                       ),
                     ],
@@ -207,8 +209,8 @@ class InstitutionTile extends StatelessWidget {
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit, size: 20, color: AppColors.textPrimary),
-                        SizedBox(width: 8),
+                        Icon(Icons.edit, size: AppComponentSizes.iconMediumSmall, color: AppColors.textPrimary),
+                        AppSpacing.gapHorizontalSmall,
                         Text('Modifier'),
                       ],
                     ),
@@ -217,8 +219,8 @@ class InstitutionTile extends StatelessWidget {
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, size: 20, color: AppColors.error),
-                        SizedBox(width: 8),
+                        Icon(Icons.delete, size: AppComponentSizes.iconMediumSmall, color: AppColors.error),
+                        AppSpacing.gapHorizontalSmall,
                         Text('Supprimer', style: TextStyle(color: AppColors.error)),
                       ],
                     ),
@@ -240,7 +242,7 @@ class InstitutionTile extends StatelessWidget {
             }),
             AppTile(
               title: 'Ajouter un compte',
-              leading: const Icon(Icons.add_circle_outline, size: 18, color: AppColors.textSecondary),
+              leading: const Icon(Icons.add_circle_outline, size: AppComponentSizes.iconSmall, color: AppColors.textSecondary),
               onTap: () => ModalService.showAddAccount(context, institutionId: institution.id),
             ),
           ],

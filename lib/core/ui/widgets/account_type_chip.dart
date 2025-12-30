@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/data/models/account_type.dart';
 import '../theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 
 class AccountTypeChip extends StatelessWidget {

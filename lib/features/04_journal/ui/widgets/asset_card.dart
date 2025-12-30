@@ -7,6 +7,8 @@ import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_elevations.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/core/data/models/aggregated_asset.dart';
 import 'package:portefeuille/core/data/models/sync_status.dart';
@@ -44,10 +46,10 @@ class _AssetCardState extends State<AssetCard> {
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.6), // Transparence
+            color: AppColors.surface.withValues(alpha: AppOpacities.prominent), // Transparence
             borderRadius: BorderRadius.circular(AppDimens.radiusM),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
+              color: Colors.white.withValues(alpha: AppOpacities.lightOverlay),
               width: 1,
             ),
             boxShadow: AppElevations.sm,
@@ -106,7 +108,7 @@ class _AssetCardState extends State<AssetCard> {
                 firstChild: const SizedBox.shrink(),
                 secondChild: Column(
                   children: [
-                    Divider(height: 1, color: AppColors.border.withValues(alpha: 0.5)),
+                    Divider(height: 1, color: AppColors.border.withValues(alpha: AppOpacities.semiVisible)),
                     Padding(
                       padding: const EdgeInsets.all(AppDimens.paddingM),
                       child: Column(
@@ -139,7 +141,7 @@ class _AssetCardState extends State<AssetCard> {
                                     _buildInfoLabel('Prix Actuel'),
                                     InkWell(
                                       onTap: widget.onEditPrice,
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: BorderRadius.circular(AppDimens.radiusXs2),
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(vertical: 2),
                                         child: Row(
@@ -149,8 +151,8 @@ class _AssetCardState extends State<AssetCard> {
                                               CurrencyFormatter.format(widget.asset.currentPrice, widget.baseCurrency),
                                               style: AppTypography.body.copyWith(color: AppColors.primary),
                                             ),
-                                            const SizedBox(width: 4),
-                                            const Icon(Icons.edit, size: 14, color: AppColors.primary),
+                                            AppSpacing.gapH4,
+                                            const Icon(Icons.edit, size: AppComponentSizes.iconXxSmall, color: AppColors.primary),
                                           ],
                                         ),
                                       ),
@@ -165,7 +167,7 @@ class _AssetCardState extends State<AssetCard> {
                                     _buildInfoLabel('Rendement Est.'),
                                     InkWell(
                                       onTap: widget.onEditYield,
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: BorderRadius.circular(AppDimens.radiusXs2),
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(vertical: 2),
                                         child: Row(
@@ -175,8 +177,8 @@ class _AssetCardState extends State<AssetCard> {
                                               "${(widget.asset.estimatedAnnualYield * 100).toStringAsFixed(2)}%",
                                               style: AppTypography.body.copyWith(color: AppColors.primary),
                                             ),
-                                            const SizedBox(width: 4),
-                                            const Icon(Icons.edit, size: 14, color: AppColors.primary),
+                                            AppSpacing.gapH4,
+                                            const Icon(Icons.edit, size: AppComponentSizes.iconXxSmall, color: AppColors.primary),
                                           ],
                                         ),
                                       ),
@@ -201,7 +203,7 @@ class _AssetCardState extends State<AssetCard> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildInfoLabel("Comptes"),
-                              const SizedBox(width: 8),
+                              AppSpacing.gapHorizontalSmall,
                               Expanded(
                                 child: Wrap(
                                   spacing: 4,
@@ -211,7 +213,7 @@ class _AssetCardState extends State<AssetCard> {
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: AppColors.surfaceLight,
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: BorderRadius.circular(AppDimens.radiusXs2),
                                       border: Border.all(color: AppColors.border),
                                     ),
                                     child: Text(name, style: AppTypography.caption),
@@ -235,8 +237,8 @@ class _AssetCardState extends State<AssetCard> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.search, size: 16, color: AppColors.primary),
-                                    const SizedBox(width: 4),
+                                    const Icon(Icons.search, size: AppComponentSizes.iconXSmall, color: AppColors.primary),
+                                    AppSpacing.gapH4,
                                     Text("Rechercher le ticker (Yahoo)", style: AppTypography.caption.copyWith(color: AppColors.primary)),
                                   ],
                                 ),
@@ -284,7 +286,7 @@ class _AssetCardState extends State<AssetCard> {
       height: 40,
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppDimens.radiusS),
       ),
       child: Center(
         child: Text(
@@ -324,9 +326,9 @@ class _AssetCardState extends State<AssetCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        color: color.withValues(alpha: AppOpacities.lightOverlay),
+        borderRadius: BorderRadius.circular(AppDimens.radiusXs2),
+        border: Border.all(color: color.withValues(alpha: AppOpacities.decorative)),
       ),
       child: Text(
         text,

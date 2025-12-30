@@ -4,6 +4,8 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_dimens.dart';
 import '../../theme/app_elevations.dart';
 import '../../theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 class AppCard extends StatelessWidget {
   final Widget child;

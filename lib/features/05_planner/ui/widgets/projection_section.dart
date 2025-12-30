@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/utils/currency_formatter.dart';
@@ -12,6 +14,7 @@ import 'package:portefeuille/features/00_app/providers/portfolio_calculation_pro
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
 import 'projection_chart.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class ProjectionSection extends StatelessWidget {
   final int selectedDuration;
@@ -44,10 +47,10 @@ class ProjectionSection extends StatelessWidget {
                 children: [
                   const AppIcon(
                       icon: Icons.show_chart,
-                      size: 18,
+                      size: AppComponentSizes.iconSmall,
                       color: AppColors.primary,
                       backgroundColor: Colors.transparent),
-                  const SizedBox(width: 8),
+                  AppSpacing.gapHorizontalSmall,
                   Text('PROJECTION', style: AppTypography.label.copyWith(color: AppColors.textTertiary)),
                 ],
               ),
@@ -105,8 +108,8 @@ class ProjectionSection extends StatelessWidget {
                   runSpacing: 8,
                   alignment: WrapAlignment.center,
                   children: [
-                    _buildLegend('Capital actuel', AppColors.primary.withValues(alpha: 0.5)),
-                    _buildLegend('Versements', AppColors.accent.withValues(alpha: 0.5)),
+                    _buildLegend('Capital actuel', AppColors.primary.withValues(alpha: AppOpacities.semiVisible)),
+                    _buildLegend('Versements', AppColors.accent.withValues(alpha: AppOpacities.semiVisible)),
                     _buildLegend('Intérêts composés', AppColors.success),
                   ],
                 ),
@@ -130,7 +133,7 @@ class ProjectionSection extends StatelessWidget {
                       backgroundColor: WidgetStateProperty.resolveWith<Color>(
                             (Set<WidgetState> states) {
                           if (states.contains(WidgetState.selected)) {
-                            return AppColors.primary.withValues(alpha: 0.2);
+                            return AppColors.primary.withValues(alpha: AppOpacities.border);
                           }
                           return Colors.transparent;
                         },
@@ -157,7 +160,7 @@ class ProjectionSection extends StatelessWidget {
     return Column(
       children: [
         Text(label, style: AppTypography.caption),
-        const SizedBox(height: 4),
+        AppSpacing.gapXs,
         Text(
           CurrencyFormatter.format(value, currency),
           style: AppTypography.bodyBold.copyWith(color: color, fontSize: 16),
@@ -175,7 +178,7 @@ class ProjectionSection extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 6),
+        AppSpacing.gapH6,
         Text(label, style: AppTypography.caption),
       ],
     );

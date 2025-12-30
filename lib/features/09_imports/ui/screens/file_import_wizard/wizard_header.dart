@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 /// Header du wizard avec poignée de glissement et titre.
 class WizardHeader extends StatelessWidget {
@@ -18,11 +21,11 @@ class WizardHeader extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.textSecondary.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
+              color: AppColors.textSecondary.withValues(alpha: AppOpacities.decorative),
+              borderRadius: BorderRadius.circular(AppDimens.radiusXs),
             ),
           ),
-          const SizedBox(height: 16),
+          AppSpacing.gapM,
           Row(
             children: [
               IconButton(
@@ -36,7 +39,7 @@ class WizardHeader extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(width: 48), // Balance the close button
+              AppSpacing.gapHXxl, // Balance the close button
             ],
           ),
         ],
@@ -78,7 +81,7 @@ class WizardProgressIndicator extends StatelessWidget {
         border: Border.all(
           color: isActive
               ? AppColors.primary
-              : AppColors.textSecondary.withValues(alpha: 0.3),
+              : AppColors.textSecondary.withValues(alpha: AppOpacities.decorative),
         ),
       ),
       child: Center(

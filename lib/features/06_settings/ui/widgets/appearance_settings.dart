@@ -3,7 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
+import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
 // Liste des couleurs prédéfinies - Utilise AppColors + palette personnalisée
@@ -31,7 +34,7 @@ class AppearanceSettings extends StatelessWidget {
           'Couleur principale',
           style: theme.textTheme.titleMedium,
         ),
-        const SizedBox(height: 8),
+        AppSpacing.gapS,
         Text(
           'Cette couleur sera utilisée pour les boutons, les icônes et les éléments actifs de l\'interface.',
           style: AppTypography.caption,
@@ -105,14 +108,14 @@ class _ColorChipState extends State<_ColorChip> {
             ),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withValues(alpha: 0.4),
+                color: widget.color.withValues(alpha: AppOpacities.shadow),
                 blurRadius: widget.isSelected || _isHovered ? 12 : 4,
                 offset: const Offset(0, 4),
               )
             ],
           ),
           child: widget.isSelected
-              ? const Icon(Icons.check, color: AppColors.white, size: 24)
+              ? const Icon(Icons.check, color: AppColors.white, size: AppComponentSizes.iconMedium)
               : null,
         ),
       ),
