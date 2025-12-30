@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
@@ -14,7 +15,6 @@ import 'package:portefeuille/features/00_app/providers/portfolio_calculation_pro
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 
 import 'projection_chart.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class ProjectionSection extends StatelessWidget {
   final int selectedDuration;

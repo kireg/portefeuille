@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
@@ -16,7 +17,6 @@ import 'package:portefeuille/core/utils/currency_formatter.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/07_management/ui/screens/add_savings_plan_screen.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class SavingsPlansSection extends StatelessWidget {
   const SavingsPlansSection({super.key});

@@ -2,13 +2,13 @@
 // REMPLACEZ LE FICHIER COMPLET
 
 import 'package:flutter/material.dart';
+import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/features/00_app/providers/portfolio_provider.dart'; // NOUVEL IMPORT
 import 'package:portefeuille/core/data/models/asset_metadata.dart'; // NOUVEL IMPORT
 import 'package:intl/intl.dart'; // NOUVEL IMPORT
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 class AppSettings extends StatefulWidget {
   const AppSettings({super.key});

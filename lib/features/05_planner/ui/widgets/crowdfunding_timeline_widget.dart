@@ -4,10 +4,10 @@ import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/transaction_type.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_opacities.dart';
 import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class CrowdfundingTimelineWidget extends StatefulWidget {
   final List<Asset> assets;

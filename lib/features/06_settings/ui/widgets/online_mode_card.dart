@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 import 'package:portefeuille/features/00_app/providers/settings_provider.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
@@ -8,7 +9,6 @@ import 'package:portefeuille/core/ui/theme/app_component_sizes.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_card.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_icon.dart';
 import 'package:portefeuille/core/ui/widgets/primitives/app_button.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class OnlineModeCard extends StatefulWidget {
   const OnlineModeCard({super.key});

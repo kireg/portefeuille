@@ -3,11 +3,11 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 import '../../00_app/providers/portfolio_provider.dart';
 import '../../02_dashboard/ui/dashboard_screen.dart';
 import 'widgets/initial_setup_wizard.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class LaunchScreen extends StatefulWidget {
   const LaunchScreen({super.key});

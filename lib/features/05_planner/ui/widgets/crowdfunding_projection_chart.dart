@@ -6,10 +6,10 @@ import 'package:portefeuille/core/data/models/asset.dart';
 import 'package:portefeuille/core/data/models/transaction.dart';
 import 'package:portefeuille/core/ui/theme/app_colors.dart';
 import 'package:portefeuille/core/ui/theme/app_dimens.dart';
+import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 import 'package:portefeuille/core/ui/theme/app_typography.dart';
 import 'package:portefeuille/core/ui/theme/app_opacities.dart';
 import 'package:portefeuille/features/00_app/services/crowdfunding_service.dart';
-import 'package:portefeuille/core/ui/theme/app_spacing.dart';
 
 class CrowdfundingProjectionChart extends StatefulWidget {
   final List<Asset> assets;

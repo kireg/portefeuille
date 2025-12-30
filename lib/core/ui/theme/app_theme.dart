@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
 import 'app_colors.dart';
 import 'app_typography.dart';
 import 'app_dimens.dart';
-import 'package:portefeuille/core/ui/theme/app_opacities.dart';
-import 'package:portefeuille/core/ui/theme/app_dimens.dart';
 
 class AppTheme {
   static ThemeData getTheme(Color primaryColor) {

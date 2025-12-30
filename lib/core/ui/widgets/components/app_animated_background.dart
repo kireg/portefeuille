@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:portefeuille/core/ui/theme/app_opacities.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_animations.dart';
-import 'package:portefeuille/core/ui/theme/app_opacities.dart';
 
 class AppAnimatedBackground extends StatefulWidget {
   final Widget child;
