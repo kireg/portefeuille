@@ -30,12 +30,13 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
     // Calcul responsive de la hauteur : 25% de l'écran, borné entre 200 et 350px
     final screenHeight = MediaQuery.of(context).size.height;
     final double chartHeight = (screenHeight * 0.25).clamp(200.0, 350.0);
-    final currencyCode = context.select<SettingsProvider, String>((s) => s.baseCurrency);
+    final currencyCode =
+        context.select<SettingsProvider, String>((s) => s.baseCurrency);
 
     return Selector<PortfolioProvider, List<PortfolioValueHistoryPoint>>(
-      selector: (context, provider) => provider.activePortfolio?.valueHistory ?? [],
+      selector: (context, provider) =>
+          provider.activePortfolio?.valueHistory ?? [],
       builder: (context, fullHistory, child) {
-        
         // Filtrage des données selon la période sélectionnée
         final history = _filterHistory(fullHistory, _selectedRange);
 
@@ -56,11 +57,13 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
                 ],
               ),
             ),
-            
+
             if (history.isEmpty)
-              _buildPlaceholder("Pas de données pour cette période.", chartHeight)
+              _buildPlaceholder(
+                  "Pas de données pour cette période.", chartHeight)
             else if (history.length < 2 && _selectedRange != ChartTimeRange.day)
-              _buildPlaceholder("Données insuffisantes pour le graphique.", chartHeight)
+              _buildPlaceholder(
+                  "Données insuffisantes pour le graphique.", chartHeight)
             else
               // Remplacement de AspectRatio par SizedBox avec hauteur dynamique uniforme
               SizedBox(
@@ -102,18 +105,21 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
     }
 
     final filtered = fullHistory.where((p) => p.date.isAfter(cutoff)).toList();
-    
+
     // Si on a moins de 2 points pour "Jour", on essaie d'ajouter le dernier point connu AVANT la période
     // pour avoir une ligne de continuité (sauf si aucun point avant).
     if (filtered.length < 2 && range != ChartTimeRange.max) {
-       final pointsBefore = fullHistory.where((p) => p.date.isBefore(cutoff) || p.date.isAtSameMomentAs(cutoff)).toList();
-       if (pointsBefore.isNotEmpty) {
-         // On ajoute le dernier point d'avant comme point de départ "fictif" à la limite du cutoff
-         // pour que le graphe ne soit pas vide.
-         filtered.insert(0, pointsBefore.last);
-       }
+      final pointsBefore = fullHistory
+          .where(
+              (p) => p.date.isBefore(cutoff) || p.date.isAtSameMomentAs(cutoff))
+          .toList();
+      if (pointsBefore.isNotEmpty) {
+        // On ajoute le dernier point d'avant comme point de départ "fictif" à la limite du cutoff
+        // pour que le graphe ne soit pas vide.
+        filtered.insert(0, pointsBefore.last);
+      }
     }
-    
+
     return filtered;
   }
 
@@ -171,14 +177,11 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
   }
 
   LineChartData _mainData(
-      List<PortfolioValueHistoryPoint> history,
-      String currencyCode
-      ) {
+      List<PortfolioValueHistoryPoint> history, String currencyCode) {
     // Tri
     history.sort((a, b) => a.date.compareTo(b.date));
 
     // Conservation des données complètes pour le tooltip
-    final fullHistory = history;
     final fullSpots = history.map((point) {
       return FlSpot(
         point.date.millisecondsSinceEpoch.toDouble(),
@@ -187,11 +190,16 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
     }).toList();
 
     // Échantillonnage intelligent pour la courbe affichée
-    final displaySpots = _sampleDataPoints(fullSpots, AppChartStyles.maxVisualDataPoints);
+    final displaySpots =
+        _sampleDataPoints(fullSpots, AppChartStyles.maxVisualDataPoints);
 
     // Min/Max
-    double minY = history.map((e) => e.value).reduce((curr, next) => curr < next ? curr : next);
-    double maxY = history.map((e) => e.value).reduce((curr, next) => curr > next ? curr : next);
+    double minY = history
+        .map((e) => e.value)
+        .reduce((curr, next) => curr < next ? curr : next);
+    double maxY = history
+        .map((e) => e.value)
+        .reduce((curr, next) => curr > next ? curr : next);
 
     // Marge esthétique (10% haut/bas)
     final double margin = (maxY - minY) * 0.1;
@@ -205,7 +213,8 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
       borderData: FlBorderData(show: false),
       titlesData: FlTitlesData(
         show: true,
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles:
+            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
@@ -231,7 +240,8 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
             reservedSize: 45,
             interval: (maxY - minY) / 3,
             getTitlesWidget: (value, meta) {
-              if (value == minY || value == maxY) return const SizedBox.shrink();
+              if (value == minY || value == maxY)
+                return const SizedBox.shrink();
               return Text(
                 NumberFormat.compact().format(value),
                 style: AppTypography.caption.copyWith(fontSize: 10),
@@ -257,7 +267,8 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
           shadow: Shadow(
             color: AppColors.primary.withValues(alpha: AppOpacities.prominent),
             blurRadius: AppChartStyles.lineShadowBlurRadius,
-            offset: Offset(AppChartStyles.lineShadowOffsetX, AppChartStyles.lineShadowOffsetY),
+            offset: Offset(AppChartStyles.lineShadowOffsetX,
+                AppChartStyles.lineShadowOffsetY),
           ),
           belowBarData: BarAreaData(
             show: true,
@@ -281,8 +292,10 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
             return touchedSpots.map((LineBarSpot touchedSpot) {
               // Trouver la vraie valeur la plus proche dans les données complètes
               final realSpot = _findClosestRealValue(touchedSpot.x, fullSpots);
-              final date = DateTime.fromMillisecondsSinceEpoch(realSpot.x.toInt());
-              final formattedValue = CurrencyFormatter.format(realSpot.y, currencyCode);
+              final date =
+                  DateTime.fromMillisecondsSinceEpoch(realSpot.x.toInt());
+              final formattedValue =
+                  CurrencyFormatter.format(realSpot.y, currencyCode);
               return LineTooltipItem(
                 '${DateFormat('dd MMM', 'fr_FR').format(date)}\n',
                 AppTypography.caption,
@@ -296,7 +309,8 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
             }).toList();
           },
         ),
-        getTouchedSpotIndicator: (LineChartBarData barData, List<int> spotIndexes) {
+        getTouchedSpotIndicator:
+            (LineChartBarData barData, List<int> spotIndexes) {
           return spotIndexes.map((spotIndex) {
             return TouchedSpotIndicatorData(
               FlLine(color: primaryColor, strokeWidth: 2, dashArray: [4, 4]),
@@ -319,7 +333,8 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
 
   double _calculateDateInterval(List<PortfolioValueHistoryPoint> history) {
     if (history.isEmpty) return 1.0;
-    final diff = history.last.date.difference(history.first.date).inMilliseconds;
+    final diff =
+        history.last.date.difference(history.first.date).inMilliseconds;
     if (diff == 0) return 1.0;
     return diff / 4;
   }
@@ -328,29 +343,29 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
   /// Garde toujours le premier et le dernier point
   List<FlSpot> _sampleDataPoints(List<FlSpot> spots, int maxPoints) {
     if (spots.length <= maxPoints) return spots;
-    
+
     final sampled = <FlSpot>[];
     sampled.add(spots.first); // Toujours garder le premier point
-    
+
     final step = (spots.length - 1) / (maxPoints - 1);
-    
+
     for (int i = 1; i < maxPoints - 1; i++) {
       final index = (i * step).round();
       sampled.add(spots[index]);
     }
-    
+
     sampled.add(spots.last); // Toujours garder le dernier point
-    
+
     return sampled;
   }
 
   /// Trouve la vraie valeur la plus proche dans les données complètes
   FlSpot _findClosestRealValue(double x, List<FlSpot> fullSpots) {
     if (fullSpots.isEmpty) return FlSpot(x, 0);
-    
+
     FlSpot closest = fullSpots.first;
     double minDistance = (fullSpots.first.x - x).abs();
-    
+
     for (var spot in fullSpots) {
       final distance = (spot.x - x).abs();
       if (distance < minDistance) {
@@ -358,7 +373,7 @@ class _PortfolioHistoryChartState extends State<PortfolioHistoryChart> {
         closest = spot;
       }
     }
-    
+
     return closest;
   }
 }
