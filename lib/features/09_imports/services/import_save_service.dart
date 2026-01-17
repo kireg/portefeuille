@@ -147,6 +147,12 @@ class ImportSaveService {
       await provider.updateTransaction(updated);
     }
 
+    // Sauvegarder les métadonnées de crowdfunding si présentes
+    if (metadataByTicker != null && metadataByTicker.isNotEmpty) {
+      final metadataList = metadataByTicker.values.toList();
+      await portfolioProvider.updateAssetMetadatas(metadataList);
+    }
+
     return selectedCandidates.length;
   }
 }
