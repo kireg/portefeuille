@@ -24,10 +24,15 @@ class TradeRepublicAccountStatementParser implements StatementParser {
   @override
   Future<List<ParsedTransaction>> parse(String rawText,
       {void Function(double)? onProgress}) async {
+    debugPrint("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    debugPrint("🔍 DÉBUT DU PARSING - Trade Republic Account Statement");
+    debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
     final List<ParsedTransaction> transactions = [];
     // Par défaut on traite la section en cours comme CTO ; chaque section "Compte PEA"
     // bascule dynamiquement la catégorie non-crypto vers PEA.
     ImportCategory currentCategory = ImportCategory.cto;
+    debugPrint("📁 Catégorie initiale : ${currentCategory.name.toUpperCase()}");
 
     // 1. Pre-processing: Split into lines
     final lines = rawText.split('\n').map((l) => l.trim()).toList();
@@ -66,22 +71,35 @@ class TradeRepublicAccountStatementParser implements StatementParser {
 
       // Changement de section selon l'intitulé du produit
       if (lowerLine.contains('compte pea')) {
+        debugPrint("\n🏦 CHANGEMENT DE SECTION DÉTECTÉ : COMPTE PEA");
+        debugPrint("   Ligne : $line");
         if (currentBlock.isNotEmpty) {
+          debugPrint(
+              "   ⚠️  Traitement du bloc en cours avant changement de section...");
           _parseBlock(currentBlock, transactions, currentCategory);
           currentBlock = [];
         }
         currentCategory = ImportCategory.pea;
+        debugPrint(
+            "   ✅ Catégorie changée : ${currentCategory.name.toUpperCase()}\n");
         inTransactionsSection = false;
         continue;
       }
       if (lowerLine.contains('compte courant') ||
           lowerLine.contains('compte espèces') ||
           lowerLine.contains('compte espece')) {
+        debugPrint(
+            "\n🏦 CHANGEMENT DE SECTION DÉTECTÉ : COMPTE COURANT/ESPÈCES");
+        debugPrint("   Ligne : $line");
         if (currentBlock.isNotEmpty) {
+          debugPrint(
+              "   ⚠️  Traitement du bloc en cours avant changement de section...");
           _parseBlock(currentBlock, transactions, currentCategory);
           currentBlock = [];
         }
         currentCategory = ImportCategory.cto;
+        debugPrint(
+            "   ✅ Catégorie changée : ${currentCategory.name.toUpperCase()}\n");
         inTransactionsSection = false;
         continue;
       }
@@ -89,18 +107,29 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // Nouvelle synthèse : on réinitialise avant de chercher le prochain tableau "TRANSACTIONS".
       if (line.contains("SYNTHÈSE DU RELEVÉ DE COMPTE") ||
           line.contains("ACCOUNT STATEMENT SUMMARY")) {
+        debugPrint("\n📋 NOUVELLE SYNTHÈSE DÉTECTÉE");
+        debugPrint("   Ligne : $line");
         if (currentBlock.isNotEmpty) {
+          debugPrint(
+              "   ⚠️  Traitement du bloc en cours avant nouvelle synthèse...");
           _parseBlock(currentBlock, transactions, currentCategory);
           currentBlock = [];
         }
         inTransactionsSection = false;
+        debugPrint("   ✅ Section transactions désactivée\n");
         continue;
       }
 
       // Detect start of transactions section
       if (line.contains("TRANSACTIONS") &&
           (i + 1 < lines.length && lines[i + 1].contains("DATE"))) {
+        debugPrint("\n📊 SECTION TRANSACTIONS DÉTECTÉE");
+        debugPrint("   Ligne actuelle : $line");
+        debugPrint("   Ligne suivante : ${lines[i + 1]}");
+        debugPrint(
+            "   Catégorie active : ${currentCategory.name.toUpperCase()}");
         inTransactionsSection = true;
+        debugPrint("   ✅ Analyse des transactions activée\n");
         continue;
       }
 
@@ -127,6 +156,8 @@ class TradeRepublicAccountStatementParser implements StatementParser {
         // Process previous block if exists
         // IMPORTANT: Only process if we are in the transactions section
         if (currentBlock.isNotEmpty && inTransactionsSection) {
+          debugPrint(
+              "\n💳 Traitement du bloc précédent (${currentBlock.length} lignes)");
           _parseBlock(currentBlock, transactions, currentCategory);
           currentBlock = [];
         }
@@ -135,9 +166,12 @@ class TradeRepublicAccountStatementParser implements StatementParser {
         if (inTransactionsSection) {
           if (isSplitDate) {
             // Reconstruct date on one line
-            currentBlock.add("${lines[i]} ${lines[i + 1]} ${lines[i + 2]}");
+            final dateStr = "${lines[i]} ${lines[i + 1]} ${lines[i + 2]}";
+            debugPrint("\n📅 Nouvelle transaction (date split) : $dateStr");
+            currentBlock.add(dateStr);
             i += 2; // Skip next 2 lines as they are part of the date
           } else {
+            debugPrint("\n📅 Nouvelle transaction : $line");
             currentBlock.add(line);
           }
         } else {
@@ -160,8 +194,15 @@ class TradeRepublicAccountStatementParser implements StatementParser {
 
     // Process last block
     if (currentBlock.isNotEmpty) {
+      debugPrint(
+          "\n💳 Traitement du dernier bloc (${currentBlock.length} lignes)");
       _parseBlock(currentBlock, transactions, currentCategory);
     }
+
+    debugPrint("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    debugPrint(
+        "✅ FIN DU PARSING - ${transactions.length} transaction(s) extraite(s)");
+    debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     return transactions;
   }
@@ -172,6 +213,15 @@ class TradeRepublicAccountStatementParser implements StatementParser {
     ImportCategory accountCategory,
   ) {
     if (block.isEmpty) return;
+
+    debugPrint("\n   ┌─ ANALYSE DU BLOC ─────────────────────────────────");
+    debugPrint("   │ Catégorie : ${accountCategory.name.toUpperCase()}");
+    debugPrint("   │ Nombre de lignes : ${block.length}");
+    debugPrint("   │ Contenu brut :");
+    for (var i = 0; i < block.length; i++) {
+      debugPrint("   │   [$i] ${block[i]}");
+    }
+    debugPrint("   └───────────────────────────────────────────────────");
 
     // Join block to analyze content more easily, but keep structure in mind.
     // Structure is usually:
@@ -259,17 +309,22 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // amounts are in reverse order: [Balance, AmountOut/In]
       // Example: [9597.19, 9.97]
 
+      debugPrint("   │ 💶 Montants détectés : $amounts");
+
       double transactionAmount = 0.0;
 
       if (amounts.length >= 2) {
         transactionAmount =
             amounts[1]; // The second from last is the transaction amount
+        debugPrint("   │    → Montant transaction : $transactionAmount");
+        debugPrint("   │    → Solde : ${amounts[0]}");
         // How to know if it is IN or OUT?
         // We can check the column headers but that's hard in a block.
         // We can infer from Type.
       } else if (amounts.length == 1) {
         // Only one amount found? Maybe balance is missing or amount is missing.
         transactionAmount = amounts[0];
+        debugPrint("   │    → Montant unique détecté : $transactionAmount");
       }
 
       // Parse Type and Description
@@ -314,14 +369,17 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       // depuis le compte courant vers le CTO (dépôts compensatoires automatiques)
       // L'application applique déjà ces dépôts compensatoires, donc on ne doit pas
       // les importer pour éviter la duplication.
-      if (description.contains("Versement PEA") || 
+      if (description.contains("Versement PEA") ||
           description.contains("Versement d'activation") ||
           fullDescription.contains("Versement PEA") ||
           fullDescription.contains("Activation PEA") ||
           description.contains("Incoming transfer from") ||
           fullDescription.contains("Incoming transfer from")) {
         // Skip internal transfers between accounts
-        debugPrint("Skipping internal transfer: $description");
+        debugPrint("   │ ⚠️  TRANSFERT INTERNE IGNORÉ");
+        debugPrint("   │    Description : $description");
+        debugPrint("   └───────────────────────────────────────────────────");
+        debugPrint("   ⏭️  Transaction ignorée (transfert inter-comptes)\n");
         return; // Ne pas ajouter cette transaction
       }
 
@@ -377,13 +435,18 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       final isinMatch = isinRegex.firstMatch(description);
       if (isinMatch != null) {
         isin = isinMatch.group(1);
-        ticker = isin; // Utiliser l'ISIN comme ticker pour grouper les transactions
+        ticker =
+            isin; // Utiliser l'ISIN comme ticker pour grouper les transactions
       }
 
       final qtyMatch = qtyRegex.firstMatch(description);
       if (qtyMatch != null) {
         quantity = double.tryParse(qtyMatch.group(1) ?? "0") ?? 0.0;
       }
+
+      debugPrint("   │ 📝 Description complète : $fullDescription");
+      debugPrint("   │ 🔖 ISIN : ${isin ?? 'NON DÉTECTÉ'}");
+      debugPrint("   │ 🔢 Quantité : $quantity");
 
       // Clean Asset Name
       // Remove "Savings plan execution", ISIN, "quantity: ..."
@@ -400,12 +463,18 @@ class TradeRepublicAccountStatementParser implements StatementParser {
       }
       if (assetName.isEmpty) assetName = "Unknown Asset";
 
+      debugPrint("   │ 🏷️  Nom de l'actif : $assetName");
+
       // Infer Asset Type
       assetType = _inferAssetType(assetName, isin);
+      debugPrint("   │ 📊 Type d'actif : ${assetType.name}");
+      debugPrint("   │ 🔄 Type de transaction : ${type.name}");
+
       // Calculate Price
       double price = 0.0;
       if (quantity > 0) {
         price = (transactionAmount.abs()) / quantity;
+        debugPrint("   │ 💰 Prix unitaire : ${price.toStringAsFixed(2)} €");
       }
 
       final blockLower = block.join(' ').toLowerCase();
@@ -431,6 +500,18 @@ class TradeRepublicAccountStatementParser implements StatementParser {
           signedAmount = transactionAmount;
       }
 
+      final finalCategory = assetType == AssetType.Crypto
+          ? ImportCategory.crypto
+          : (blockLower.contains('pea') ? ImportCategory.pea : accountCategory);
+
+      debugPrint(
+          "   │ 💵 Montant signé final : ${signedAmount.toStringAsFixed(2)} €");
+      debugPrint(
+          "   │ 🗂️  Catégorie finale : ${finalCategory.name.toUpperCase()}");
+      debugPrint("   │ 📅 Date : ${date.day}/${date.month}/${date.year}");
+      debugPrint("   └───────────────────────────────────────────────────");
+      debugPrint("   ✅ Transaction ajoutée\n");
+
       transactions.add(ParsedTransaction(
         date: date,
         type: type,
@@ -444,14 +525,16 @@ class TradeRepublicAccountStatementParser implements StatementParser {
             0, // Fees are often separate or included. In this summary, they might be included in net amount.
         currency: "EUR",
         assetType: assetType,
-        category: assetType == AssetType.Crypto
-            ? ImportCategory.crypto
-            : (blockLower.contains('pea')
-                ? ImportCategory.pea
-                : accountCategory),
+        category: finalCategory,
       ));
     } catch (e) {
-      debugPrint("Error parsing block: $block \n $e");
+      debugPrint("   │ ❌ ERREUR DE PARSING");
+      debugPrint("   │ Erreur : $e");
+      debugPrint("   │ Bloc complet :");
+      for (var i = 0; i < block.length; i++) {
+        debugPrint("   │   [$i] ${block[i]}");
+      }
+      debugPrint("   └───────────────────────────────────────────────────\n");
     }
   }
 

@@ -44,7 +44,16 @@ class TradeRepublicParser implements StatementParser {
   @override
   Future<List<ParsedTransaction>> parse(String rawText,
       {void Function(double)? onProgress}) async {
+    debugPrint(
+        "\n════════════════════════════════════════════════════════════════");
+    debugPrint("📊 DÉBUT DU PARSING - Trade Republic Portfolio Statement");
+    debugPrint(
+        "════════════════════════════════════════════════════════════════\n");
+
     final List<ParsedTransaction> transactions = [];
+    ImportCategory currentCategory = ImportCategory.cto; // Par défaut CTO
+    debugPrint(
+        "📁 Catégorie initiale : ${currentCategory.name.toUpperCase()}\n");
 
     // Normalisation du texte : remplacer les sauts de ligne par des espaces pour faciliter les regex
     // Mais attention, parfois la structure ligne par ligne est utile.
@@ -91,6 +100,46 @@ class TradeRepublicParser implements StatementParser {
       caseSensitive: false,
     );
 
+    // Détection des sections CTO/PEA
+    final lines = rawText.split('\n');
+    for (final line in lines) {
+      final lowerLine = line.toLowerCase().trim();
+
+      // Détection de la section PEA
+      if (lowerLine.contains('plan d') &&
+          lowerLine.contains('épargne') &&
+          lowerLine.contains('action')) {
+        debugPrint("\n🏦 SECTION DÉTECTÉE : PLAN D'ÉPARGNE EN ACTIONS (PEA)");
+        debugPrint("   Ligne : $line");
+        currentCategory = ImportCategory.pea;
+        debugPrint(
+            "   ✅ Catégorie changée : ${currentCategory.name.toUpperCase()}\n");
+      }
+      // Détection de la section PEA (variante)
+      else if (lowerLine.contains('compte pea') || lowerLine.contains('pea')) {
+        if (!lowerLine.contains('versement')) {
+          // Éviter les lignes "Versement PEA"
+          debugPrint("\n🏦 SECTION DÉTECTÉE : COMPTE PEA");
+          debugPrint("   Ligne : $line");
+          currentCategory = ImportCategory.pea;
+          debugPrint(
+              "   ✅ Catégorie changée : ${currentCategory.name.toUpperCase()}\n");
+        }
+      }
+      // Détection de la section CTO
+      else if (lowerLine.contains('compte-titres ordinaire') ||
+          lowerLine.contains('compte titres ordinaire') ||
+          (lowerLine.contains('compte') &&
+              lowerLine.contains('titres') &&
+              !lowerLine.contains('pea'))) {
+        debugPrint("\n🏦 SECTION DÉTECTÉE : COMPTE-TITRES ORDINAIRE (CTO)");
+        debugPrint("   Ligne : $line");
+        currentCategory = ImportCategory.cto;
+        debugPrint(
+            "   ✅ Catégorie changée : ${currentCategory.name.toUpperCase()}\n");
+      }
+    }
+
     // Extraction des dates (souvent en haut du document : "Date : 12.05.2023")
     final regexDate = RegExp(r'Date\s*[:.]?\s*(\d{2})[./](\d{2})[./](\d{4})');
     DateTime? docDate;
@@ -112,17 +161,26 @@ class TradeRepublicParser implements StatementParser {
           int.parse(dateTitleMatch.group(2)!),
           int.parse(dateTitleMatch.group(1)!),
         );
-        debugPrint("TradeRepublicParser: Date found in title: $docDate");
+        debugPrint("📅 Date trouvée dans le titre : $docDate");
       } else {
-        debugPrint("TradeRepublicParser: No date found");
+        debugPrint("⚠️ Aucune date trouvée dans le document");
       }
     }
 
+    // Reset de la catégorie avant le parsing des transactions
+    currentCategory = ImportCategory.cto;
+    debugPrint(
+        "\n🔄 Début du parsing des transactions (catégorie réinitialisée à CTO)\n");
+
     // Recherche des correspondances pour les ordres
     final matches = regexOrderFR.allMatches(rawText);
-    debugPrint("TradeRepublicParser: Found ${matches.length} order matches");
+    debugPrint("\n📝 RECHERCHE DES ORDRES (Achat/Vente)");
+    debugPrint("   Trouvé : ${matches.length} ordre(s)");
 
     for (final match in matches) {
+      debugPrint(
+          "\n   ┌─ ORDRE ──────────────────────────────────────────────────────");
+
       final typeStr = match.group(1)!.toLowerCase();
       final qtyStr = match.group(2)!.replaceAll(',', '.');
       final assetName = match.group(3)!.trim();
@@ -131,19 +189,29 @@ class TradeRepublicParser implements StatementParser {
 
       final quantity = double.tryParse(qtyStr) ?? 0.0;
       final price = double.tryParse(priceStr) ?? 0.0;
-        // Uniformisation: Achat = montant négatif, Vente = positif
-        final rawAmount = quantity * price;
-        final amount = (typeStr == 'achat') ? -rawAmount.abs() : rawAmount.abs();
+      // Uniformisation: Achat = montant négatif, Vente = positif
+      final rawAmount = quantity * price;
+      final amount = (typeStr == 'achat') ? -rawAmount.abs() : rawAmount.abs();
       final assetType = _inferAssetType(assetName);
       final ImportCategory category = assetType == AssetType.Crypto
           ? ImportCategory.crypto
-          : ImportCategory.unknown;
+          : currentCategory;
+
+      debugPrint("   │ 🔄 Type : ${typeStr.toUpperCase()}");
+      debugPrint("   │ 🏷️  Actif : $assetName");
+      debugPrint("   │ 🔢 Quantité : $quantity");
+      debugPrint("   │ 💰 Prix : $price $currency");
+      debugPrint("   │ 💵 Montant : ${amount.toStringAsFixed(2)} $currency");
+      debugPrint("   │ 📈 Type d'actif : ${assetType.name}");
+      debugPrint("   │ 🗂️  Catégorie : ${category.name.toUpperCase()}");
 
       transactions.add(ParsedTransaction(
         date: docDate ?? DateTime.now(), // Fallback si date non trouvée
         type: typeStr == 'achat' ? TransactionType.Buy : TransactionType.Sell,
         assetName: assetName,
-        ticker: assetName.replaceAll(RegExp(r'\s+'), '_').toUpperCase(), // Utiliser le nom comme ticker pour grouper
+        ticker: assetName
+            .replaceAll(RegExp(r'\s+'), '_')
+            .toUpperCase(), // Utiliser le nom comme ticker pour grouper
         quantity: quantity,
         price: price,
         amount: amount,
@@ -153,15 +221,21 @@ class TradeRepublicParser implements StatementParser {
         category: category,
       ));
       debugPrint(
-          "TradeRepublicParser: Added transaction: $typeStr $quantity $assetName @ $price $currency");
+          "   └──────────────────────────────────────────────────────────────");
+      debugPrint("   ✅ Transaction ajoutée\n");
     }
 
     // Recherche des positions (Import initial)
+    // On va parser ligne par ligne pour détecter les changements de section
+    currentCategory = ImportCategory.cto;
     final positionMatches = regexPosition.allMatches(rawText);
-    debugPrint(
-        "TradeRepublicParser: Found ${positionMatches.length} position matches");
+    debugPrint("\n📦 RECHERCHE DES POSITIONS");
+    debugPrint("   Trouvé : ${positionMatches.length} position(s)\n");
 
     for (final match in positionMatches) {
+      debugPrint(
+          "   ┌─ POSITION ───────────────────────────────────────────────────");
+
       final qtyStr = match.group(1)!.replaceAll(',', '.');
       final assetNameRaw = match.group(2)!.trim();
       // Nettoyage du nom (enlève les sauts de ligne excessifs)
@@ -176,16 +250,51 @@ class TradeRepublicParser implements StatementParser {
       final price = double.tryParse(priceStr) ?? 0.0;
       final total = double.tryParse(totalStr) ?? 0.0;
       final assetType = _inferAssetType(assetName);
+
+      // Détection de la catégorie selon le contexte avant la position
+      final matchStart = match.start;
+      final textBeforeMatch =
+          rawText.substring(0, matchStart > 500 ? matchStart : matchStart);
+      final lastLines = textBeforeMatch
+          .split('\n')
+          .reversed
+          .take(20)
+          .toList()
+          .reversed
+          .join(' ')
+          .toLowerCase();
+
+      if (lastLines.contains('plan d') &&
+          lastLines.contains('épargne') &&
+          lastLines.contains('action')) {
+        currentCategory = ImportCategory.pea;
+      } else if (lastLines.contains('compte pea') ||
+          lastLines.contains('pea')) {
+        currentCategory = ImportCategory.pea;
+      } else if (lastLines.contains('compte-titres ordinaire') ||
+          lastLines.contains('compte titres')) {
+        currentCategory = ImportCategory.cto;
+      }
+
       final ImportCategory category = assetType == AssetType.Crypto
           ? ImportCategory.crypto
-          : ImportCategory.unknown;
+          : currentCategory;
+
+      debugPrint("   │ 🏷️  Actif : $assetName");
+      debugPrint("   │ 🔖 ISIN : $isin");
+      debugPrint("   │ 🔢 Quantité : $quantity");
+      debugPrint("   │ 💰 Prix : ${price.toStringAsFixed(2)} €");
+      debugPrint("   │ 💵 Total : ${total.toStringAsFixed(2)} €");
+      debugPrint("   │ 📈 Type d'actif : ${assetType.name}");
+      debugPrint("   │ 🗂️  Catégorie : ${category.name.toUpperCase()}");
 
       transactions.add(ParsedTransaction(
         date: docDate ?? DateTime.now(),
         type: TransactionType.Buy, // Portfolio snapshot
         assetName: assetName,
         isin: isin,
-        ticker: isin, // Utiliser l'ISIN comme ticker pour grouper les transactions
+        ticker:
+            isin, // Utiliser l'ISIN comme ticker pour grouper les transactions
         quantity: quantity,
         price: price,
         amount: -total.abs(),
@@ -195,24 +304,27 @@ class TradeRepublicParser implements StatementParser {
         category: category,
       ));
       debugPrint(
-          "TradeRepublicParser: Added position: $quantity $assetName ($isin) @ $price");
+          "   └──────────────────────────────────────────────────────────────");
+      debugPrint("   ✅ Position ajoutée\n");
     }
 
     // Recherche des dividendes
     final dividendMatches = regexDividendFR.allMatches(rawText);
-    debugPrint(
-        "TradeRepublicParser: Found ${dividendMatches.length} dividend matches");
+    debugPrint("\n💰 RECHERCHE DES DIVIDENDES");
+    debugPrint("   Trouvé : ${dividendMatches.length} dividende(s)\n");
 
     for (final match in dividendMatches) {
       try {
         final qtyStr = match.group(1)!.replaceAll(',', '.');
-        final assetName = match.group(2)!.trim().replaceAll(RegExp(r'\s+'), ' ');
+        final assetName =
+            match.group(2)!.trim().replaceAll(RegExp(r'\s+'), ' ');
         final perShareStr = match.group(3)!.replaceAll(',', '.');
         final currency = match.group(4)!;
 
         final quantity = double.tryParse(qtyStr) ?? 0.0;
         final perShare = double.tryParse(perShareStr) ?? 0.0;
-        final amount = (quantity * perShare).abs(); // Dividende toujours positif
+        final amount =
+            (quantity * perShare).abs(); // Dividende toujours positif
 
         final assetType = _inferAssetType(assetName);
         final ImportCategory category = assetType == AssetType.Crypto
@@ -223,7 +335,9 @@ class TradeRepublicParser implements StatementParser {
           date: docDate ?? DateTime.now(),
           type: TransactionType.Dividend,
           assetName: assetName,
-          ticker: assetName.replaceAll(RegExp(r'\s+'), '_').toUpperCase(), // Utiliser le nom comme ticker pour grouper
+          ticker: assetName
+              .replaceAll(RegExp(r'\s+'), '_')
+              .toUpperCase(), // Utiliser le nom comme ticker pour grouper
           quantity: quantity,
           price: perShare,
           amount: amount,
@@ -232,7 +346,8 @@ class TradeRepublicParser implements StatementParser {
           assetType: assetType,
           category: category,
         ));
-        debugPrint("TradeRepublicParser: Added dividend: $assetName amount=$amount $currency");
+        debugPrint(
+            "TradeRepublicParser: Added dividend: $assetName amount=$amount $currency");
       } catch (e) {
         debugPrint('TradeRepublicParser: Error parsing dividend: $e');
       }
@@ -240,12 +355,13 @@ class TradeRepublicParser implements StatementParser {
 
     // Recherche des dividendes avec format alternatif (montant total direct)
     final dividendAltMatches = regexDividendAlt.allMatches(rawText);
-    debugPrint(
-        "TradeRepublicParser: Found ${dividendAltMatches.length} dividend alt matches");
+    debugPrint("\n💰 RECHERCHE DES DIVIDENDES (format alternatif)");
+    debugPrint("   Trouvé : ${dividendAltMatches.length} dividende(s)\n");
 
     for (final match in dividendAltMatches) {
       try {
-        final assetName = match.group(1)!.trim().replaceAll(RegExp(r'\s+'), ' ');
+        final assetName =
+            match.group(1)!.trim().replaceAll(RegExp(r'\s+'), ' ');
         final amountStr = match.group(2)!.replaceAll(',', '.');
         final currency = match.group(3)!;
 
@@ -254,8 +370,9 @@ class TradeRepublicParser implements StatementParser {
         // Vérifier qu'on n'a pas déjà ajouté ce dividende
         final alreadyExists = transactions.any((t) =>
             t.type == TransactionType.Dividend &&
-            t.assetName.contains(assetName.substring(0, assetName.length > 10 ? 10 : assetName.length)));
-        
+            t.assetName.contains(assetName.substring(
+                0, assetName.length > 10 ? 10 : assetName.length)));
+
         if (!alreadyExists) {
           final assetType = _inferAssetType(assetName);
           final ImportCategory category = assetType == AssetType.Crypto
@@ -266,7 +383,9 @@ class TradeRepublicParser implements StatementParser {
             date: docDate ?? DateTime.now(),
             type: TransactionType.Dividend,
             assetName: assetName,
-            ticker: assetName.replaceAll(RegExp(r'\s+'), '_').toUpperCase(), // Utiliser le nom comme ticker pour grouper
+            ticker: assetName
+                .replaceAll(RegExp(r'\s+'), '_')
+                .toUpperCase(), // Utiliser le nom comme ticker pour grouper
             quantity: 0,
             price: 0,
             amount: amount,
@@ -275,7 +394,8 @@ class TradeRepublicParser implements StatementParser {
             assetType: assetType,
             category: category,
           ));
-          debugPrint("TradeRepublicParser: Added dividend (alt): $assetName amount=$amount $currency");
+          debugPrint(
+              "TradeRepublicParser: Added dividend (alt): $assetName amount=$amount $currency");
         }
       } catch (e) {
         debugPrint('TradeRepublicParser: Error parsing dividend alt: $e');
@@ -308,9 +428,17 @@ class TradeRepublicParser implements StatementParser {
           assetType: tx.assetType,
           category: tx.category,
         );
-        debugPrint("TradeRepublicParser: Updated dividend with credit amount: $creditAmount $creditCurrency");
+        debugPrint(
+            "   ✅ Dividende mis à jour avec montant crédit : $creditAmount $creditCurrency");
       }
     }
+
+    debugPrint(
+        "\n════════════════════════════════════════════════════════════════");
+    debugPrint(
+        "✅ FIN DU PARSING - ${transactions.length} transaction(s) extraite(s)");
+    debugPrint(
+        "════════════════════════════════════════════════════════════════\n");
 
     return transactions;
   }
